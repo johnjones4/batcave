@@ -9,36 +9,49 @@ type InterfaceContext interface {
 }
 
 type InterfaceTypeSMS struct {
-	PhoneNumber string
-	Initiant    string
+	Person   Person
+	Initiant string
 }
 
 type InterfaceTypeTerminal struct {
-	Hostname string
+	Machine Machine
+}
+
+type Response struct {
+	Message  string
+	MediaURL string
+}
+
+type Noun interface {
+	Act(object interface{}) (State, Response, error)
+}
+
+type Person struct {
+	PhoneNumber string
+	Email       string
+}
+
+type Machine struct {
+}
+
+type ParsedInputMessage struct {
+	Message  string
+	Segments []interface{}
+}
+
+type Intent interface {
+	Name() string
+	Process(p ParsedInputMessage) (State, Response, error)
 }
 
 type State interface {
-	TransitionToState(state State)
+	Name() string
+	CanTransitionToState(state State) bool
+	InferIntent(p ParsedInputMessage) (Intent, error)
 }
 
 type Session struct {
 	Start   time.Time
 	Context InterfaceContext
 	State   State
-}
-
-type Intent struct {
-	Name string
-}
-
-type Action struct {
-	Content string
-	Session Session
-	Intent  Intent
-}
-
-type Response struct {
-	Message   string
-	MediaURL  string
-	NextState State
 }
