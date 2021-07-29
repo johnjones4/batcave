@@ -6,19 +6,23 @@ import (
 	"github.com/sbl/ner"
 )
 
-type Message struct {
+type ResponseMessage struct {
 	Text  string      `json:"text"`
 	URL   string      `json:"url"`
 	Extra interface{} `json:"extra"`
 }
 
-type ParsedMessage struct {
-	Original      string
+type RequestMessage struct {
+	Message string `json:"message"`
+}
+
+type ParsedRequestMessage struct {
+	Original      RequestMessage
 	NamedEntities []ner.Entity
 	Tokens        []prose.Token
 	DateInfo      *when.Result
 }
 
-func MessageOk() Message {
-	return Message{"Ok", "", nil}
+func MessageOk() ResponseMessage {
+	return ResponseMessage{"Ok", "", nil}
 }

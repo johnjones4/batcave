@@ -12,8 +12,8 @@ type DisplayIntent struct {
 	LastURL           string                             `json:"lastUrl"`
 }
 
-func NewDisplayIntent(m ParsedMessage) (DisplayIntent, error) {
-	display, err := FindDisplayInString(m.Original)
+func NewDisplayIntent(m ParsedRequestMessage) (DisplayIntent, error) {
+	display, err := FindDisplayInString(m.Original.Message)
 	if err != nil {
 		return DisplayIntent{}, err
 	}
@@ -21,7 +21,7 @@ func NewDisplayIntent(m ParsedMessage) (DisplayIntent, error) {
 	return DisplayIntent{Display: display}, nil
 }
 
-func (i DisplayIntent) Execute(lastState State) (State, Message, error) {
+func (i DisplayIntent) Execute(lastState State) (State, ResponseMessage, error) {
 	if i.Display.Type == DisplayTypeVideo && i.Display.Source == DisplaySourceGoogle {
 		var url string
 		var refreshInfo service.GoogleStreamRefreshRequest
@@ -32,11 +32,11 @@ func (i DisplayIntent) Execute(lastState State) (State, Message, error) {
 			url, refreshInfo, err = service.GetGoogleVideoStreamURL(i.Display.ID)
 		}
 		if err != nil {
-			return nil, Message{}, err
+			return nil, ResponseMessage{}, err
 		}
 		i.GoogleRefreshInfo = refreshInfo
 		i.LastURL = url
-		m := Message{
+		m := ResponseMessage{
 			Text:  fmt.Sprintf("Here's the %s.", i.Display.Names[0]),
 			URL:   url,
 			Extra: i,
@@ -44,5 +44,5 @@ func (i DisplayIntent) Execute(lastState State) (State, Message, error) {
 		return lastState, m, nil
 	}
 
-	return nil, Message{}, errors.New("unable to handle display type")
+	return nil, ResponseMessage{}, errors.New("unable to handle display type")
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type Interface interface {
-	SendMessage(message Message) error
+	SendMessage(message ResponseMessage) error
 }
 
 type InterfaceTypeSMS struct {
@@ -15,7 +15,7 @@ type InterfaceTypeSMS struct {
 type InterfaceTypeTerminal struct {
 }
 
-func (i InterfaceTypeSMS) SendMessage(m Message) error {
+func (i InterfaceTypeSMS) SendMessage(m ResponseMessage) error {
 	fmt.Println(m.Text)
 	return nil
 }

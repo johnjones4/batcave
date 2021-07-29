@@ -1,11 +1,13 @@
 package util
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"time"
 )
 
 var kvStore map[string]string
@@ -32,6 +34,16 @@ func GetKVValueString(key string, defaultVal string) string {
 	return defaultVal
 }
 
+func GetKVValueBytes(key string, defaultVal []byte) []byte {
+	if val, ok := kvStore[key]; ok {
+		bytes, err := base64.StdEncoding.DecodeString(val)
+		if err == nil {
+			return bytes
+		}
+	}
+	return defaultVal
+}
+
 func GetKVValueFloat(key string, defaultVal float64) float64 {
 	if val, ok := kvStore[key]; ok {
 		fval, err := strconv.ParseFloat(val, 64)
@@ -54,7 +66,7 @@ func GetKVValueInt(key string, defaultVal int) int {
 	return defaultVal
 }
 
-func SetKVValue(key string, value interface{}) error {
+func SetKVValue(key string, value interface{}, expiration time.Time) error {
 	kvStore[key] = fmt.Sprint(value)
 
 	bytes, err := json.Marshal(kvStore)
@@ -68,4 +80,9 @@ func SetKVValue(key string, value interface{}) error {
 	}
 
 	return nil
+}
+
+func SetKVValueBytes(key string, value []byte, expiration time.Time) error {
+	strValue := base64.StdEncoding.EncodeToString(value)
+	return SetKVValue(key, strValue, expiration)
 }

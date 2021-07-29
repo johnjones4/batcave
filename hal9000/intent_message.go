@@ -7,8 +7,8 @@ type MessageIntent struct {
 	Message string `json:"message"`
 }
 
-func NewMessageIntent(m ParsedMessage) (MessageIntent, error) {
-	person, messageStart, err := GetPersonInParsedMessage(m)
+func NewMessageIntent(m ParsedRequestMessage) (MessageIntent, error) {
+	person, messageStart, err := GetPersonInParsedRequestMessage(m)
 	if err != nil {
 		return MessageIntent{}, err
 	}
@@ -18,16 +18,16 @@ func NewMessageIntent(m ParsedMessage) (MessageIntent, error) {
 	return MessageIntent{person, sendMessage}, nil
 }
 
-func (i MessageIntent) Execute(lastState State) (State, Message, error) {
+func (i MessageIntent) Execute(lastState State) (State, ResponseMessage, error) {
 	err := SendMessageToPerson(i.Person, i.Message)
 	if err != nil {
-		return nil, Message{}, err
+		return nil, ResponseMessage{}, err
 	}
 
 	return lastState, MessageOk(), nil
 }
 
-func GetPersonInParsedMessage(m ParsedMessage) (Person, int, error) {
+func GetPersonInParsedRequestMessage(m ParsedRequestMessage) (Person, int, error) {
 	for _, entity := range m.NamedEntities {
 		person, err := GetPersonByName(entity.Name)
 		if err != nil && err != ErrorPersonNotFound {

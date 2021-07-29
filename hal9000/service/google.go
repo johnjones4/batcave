@@ -58,8 +58,8 @@ func RefreshGoogleTokenIfNeeded() error {
 			return err
 		}
 
-		util.SetKVValue(KVKeyGoogleAuthExpiration, int(time.Now().Unix())+(response.ExpiresIn/2))
-		util.SetKVValue(KVKeyGoogleAuthAccessToken, response.AccessToken)
+		util.SetKVValue(KVKeyGoogleAuthExpiration, int(time.Now().Unix())+(response.ExpiresIn/2), time.Time{})
+		util.SetKVValue(KVKeyGoogleAuthAccessToken, response.AccessToken, time.Time{})
 	}
 
 	return nil

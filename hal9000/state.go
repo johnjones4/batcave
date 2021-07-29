@@ -20,14 +20,14 @@ import (
 
 type State interface {
 	Name() string
-	ProcessIncomingMessage(m string) (State, Message, error)
+	ProcessIncomingMessage(m RequestMessage) (State, ResponseMessage, error)
 }
 
-func InitStateByName(name string) (State, error) {
+func InitStateByName(name string) State {
 	if name == util.StateTypeDefault {
-		return DefaultState{}, nil
+		return DefaultState{}
 	}
-	return nil, fmt.Errorf("no state type named %s", name)
+	return DefaultState{}
 }
 
 var subtypeMap map[uint8]string
@@ -90,32 +90,32 @@ type DefaultState struct{}
 
 func (s DefaultState) Name() string { return util.StateTypeDefault }
 
-func (s DefaultState) ProcessIncomingMessage(input string) (State, Message, error) {
-	class := model.Predict(input)
+func (s DefaultState) ProcessIncomingMessage(input RequestMessage) (State, ResponseMessage, error) {
+	class := model.Predict(input.Message)
 
 	intentLabel, ok := subtypeMap[class]
 	if !ok {
-		return nil, Message{}, fmt.Errorf("no alias for intent %d", class)
+		return nil, ResponseMessage{}, fmt.Errorf("no alias for intent %d", class)
 	}
 
-	nerTokens := ner.Tokenize(input)
+	nerTokens := ner.Tokenize(input.Message)
 	es, err := nerExtractor.Extract(nerTokens)
 	if err != nil {
-		return nil, Message{}, err
+		return nil, ResponseMessage{}, err
 	}
 
-	doc, err := prose.NewDocument(input)
+	doc, err := prose.NewDocument(input.Message)
 	if err != nil {
-		return nil, Message{}, err
+		return nil, ResponseMessage{}, err
 	}
 	tokens := doc.Tokens()
 
-	dateInfo, err := dateExtractor.Parse(input, time.Now())
+	dateInfo, err := dateExtractor.Parse(input.Message, time.Now())
 	if err != nil {
-		return nil, Message{}, err
+		return nil, ResponseMessage{}, err
 	}
 
-	inputMessage := ParsedMessage{
+	inputMessage := ParsedRequestMessage{
 		Original:      input,
 		NamedEntities: es,
 		Tokens:        tokens,
@@ -126,7 +126,7 @@ func (s DefaultState) ProcessIncomingMessage(input string) (State, Message, erro
 
 	intent, err := GetIntentForIncomingMessage(intentLabel, inputMessage)
 	if err != nil {
-		return nil, Message{}, err
+		return nil, ResponseMessage{}, err
 	}
 
 	return intent.Execute(s)

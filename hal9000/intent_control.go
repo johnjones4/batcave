@@ -10,8 +10,8 @@ type ControlIntent struct {
 	On     bool   `json:"on"`
 }
 
-func NewControlIntent(m ParsedMessage, on bool) (ControlIntent, error) {
-	device, err := FindDeviceInString(m.Original)
+func NewControlIntent(m ParsedRequestMessage, on bool) (ControlIntent, error) {
+	device, err := FindDeviceInString(m.Original.Message)
 	if err != nil {
 		return ControlIntent{}, err
 	}
@@ -19,7 +19,7 @@ func NewControlIntent(m ParsedMessage, on bool) (ControlIntent, error) {
 	return ControlIntent{Device: device, On: on}, nil
 }
 
-func (i ControlIntent) Execute(lastState State) (State, Message, error) {
+func (i ControlIntent) Execute(lastState State) (State, ResponseMessage, error) {
 	var err error
 	if i.Device.Type == DeviceTypeGroup {
 		for _, device := range i.Device.Devices() {
@@ -32,7 +32,7 @@ func (i ControlIntent) Execute(lastState State) (State, Message, error) {
 		err = ExecuteOnDevice(i.Device, i.On)
 	}
 	if err != nil {
-		return nil, Message{}, err
+		return nil, ResponseMessage{}, err
 	}
 
 	return lastState, MessageOk(), nil

@@ -53,16 +53,16 @@ func SendMessageToPerson(person Person, m string) error {
 			return ErrorNoInterfacesAvailable(person)
 		}
 		for _, ic := range ics {
-			ses, err := InitiateNewSession(ic)
+			ses, err := NewSession(ic)
 			if err != nil {
 				return err
 			}
-			ses.BreakIn(Message{m, "", nil})
+			ses.BreakIn(ResponseMessage{m, "", nil})
 		}
 		return nil
 	}
 	for _, ses := range sessions {
-		err = ses.BreakIn(Message{m, "", nil})
+		err = ses.BreakIn(ResponseMessage{m, "", nil})
 		if err != nil {
 			return err
 		}

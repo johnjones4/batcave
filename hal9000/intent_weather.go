@@ -17,7 +17,7 @@ type WeatherIntent struct {
 	Date   time.Time `json:"date"`
 }
 
-func NewWeatherIntent(m ParsedMessage) (WeatherIntent, error) {
+func NewWeatherIntent(m ParsedRequestMessage) (WeatherIntent, error) {
 	locale := ""
 	for _, entity := range m.NamedEntities {
 		if entity.Tag == util.NERTagPlace {
@@ -34,14 +34,14 @@ func NewWeatherIntent(m ParsedMessage) (WeatherIntent, error) {
 	return WeatherIntent{locale, date}, nil
 }
 
-func (i WeatherIntent) Execute(lastState State) (State, Message, error) {
+func (i WeatherIntent) Execute(lastState State) (State, ResponseMessage, error) {
 	forecast, err := GetWeather(i.Date, i.Locale)
 	if err != nil {
-		return lastState, Message{}, err
+		return lastState, ResponseMessage{}, err
 	}
 
 	responseMessage := FormulateWeatherResponsePreamble(i.Date, i.Locale) + forecast
-	return lastState, Message{responseMessage, "", nil}, nil
+	return lastState, ResponseMessage{responseMessage, "", nil}, nil
 }
 
 func FormulateWeatherResponsePreamble(date time.Time, locale string) string {
