@@ -11,21 +11,24 @@ import (
 )
 
 type HistoricalExchange struct {
-	Timestamp time.Time       `json:"timestamp"`
-	Request   RequestMessage  `json:"request"`
-	Response  ResponseMessage `json:"response"`
+	Timestamp  time.Time       `json:"timestamp"`
+	Request    RequestMessage  `json:"request"`
+	Response   ResponseMessage `json:"response"`
+	StartState string          `json:"startState"`
+	EndState   string          `json:"endState"`
 }
 
 type Session struct {
-	ID          string               `json:"id"`
-	Start       time.Time            `json:"start"`
-	Interface   Interface            `json:"interface"`
-	StateString string               `json:"state"`
-	History     []HistoricalExchange `json:"history"`
+	ID            string               `json:"id"`
+	Start         time.Time            `json:"start"`
+	StateString   string               `json:"state"`
+	History       []HistoricalExchange `json:"history"`
+	InterfaceType string               `json:"interface"`
+	Interface     Interface
 }
 
 var (
-	SessionNotFoundError = errors.New("session not found")
+	ErrorSessionNotFound = errors.New("session not found")
 )
 
 func GetActiveSessions(p Person) ([]Session, error) {
@@ -34,11 +37,12 @@ func GetActiveSessions(p Person) ([]Session, error) {
 
 func NewSession(ic Interface) (Session, error) {
 	ses := Session{
-		ID:          uuid.NewString(),
-		Start:       time.Now(),
-		Interface:   ic,
-		StateString: util.StateTypeDefault,
-		History:     make([]HistoricalExchange, 0),
+		ID:            uuid.NewString(),
+		Start:         time.Now(),
+		Interface:     ic,
+		InterfaceType: ic.Name(),
+		StateString:   util.StateTypeDefault,
+		History:       make([]HistoricalExchange, 0),
 	}
 	err := ses.Save()
 	if err != nil {
@@ -51,16 +55,19 @@ func SessionKeyForID(id string) string {
 	return fmt.Sprintf("session_%s", id)
 }
 
-func LoadSession(id string) (Session, error) {
+func LoadSession(id string, ic Interface) (Session, error) {
 	key := SessionKeyForID(id)
 	bytes := util.GetKVValueBytes(key, []byte{})
 	if len(bytes) == 0 {
-		return Session{}, SessionNotFoundError
+		return Session{}, ErrorSessionNotFound
 	}
 	var ses Session
 	err := json.Unmarshal(bytes, &ses)
 	if err != nil {
 		return Session{}, err
+	}
+	if ses.InterfaceType != ic.Name() {
+		return Session{}, fmt.Errorf("Interface mismatch (Received %s, expected %s)", ses.InterfaceType, ic.Name())
 	}
 	return ses, nil
 }
@@ -91,13 +98,17 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, err
 		return ResponseMessage{}, err
 	}
 
-	s.StateString = nextState.Name()
-
 	s.History = append(s.History, HistoricalExchange{
-		Timestamp: requestTime,
-		Request:   m,
-		Response:  response,
+		Timestamp:  requestTime,
+		Request:    m,
+		Response:   response,
+		StartState: s.StateString,
+		EndState:   nextState.Name(),
 	})
+
+	//TODO write log
+
+	s.StateString = nextState.Name()
 
 	return response, nil
 }

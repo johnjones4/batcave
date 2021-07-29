@@ -39,7 +39,7 @@ func main() {
 		return
 	}
 
-	ses, err := hal9000.NewSession(nil)
+	ses, err := hal9000.NewSession(hal9000.InterfaceTypeTerminal{os.Stdout})
 	if err != nil {
 		fmt.Println(err)
 		return

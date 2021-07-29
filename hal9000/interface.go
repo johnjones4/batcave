@@ -2,9 +2,11 @@ package hal9000
 
 import (
 	"fmt"
+	"os"
 )
 
 type Interface interface {
+	Name() string
 	SendMessage(message ResponseMessage) error
 }
 
@@ -12,11 +14,25 @@ type InterfaceTypeSMS struct {
 	Number string
 }
 
-type InterfaceTypeTerminal struct {
+func (i InterfaceTypeSMS) Name() string {
+	return "sms"
 }
 
 func (i InterfaceTypeSMS) SendMessage(m ResponseMessage) error {
 	fmt.Println(m.Text)
+	return nil
+}
+
+type InterfaceTypeTerminal struct {
+	Output *os.File
+}
+
+func (i InterfaceTypeTerminal) Name() string {
+	return "terminal"
+}
+
+func (i InterfaceTypeTerminal) SendMessage(m ResponseMessage) error {
+	i.Output.Write([]byte(m.Text + "\n"))
 	return nil
 }
 
