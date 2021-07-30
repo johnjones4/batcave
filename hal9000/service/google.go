@@ -29,8 +29,8 @@ type GoogleDeviceCommandRequest struct {
 }
 
 func RefreshGoogleTokenIfNeeded() error {
-	expiration := util.GetKVValueInt(KVKeyGoogleAuthExpiration, 0)
-	accessToken := util.GetKVValueString(KVKeyGoogleAuthAccessToken, "")
+	expiration := util.KVStoreInstance.GetInt(KVKeyGoogleAuthExpiration, 0)
+	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
 	if accessToken == "" || expiration == 0 || time.Unix(int64(expiration), 0).Before(time.Now()) {
 		refreshToken := os.Getenv("GOOGLE_REFRESH_TOKEN")
 

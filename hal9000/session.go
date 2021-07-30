@@ -57,7 +57,7 @@ func SessionKeyForID(id string) string {
 
 func LoadSession(id string, ic Interface) (Session, error) {
 	key := SessionKeyForID(id)
-	bytes := util.GetKVValueBytes(key, []byte{})
+	bytes := util.KVStoreInstance.GetBytes(key, []byte{})
 	if len(bytes) == 0 {
 		return Session{}, ErrorSessionNotFound
 	}
@@ -78,7 +78,7 @@ func (s *Session) Save() error {
 		return err
 	}
 	key := SessionKeyForID(s.ID)
-	return util.SetKVValueBytes(key, sessionData, time.Now().Add(time.Hour))
+	return util.KVStoreInstance.SetBytes(key, sessionData, time.Now().Add(time.Hour))
 }
 
 func (s *Session) BreakIn(p ResponseMessage) error {

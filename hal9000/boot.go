@@ -7,7 +7,7 @@ import (
 
 func BootUp() error {
 	fns := [](func() error){
-		util.InitKVStore,
+		util.InitFileKVStore,
 		InitializeDefaultIncomingMessageParser,
 		InitPeople,
 		InitDisplays,
