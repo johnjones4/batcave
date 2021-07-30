@@ -58,8 +58,8 @@ func RefreshGoogleTokenIfNeeded() error {
 			return err
 		}
 
-		util.SetKVValue(KVKeyGoogleAuthExpiration, int(time.Now().Unix())+(response.ExpiresIn/2), time.Time{})
-		util.SetKVValue(KVKeyGoogleAuthAccessToken, response.AccessToken, time.Time{})
+		util.KVStoreInstance.Set(KVKeyGoogleAuthExpiration, int(time.Now().Unix())+(response.ExpiresIn/2), time.Time{})
+		util.KVStoreInstance.Set(KVKeyGoogleAuthAccessToken, response.AccessToken, time.Time{})
 	}
 
 	return nil
@@ -91,7 +91,7 @@ func GetGoogleVideoStreamURL(deviceId string) (string, GoogleStreamRefreshReques
 		return "", GoogleStreamRefreshRequest{}, err
 	}
 
-	accessToken := util.GetKVValueString(KVKeyGoogleAuthAccessToken, "")
+	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
 	if accessToken == "" {
 		return "", GoogleStreamRefreshRequest{}, errors.New("no access token available for google")
 	}
@@ -138,7 +138,7 @@ func RefreshGoogleVideoStreamURL(oldUrl, deviceId, extensionToken string) (strin
 		return "", GoogleStreamRefreshRequest{}, err
 	}
 
-	accessToken := util.GetKVValueString(KVKeyGoogleAuthAccessToken, "")
+	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
 	if accessToken == "" {
 		return "", GoogleStreamRefreshRequest{}, errors.New("no access token available for google")
 	}
