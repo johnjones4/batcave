@@ -3,11 +3,12 @@ package hal9000
 import "hal9000/util"
 
 type MessageIntent struct {
+	Caller  Person `json:"caller"`
 	Person  Person `json:"person"`
 	Message string `json:"message"`
 }
 
-func NewMessageIntent(m ParsedRequestMessage) (MessageIntent, error) {
+func NewMessageIntent(c Person, m ParsedRequestMessage) (MessageIntent, error) {
 	person, messageStart, err := GetPersonInParsedRequestMessage(m)
 	if err != nil {
 		return MessageIntent{}, err
@@ -15,11 +16,11 @@ func NewMessageIntent(m ParsedRequestMessage) (MessageIntent, error) {
 
 	sendMessage := util.ConcatTokensInRange(m.Tokens, messageStart, len(m.Tokens))
 
-	return MessageIntent{person, sendMessage}, nil
+	return MessageIntent{c, person, sendMessage}, nil
 }
 
 func (i MessageIntent) Execute(lastState State) (State, ResponseMessage, error) {
-	err := SendMessageToPerson(i.Person, i.Message)
+	err := SendMessageToPerson(i.Caller, i.Person, i.Message)
 	if err != nil {
 		return nil, ResponseMessage{}, err
 	}

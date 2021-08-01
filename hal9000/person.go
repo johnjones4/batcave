@@ -3,12 +3,15 @@ package hal9000
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
 type Person struct {
+	ID          string   `json:"id"`
 	Names       []string `json:"names"`
 	PhoneNumber string   `json:"phoneNumber"`
 }
@@ -27,6 +30,11 @@ func InitPeople() error {
 	if err != nil {
 		return err
 	}
+
+	for _, p := range people {
+		RegisterTransientInterface(p, InterfaceTypeSMS{p.PhoneNumber})
+	}
+
 	return nil
 }
 
@@ -42,31 +50,30 @@ func GetPersonByName(name string) (Person, error) {
 	return Person{}, ErrorPersonNotFound
 }
 
-func SendMessageToPerson(person Person, m string) error {
-	sessions, err := GetActiveSessions(person)
-	if err != nil {
-		return err
+func SendMessageToPerson(sender Person, recipient Person, m string) error {
+	ics := GetInterfacesForPerson(recipient, "")
+	if len(ics) == 0 {
+		return ErrorNoInterfacesAvailable(recipient)
 	}
-	if len(sessions) == 0 {
-		ics := GetInterfacesForPerson(person)
-		if len(ics) == 0 {
-			return ErrorNoInterfacesAvailable(person)
-		}
-		for _, ic := range ics {
-			ses, err := NewSession(ic)
-			if err != nil {
-				return err
-			}
-			ses.BreakIn(ResponseMessage{m, "", nil})
-		}
-		return nil
-	}
-	for _, ses := range sessions {
-		err = ses.BreakIn(ResponseMessage{m, "", nil})
+	message := fmt.Sprintf("Message from %s: \"%s\"", sender.Names[0], m)
+	for _, ic := range ics {
+		util.LogEvent("break_in", map[string]interface{}{
+			"from": sender.ID,
+			"to":   recipient.ID,
+		})
+		err := ic.SendMessage(ResponseMessage{message, "", nil})
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
+}
+
+func GetPersonByID(id string) (Person, error) {
+	for _, person := range people {
+		if person.ID == id {
+			return person, nil
+		}
+	}
+	return Person{}, ErrorPersonNotFound
 }

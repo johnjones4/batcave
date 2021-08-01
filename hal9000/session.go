@@ -19,30 +19,28 @@ type HistoricalExchange struct {
 }
 
 type Session struct {
-	ID            string               `json:"id"`
-	Start         time.Time            `json:"start"`
-	StateString   string               `json:"state"`
-	History       []HistoricalExchange `json:"history"`
-	InterfaceType string               `json:"interface"`
-	Interface     Interface
+	Caller      Person               `json:"caller"`
+	ID          string               `json:"id"`
+	Start       time.Time            `json:"start"`
+	StateString string               `json:"state"`
+	History     []HistoricalExchange `json:"history"`
+	InterfaceID string               `json:"interface"`
+	Interface   Interface
 }
 
 var (
 	ErrorSessionNotFound = errors.New("session not found")
 )
 
-func GetActiveSessions(p Person) ([]Session, error) {
-	return []Session{}, nil //TODO
-}
-
-func NewSession(ic Interface) (Session, error) {
+func NewSession(caller Person, ic Interface) (Session, error) {
 	ses := Session{
-		ID:            uuid.NewString(),
-		Start:         time.Now(),
-		Interface:     ic,
-		InterfaceType: ic.Name(),
-		StateString:   util.StateTypeDefault,
-		History:       make([]HistoricalExchange, 0),
+		Caller:      caller,
+		ID:          uuid.NewString(),
+		Start:       time.Now(),
+		Interface:   ic,
+		InterfaceID: ic.ID(),
+		StateString: util.StateTypeDefault,
+		History:     make([]HistoricalExchange, 0),
 	}
 	err := ses.Save()
 	if err != nil {
@@ -55,7 +53,7 @@ func SessionKeyForID(id string) string {
 	return fmt.Sprintf("session_%s", id)
 }
 
-func LoadSession(id string, ic Interface) (Session, error) {
+func LoadSession(id string) (Session, error) {
 	key := SessionKeyForID(id)
 	bytes := util.KVStoreInstance.GetBytes(key, []byte{})
 	if len(bytes) == 0 {
@@ -66,9 +64,11 @@ func LoadSession(id string, ic Interface) (Session, error) {
 	if err != nil {
 		return Session{}, err
 	}
-	if ses.InterfaceType != ic.Name() {
-		return Session{}, fmt.Errorf("Interface mismatch (Received %s, expected %s)", ses.InterfaceType, ic.Name())
+	interfaces := GetInterfacesForPerson(ses.Caller, ses.InterfaceID)
+	if len(interfaces) == 0 {
+		return Session{}, errors.New("interface for session not found")
 	}
+	ses.Interface = interfaces[0]
 	return ses, nil
 }
 
@@ -81,11 +81,6 @@ func (s *Session) Save() error {
 	return util.KVStoreInstance.SetBytes(key, sessionData, time.Now().Add(time.Hour))
 }
 
-func (s *Session) BreakIn(p ResponseMessage) error {
-	s.Interface.SendMessage(p) //TODO
-	return nil
-}
-
 func (s *Session) State() State {
 	return InitStateByName(s.StateString)
 }
@@ -93,20 +88,24 @@ func (s *Session) State() State {
 func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, error) {
 	requestTime := time.Now()
 
-	nextState, response, err := s.State().ProcessIncomingMessage(m)
+	nextState, response, err := s.State().ProcessIncomingMessage(s.Caller, m)
 	if err != nil {
 		return ResponseMessage{}, err
 	}
 
-	s.History = append(s.History, HistoricalExchange{
+	exchange := HistoricalExchange{
 		Timestamp:  requestTime,
 		Request:    m,
 		Response:   response,
 		StartState: s.StateString,
 		EndState:   nextState.Name(),
-	})
+	}
+	s.History = append(s.History, exchange)
 
-	//TODO write log
+	util.LogEvent("exchange", map[string]interface{}{
+		"session":  s.ID,
+		"exchange": exchange,
+	})
 
 	s.StateString = nextState.Name()
 

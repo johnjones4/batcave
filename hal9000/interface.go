@@ -1,12 +1,14 @@
 package hal9000
 
 import (
+	"crypto/sha1"
 	"fmt"
-	"os"
 )
 
 type Interface interface {
-	Name() string
+	Type() string
+	ID() string
+	IsStillValid() bool
 	SendMessage(message ResponseMessage) error
 }
 
@@ -14,32 +16,54 @@ type InterfaceTypeSMS struct {
 	Number string
 }
 
-func (i InterfaceTypeSMS) Name() string {
+func (i InterfaceTypeSMS) Type() string {
 	return "sms"
 }
 
+func (i InterfaceTypeSMS) ID() string {
+	h := sha1.New()
+	h.Write([]byte(i.Number))
+	bs := h.Sum(nil)
+	return fmt.Sprintf("sms-%x", bs)
+}
+
+func (i InterfaceTypeSMS) IsStillValid() bool {
+	return true
+}
+
 func (i InterfaceTypeSMS) SendMessage(m ResponseMessage) error {
-	fmt.Println(m.Text)
+	fmt.Println(m.Text) //TODO
 	return nil
 }
 
-type InterfaceTypeTerminal struct {
-	Output *os.File
+var transientInterfaceStore map[string][]Interface = make(map[string][]Interface)
+
+func RegisterTransientInterface(person Person, iface Interface) {
+	if _, ok := transientInterfaceStore[person.ID]; !ok {
+		transientInterfaceStore[person.ID] = make([]Interface, 0)
+	}
+	transientInterfaceStore[person.ID] = append(transientInterfaceStore[person.ID], iface)
 }
 
-func (i InterfaceTypeTerminal) Name() string {
-	return "terminal"
-}
-
-func (i InterfaceTypeTerminal) SendMessage(m ResponseMessage) error {
-	i.Output.Write([]byte(m.Text + "\n"))
-	return nil
-}
-
-func GetInterfacesForPerson(p Person) []Interface {
+func GetInterfacesForPerson(p Person, id string) []Interface {
 	interfaces := make([]Interface, 0)
-	if p.PhoneNumber != "" {
-		interfaces = append(interfaces, InterfaceTypeSMS{p.PhoneNumber})
+	if transInterfaces, ok := transientInterfaceStore[p.ID]; ok {
+		removeSet := make([]int, 0)
+		for i, iface := range transInterfaces {
+			if iface.IsStillValid() {
+				if id == "" || (id != "" && id == iface.ID()) {
+					interfaces = append(interfaces, iface)
+				}
+			} else {
+				removeSet = append(removeSet, i)
+			}
+		}
+		if len(removeSet) > 0 {
+			for _, i := range removeSet {
+				transInterfaces = append(transInterfaces[:i], transInterfaces[i+1:]...)
+			}
+			transientInterfaceStore[p.ID] = transInterfaces
+		}
 	}
 	return interfaces
 }

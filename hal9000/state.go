@@ -20,7 +20,7 @@ import (
 
 type State interface {
 	Name() string
-	ProcessIncomingMessage(m RequestMessage) (State, ResponseMessage, error)
+	ProcessIncomingMessage(c Person, m RequestMessage) (State, ResponseMessage, error)
 }
 
 func InitStateByName(name string) State {
@@ -90,7 +90,7 @@ type DefaultState struct{}
 
 func (s DefaultState) Name() string { return util.StateTypeDefault }
 
-func (s DefaultState) ProcessIncomingMessage(input RequestMessage) (State, ResponseMessage, error) {
+func (s DefaultState) ProcessIncomingMessage(caller Person, input RequestMessage) (State, ResponseMessage, error) {
 	class := model.Predict(input.Message)
 
 	intentLabel, ok := subtypeMap[class]
@@ -122,9 +122,7 @@ func (s DefaultState) ProcessIncomingMessage(input RequestMessage) (State, Respo
 		DateInfo:      dateInfo,
 	}
 
-	fmt.Println(inputMessage)
-
-	intent, err := GetIntentForIncomingMessage(intentLabel, inputMessage)
+	intent, err := GetIntentForIncomingMessage(intentLabel, caller, inputMessage)
 	if err != nil {
 		return nil, ResponseMessage{}, err
 	}

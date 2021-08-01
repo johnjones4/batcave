@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	fmt.Println("Booting up ...")
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println(err)
@@ -24,5 +25,11 @@ func main() {
 
 	http.HandleFunc("/ws", wsHandler)
 
-	http.ListenAndServe(os.Getenv("HTTP_SERVER"), nil)
+	fmt.Println("Ready")
+
+	err = http.ListenAndServe(os.Getenv("HTTP_SERVER"), nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

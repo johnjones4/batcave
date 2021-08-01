@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/sha1"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hal9000"
 	"net/http"
@@ -11,10 +13,22 @@ import (
 
 type InterfaceTypeWebsocket struct {
 	Connection *websocket.Conn
+	Open       bool
 }
 
-func (i InterfaceTypeWebsocket) Name() string {
+func (i InterfaceTypeWebsocket) Type() string {
 	return "websocket"
+}
+
+func (i InterfaceTypeWebsocket) ID() string {
+	h := sha1.New()
+	h.Write([]byte(i.Connection.RemoteAddr().String()))
+	bs := h.Sum(nil)
+	return fmt.Sprintf("ws-%x", bs)
+}
+
+func (i InterfaceTypeWebsocket) IsStillValid() bool {
+	return i.Open
 }
 
 func (i InterfaceTypeWebsocket) SendMessage(m hal9000.ResponseMessage) error {
@@ -29,19 +43,21 @@ func (i InterfaceTypeWebsocket) SendMessage(m hal9000.ResponseMessage) error {
 	return nil
 }
 
-type HAL9000HTTPRequest struct {
-	SessionID string                 `json:"sessionId"`
-	Request   hal9000.RequestMessage `json:"request"`
-}
-
-type HAL9000HTTPResponse struct {
-	SessionID string                  `json:"sessionId"`
-	Response  hal9000.ResponseMessage `json:"response"`
-}
-
 var upgrader = websocket.Upgrader{}
 
 func wsHandler(w http.ResponseWriter, req *http.Request) {
+	userId := req.URL.Query().Get("user")
+	if userId == "" {
+		errorResponse(w, errors.New("no user id provided"))
+		return
+	}
+
+	person, err := hal9000.GetPersonByID(userId)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
 	c, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		errorResponse(w, err)
@@ -50,9 +66,12 @@ func wsHandler(w http.ResponseWriter, req *http.Request) {
 
 	defer c.Close()
 
-	ses, err := hal9000.NewSession(InterfaceTypeWebsocket{c})
+	iface := InterfaceTypeWebsocket{c, true}
+	hal9000.RegisterTransientInterface(person, iface)
+	ses, err := hal9000.NewSession(person, iface)
 	if err != nil {
 		fmt.Println(err)
+		iface.Open = false
 		return
 	}
 
@@ -60,31 +79,36 @@ func wsHandler(w http.ResponseWriter, req *http.Request) {
 		_, request, err := c.ReadMessage()
 		if err != nil {
 			fmt.Println(err)
+			iface.Open = false
 			return
 		}
 
-		var halReq HAL9000HTTPRequest
+		var halReq hal9000.RequestMessage
 		err = json.Unmarshal(request, &halReq)
 		if err != nil {
 			fmt.Println(err)
+			iface.Open = false
 			return
 		}
 
-		response, err := ses.ProcessIncomingMessage(halReq.Request)
+		response, err := ses.ProcessIncomingMessage(halReq)
 		if err != nil {
 			fmt.Println(err)
+			iface.Open = false
 			return
 		}
 
 		err = ses.Interface.SendMessage(response)
 		if err != nil {
 			fmt.Println(err)
+			iface.Open = false
 			return
 		}
 
 		err = ses.Save()
 		if err != nil {
 			fmt.Println(err)
+			iface.Open = false
 			return
 		}
 	}

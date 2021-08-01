@@ -74,6 +74,7 @@ func requestGetRemoteAddress(r *http.Request) string {
 }
 
 func errorResponse(w http.ResponseWriter, err error) {
+	fmt.Println(err)
 	w.WriteHeader(http.StatusInternalServerError)
 	jsonResponse(w, Message{
 		Error:   true,

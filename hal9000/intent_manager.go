@@ -12,9 +12,9 @@ func ErrorNotImplemented(intentType string) error {
 	return fmt.Errorf("not implemented: %s", intentType)
 }
 
-func GetIntentForIncomingMessage(intentType string, m ParsedRequestMessage) (Intent, error) {
+func GetIntentForIncomingMessage(intentType string, caller Person, m ParsedRequestMessage) (Intent, error) {
 	if intentType == "message" {
-		return NewMessageIntent(m)
+		return NewMessageIntent(caller, m)
 	} else if intentType == "control_on" {
 		return NewControlIntent(m, true)
 	} else if intentType == "control_off" {

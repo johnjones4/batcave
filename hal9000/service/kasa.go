@@ -30,7 +30,6 @@ func SetKasaDeviceStatus(id string, on bool) error {
 		message = "off"
 	}
 	topic := fmt.Sprintf("/%s/switch", id)
-	// fmt.Println(topic)
 	token := kasaMQTTConnection.Publish(topic, 0, false, message)
 	token.Wait()
 	return token.Error()
