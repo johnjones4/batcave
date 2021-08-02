@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  hal:
+    build: ./src
+    restart: always
+    environment: 
+      - NER_MODEL_PATH=/usr/src/MITIE-0.7//MITIE-models/english/ner_model.dat
+      - MODEL_FILE=/data/trained_subtype.data
+      - SUBTYPE_MAP_FILE=/data/subtype_map.json
+      - PEOPLE_MANIFEST_PATH=/data/people.json
+      - DEFAULT_WEATHER_LAT=38.907192
+      - DEFAULT_WEATHER_LON=-77.036873
+      - KV_FILE_PATH=/data/kv.json
+      - DISPLAY_MANIFEST_PATH=/data/displays.json
+      - DEVICE_MANIFEST_PATH=/data/devices.json
+      - KASA_MQTT_URL=tcp://mosquitto:1883
+      - HTTP_SERVER=0.0.0.0:8080
+      - LOG_DIR=/data/logs
+    env_file:
+      - secrets.env
+    depends_on:
+      - mosquitto
+    ports:
+      - 8080:8080
+    volumes:
+      - hal:/data
+  mqtt2kasa:
+    build: ./vendor/mqtt2kasa
+    restart: always
+    volumes:
+      - mqtt2kasa:/usr/src/app/data
+    depends_on:
+      - mosquitto
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    restart: always
+    ports:
+      - 1883:1883
+      - 9001:9001
+    volumes: 
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+volumes:
+  hal:
+    driver_opts:
+      type: "nfs"
+      o: "addr=files,nolock,soft,rw"
+      device: ":/mnt/raid1/hal"
+  mqtt2kasa:
+    driver_opts:
+      type: "nfs"
+      o: "addr=files,nolock,soft,rw"
+      device: ":/mnt/raid1/mqtt2kasa"
+       

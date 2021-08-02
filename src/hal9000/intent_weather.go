@@ -51,7 +51,7 @@ func FormulateWeatherResponsePreamble(date time.Time, locale string) string {
 		message += fmt.Sprintf(" in %s", locale)
 	}
 
-	message += fmt.Sprintf(" for %s ", date.Format("July _2"))
+	message += fmt.Sprintf(" for %s ", date.Format("January 2"))
 
 	if date.After(time.Now().Add(time.Hour + 24)) {
 		message += "will be: "

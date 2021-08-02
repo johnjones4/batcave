@@ -1,9 +1,6 @@
 package hal9000
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"hal9000/util"
 	"time"
 
@@ -24,61 +21,20 @@ type Session struct {
 	Start       time.Time            `json:"start"`
 	StateString string               `json:"state"`
 	History     []HistoricalExchange `json:"history"`
-	InterfaceID string               `json:"interface"`
-	Interface   Interface
+	Interface   Interface            `json:"interface"`
 }
 
-var (
-	ErrorSessionNotFound = errors.New("session not found")
-)
-
-func NewSession(caller Person, ic Interface) (Session, error) {
+func NewSession(caller Person, ic Interface) Session {
 	ses := Session{
 		Caller:      caller,
 		ID:          uuid.NewString(),
 		Start:       time.Now(),
 		Interface:   ic,
-		InterfaceID: ic.ID(),
 		StateString: util.StateTypeDefault,
 		History:     make([]HistoricalExchange, 0),
 	}
-	err := ses.Save()
-	if err != nil {
-		return Session{}, err
-	}
-	return ses, nil
-}
-
-func SessionKeyForID(id string) string {
-	return fmt.Sprintf("session_%s", id)
-}
-
-func LoadSession(id string) (Session, error) {
-	key := SessionKeyForID(id)
-	bytes := util.KVStoreInstance.GetBytes(key, []byte{})
-	if len(bytes) == 0 {
-		return Session{}, ErrorSessionNotFound
-	}
-	var ses Session
-	err := json.Unmarshal(bytes, &ses)
-	if err != nil {
-		return Session{}, err
-	}
-	interfaces := GetInterfacesForPerson(ses.Caller, ses.InterfaceID)
-	if len(interfaces) == 0 {
-		return Session{}, errors.New("interface for session not found")
-	}
-	ses.Interface = interfaces[0]
-	return ses, nil
-}
-
-func (s *Session) Save() error {
-	sessionData, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-	key := SessionKeyForID(s.ID)
-	return util.KVStoreInstance.SetBytes(key, sessionData, time.Now().Add(time.Hour))
+	SaveSession(ses)
+	return ses
 }
 
 func (s *Session) State() State {
@@ -110,4 +66,12 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, err
 	s.StateString = nextState.Name()
 
 	return response, nil
+}
+
+func (s *Session) BreakIn(m ResponseMessage) error {
+	util.LogEvent("break_in", map[string]interface{}{
+		"session": s.ID,
+		"message": m,
+	})
+	return s.Interface.SendMessage(m)
 }

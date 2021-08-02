@@ -24,6 +24,7 @@ func main() {
 	}
 
 	http.HandleFunc("/ws", wsHandler)
+	http.HandleFunc("/sms", handleSMS)
 
 	fmt.Println("Ready")
 

@@ -2,7 +2,12 @@ package hal9000
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
 )
 
 type Interface interface {
@@ -32,8 +37,25 @@ func (i InterfaceTypeSMS) IsStillValid() bool {
 }
 
 func (i InterfaceTypeSMS) SendMessage(m ResponseMessage) error {
-	fmt.Println(m.Text) //TODO
-	return nil
+	accountSid := os.Getenv("TWILIO_SID")
+	authToken := os.Getenv("TWILIO_AUTH_TOKEN")
+
+	urlStr := fmt.Sprintf("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json", accountSid)
+
+	msgData := url.Values{}
+	msgData.Set("To", i.Number)
+	msgData.Set("From", os.Getenv("TWILIO_NUMBER_FROM"))
+	msgData.Set("Body", m.Text)
+	msgDataReader := *strings.NewReader(msgData.Encode())
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", urlStr, &msgDataReader)
+	req.SetBasicAuth(accountSid, authToken)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	_, err := client.Do(req)
+	return err
 }
 
 var transientInterfaceStore map[string][]Interface = make(map[string][]Interface)
@@ -66,6 +88,17 @@ func GetInterfacesForPerson(p Person, id string) []Interface {
 		}
 	}
 	return interfaces
+}
+
+func DetermineOwnerOfInterface(iface Interface) (Person, error) {
+	for owner, ifaces := range transientInterfaceStore {
+		for _, _iface := range ifaces {
+			if iface.ID() == _iface.ID() {
+				return GetPersonByID(owner)
+			}
+		}
+	}
+	return Person{}, errors.New("no owner for interface")
 }
 
 func ErrorNoInterfacesAvailable(p Person) error {

@@ -68,12 +68,7 @@ func wsHandler(w http.ResponseWriter, req *http.Request) {
 
 	iface := InterfaceTypeWebsocket{c, true}
 	hal9000.RegisterTransientInterface(person, iface)
-	ses, err := hal9000.NewSession(person, iface)
-	if err != nil {
-		fmt.Println(err)
-		iface.Open = false
-		return
-	}
+	ses := hal9000.NewSession(person, iface)
 
 	for {
 		_, request, err := c.ReadMessage()
@@ -105,7 +100,7 @@ func wsHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = ses.Save()
+		hal9000.SaveSession(ses)
 		if err != nil {
 			fmt.Println(err)
 			iface.Open = false

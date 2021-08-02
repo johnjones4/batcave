@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -51,17 +50,19 @@ func GetPersonByName(name string) (Person, error) {
 }
 
 func SendMessageToPerson(sender Person, recipient Person, m string) error {
-	ics := GetInterfacesForPerson(recipient, "")
-	if len(ics) == 0 {
-		return ErrorNoInterfacesAvailable(recipient)
-	}
 	message := fmt.Sprintf("Message from %s: \"%s\"", sender.Names[0], m)
-	for _, ic := range ics {
-		util.LogEvent("break_in", map[string]interface{}{
-			"from": sender.ID,
-			"to":   recipient.ID,
-		})
-		err := ic.SendMessage(ResponseMessage{message, "", nil})
+	sessions := GetUserSessions(recipient)
+	if len(sessions) == 0 {
+		ics := GetInterfacesForPerson(recipient, "")
+		if len(ics) == 0 {
+			return ErrorNoInterfacesAvailable(recipient)
+		}
+		for _, ic := range ics {
+			sessions = append(sessions, NewSession(recipient, ic))
+		}
+	}
+	for _, ses := range sessions {
+		err := ses.BreakIn(ResponseMessage{message, "", nil})
 		if err != nil {
 			return err
 		}
