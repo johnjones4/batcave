@@ -13,10 +13,7 @@ RUN tar zxvf v0.7.tar.gz
 WORKDIR /usr/src/MITIE-0.7/mitielib
 RUN make
 RUN make install
-RUN mkdir build
-WORKDIR /usr/src/MITIE-0.7/mitielib/build
-RUN cmake ..
-RUN cmake --build . --config Release --target install
+RUN ldconfig
 
 
 WORKDIR /usr/src/MITIE-0.7
@@ -30,6 +27,9 @@ COPY . .
 WORKDIR /usr/src/api/api
 RUN go get .
 RUN go build .
+
+
+VOLUME [ "/data" ]
 
 
 CMD ["/usr/src/api/api/main"]
