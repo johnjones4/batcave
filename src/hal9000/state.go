@@ -97,6 +97,7 @@ func (s DefaultState) ProcessIncomingMessage(caller Person, input RequestMessage
 	if !ok {
 		return nil, ResponseMessage{}, fmt.Errorf("no alias for intent %d", class)
 	}
+	fmt.Println(intentLabel)
 
 	nerTokens := ner.Tokenize(input.Message)
 	es, err := nerExtractor.Extract(nerTokens)

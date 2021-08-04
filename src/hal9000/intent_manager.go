@@ -23,6 +23,10 @@ func GetIntentForIncomingMessage(intentType string, caller Person, m ParsedReque
 		return NewDisplayIntent(m)
 	} else if intentType == "weather" {
 		return NewWeatherIntent(m)
+	} else if intentType == "agenda" {
+		return NewCalendarAgendaIntent(m)
+	} else if intentType == "calendar_add" {
+		return NewCalendarAddIntent(m)
 	} else if intentType == "job" {
 		return nil, ErrorNotImplemented(intentType) //TODO
 	} else {

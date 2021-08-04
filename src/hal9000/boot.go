@@ -19,6 +19,7 @@ func BootUp() error {
 		LogStep{"people", InitPeople},
 		LogStep{"displayables", InitDisplays},
 		LogStep{"devices", InitDevices},
+		LogStep{"calendars", InitCalendarSchedules},
 		LogStep{"kasa", service.InitKasaConnection},
 	}
 	for _, fn := range fns {

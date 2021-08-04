@@ -3,6 +3,7 @@ package hal9000
 import (
 	"encoding/json"
 	"errors"
+	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -18,6 +19,10 @@ type Device struct {
 	ID        string   `json:"id"`
 	Type      string   `json:"type"`
 	DeviceIDs []string `json:"devices"`
+}
+
+func (d Device) GetNames() []string {
+	return d.Names
 }
 
 func (d Device) Devices() []Device {
@@ -50,14 +55,22 @@ func InitDevices() error {
 	return nil
 }
 
+type NameableDeviceSequenceItem struct {
+	Name     string
+	Nameable Device
+}
+
 func FindDeviceInString(str string) (Device, error) {
+	nameables := make([]util.Nameable, len(devices))
+	for i, d := range devices {
+		nameables[i] = d
+	}
+	sortedNameables := util.GenerateNameableSequence(nameables)
 	lcStr := strings.ToLower(str)
-	for _, device := range devices {
-		for _, name := range device.Names {
-			lcName := strings.ToLower(name)
-			if strings.Contains(lcStr, lcName) {
-				return device, nil
-			}
+	for _, nameable := range sortedNameables {
+		lcName := strings.ToLower(nameable.Name)
+		if strings.Contains(lcStr, lcName) {
+			return nameable.Nameable.(Device), nil
 		}
 	}
 	return Device{}, ErrorDeviceNotFound

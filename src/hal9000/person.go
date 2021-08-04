@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -16,6 +17,10 @@ type Person struct {
 }
 
 var people []Person
+
+func (p Person) GetNames() []string {
+	return p.Names
+}
 
 var ErrorPersonNotFound = errors.New("person not found")
 
@@ -38,12 +43,15 @@ func InitPeople() error {
 }
 
 func GetPersonByName(name string) (Person, error) {
+	nameables := make([]util.Nameable, len(people))
+	for i, p := range people {
+		nameables[i] = p
+	}
+	sortedNameables := util.GenerateNameableSequence(nameables)
 	lcName := strings.ToLower(name)
-	for _, person := range people {
-		for _, pName := range person.Names {
-			if strings.ToLower(pName) == lcName {
-				return person, nil
-			}
+	for _, nameable := range sortedNameables {
+		if strings.ToLower(nameable.Name) == lcName {
+			return nameable.Nameable.(Person), nil
 		}
 	}
 	return Person{}, ErrorPersonNotFound

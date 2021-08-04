@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,10 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"golang.org/x/oauth2"
+	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -192,3 +197,36 @@ func RefreshGoogleVideoStreamURL(oldUrl, deviceId, extensionToken string) (strin
 }
 
 //TODO subscribe to stream
+
+func CreateNewEvent(title string, start, end time.Time) error {
+	err := RefreshGoogleTokenIfNeeded()
+	if err != nil {
+		return err
+	}
+
+	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
+	if accessToken == "" {
+		return errors.New("no access token available for google")
+	}
+
+	config := &oauth2.Config{}
+	ctx := context.Background()
+	calendarService, err := calendar.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, &oauth2.Token{AccessToken: accessToken})))
+
+	event := &calendar.Event{
+		Summary: title,
+		Start: &calendar.EventDateTime{
+			DateTime: start.Format(time.RFC3339),
+			TimeZone: start.Local().String(),
+		},
+		End: &calendar.EventDateTime{
+			DateTime: end.Format(time.RFC3339),
+			TimeZone: start.Local().String(),
+		},
+	}
+
+	calendarId := "primary"
+	event, err = calendarService.Events.Insert(calendarId, event).Do()
+
+	return err
+}

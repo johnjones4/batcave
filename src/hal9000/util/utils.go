@@ -1,6 +1,8 @@
 package util
 
 import (
+	"sort"
+
 	"github.com/jdkato/prose/v2"
 )
 
@@ -53,4 +55,26 @@ func GetContiguousUniformTokens(tokens []prose.Token, tags []string) []Contigiou
 		}
 	}
 	return output
+}
+
+type Nameable interface {
+	GetNames() []string
+}
+
+type NameableSequenceItem struct {
+	Name     string
+	Nameable Nameable
+}
+
+func GenerateNameableSequence(nameables []Nameable) []NameableSequenceItem {
+	nameableSeq := make([]NameableSequenceItem, 0)
+	for _, n := range nameables {
+		for _, name := range n.GetNames() {
+			nameableSeq = append(nameableSeq, NameableSequenceItem{name, n})
+		}
+	}
+	sort.SliceStable(nameableSeq, func(i, j int) bool {
+		return len(nameableSeq[i].Name) > len(nameableSeq[j].Name)
+	})
+	return nameableSeq
 }
