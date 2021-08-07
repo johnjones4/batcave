@@ -11,13 +11,9 @@ import (
 
 func main() {
 	fmt.Println("Booting up ...")
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	godotenv.Load()
 
-	err = hal9000.BootUp()
+	err := hal9000.BootUp()
 	if err != nil {
 		fmt.Println(err)
 		return
