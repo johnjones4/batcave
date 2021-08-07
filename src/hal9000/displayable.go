@@ -13,39 +13,39 @@ const (
 	DisplayTypeVideo    = "video"
 )
 
-type Display struct {
+type Displayable struct {
 	Names  []string `json:"names"`
 	ID     string   `json:"id"`
 	Type   string   `json:"type"`
 	Source string   `json:"source"`
 }
 
-var displays []Display
+var displayables []Displayable
 
 var ErrorDisplayNotFound = errors.New("display not found")
 
-func InitDisplays() error {
-	bytes, err := ioutil.ReadFile(os.Getenv("DISPLAY_MANIFEST_PATH"))
+func InitDisplayables() error {
+	bytes, err := ioutil.ReadFile(os.Getenv("DISPLAYABLES_MANIFEST_PATH"))
 	if err != nil {
 		return err
 	}
-	displays = nil
-	err = json.Unmarshal(bytes, &displays)
+	displayables = nil
+	err = json.Unmarshal(bytes, &displayables)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func FindDisplayInString(str string) (Display, error) {
+func FindDisplayableInString(str string) (Displayable, error) {
 	lcStr := strings.ToLower(str)
-	for _, display := range displays {
-		for _, name := range display.Names {
+	for _, displayable := range displayables {
+		for _, name := range displayable.Names {
 			lcName := strings.ToLower(name)
 			if strings.Contains(lcStr, lcName) {
-				return display, nil
+				return displayable, nil
 			}
 		}
 	}
-	return Display{}, ErrorDisplayNotFound
+	return Displayable{}, ErrorDisplayNotFound
 }

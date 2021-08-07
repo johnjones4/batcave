@@ -17,7 +17,7 @@ func BootUp() error {
 		LogStep{"kv store", util.InitFileKVStore},
 		LogStep{"message parser", InitializeDefaultIncomingMessageParser},
 		LogStep{"people", InitPeople},
-		LogStep{"displayables", InitDisplays},
+		LogStep{"displayables", InitDisplayables},
 		LogStep{"devices", InitDevices},
 		LogStep{"calendars", InitCalendarSchedules},
 		LogStep{"kasa", service.InitKasaConnection},

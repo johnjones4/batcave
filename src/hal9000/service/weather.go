@@ -2,81 +2,86 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"os"
+	"time"
 )
 
-type WeatherAPIResponseWeatherDetail struct {
-	Description string `json:"description"`
+var ErrorWeatherForecastNotAvailable = errors.New("weather forecast not available")
+
+type NOAAWeatherPointProperties struct {
+	ForecastURL  string `json:"forecast"`
+	RadarStation string `json:"radarStation"`
 }
 
-type WeatherAPIResponseCurrent struct {
-	Temperature float64                           `json:"temp"`
-	FeelsLike   float64                           `json:"feels_like"`
-	Humidity    float64                           `json:"humidity"`
-	DewPoint    float64                           `json:"dew_point"`
-	Weather     []WeatherAPIResponseWeatherDetail `json:"weather"`
+type NOAAWeatherPointResponse struct {
+	Properties NOAAWeatherPointProperties `json:"properties"`
 }
 
-type WeatherAPIResponseForecastTemp struct {
-	Min float64 `json:"min"`
-	Max float64 `json:"max"`
+type NOAAWeatherForecastPeriod struct {
+	StartTime        time.Time `json:"startTime"`
+	EndTime          time.Time `json:"endTime"`
+	DetailedForecast string    `json:"detailedForecast"`
 }
 
-type WeatherAPIResponseForecastFeelsLike struct {
-	Day     float64 `json:"day"`
-	Night   float64 `json:"night"`
-	Evening float64 `json:"eve"`
-	Morning float64 `json:"morn"`
+type NOAAWeatherForecastProperties struct {
+	Periods []NOAAWeatherForecastPeriod `json:"periods"`
 }
 
-type WeatherAPIResponseForecast struct {
-	Temperature WeatherAPIResponseForecastTemp      `json:"temp"`
-	FeelsLike   WeatherAPIResponseForecastFeelsLike `json:"feels_like"`
-	Humidity    float64                             `json:"humidity"`
-	DewPoint    float64                             `json:"dew_point"`
-	Weather     []WeatherAPIResponseWeatherDetail   `json:"weather"`
-	Timestamp   int                                 `json:"dt"`
+type NOAAWeatherForecastResponse struct {
+	Properties NOAAWeatherForecastProperties `json:"properties"`
 }
 
-type WeatherAPIResponse struct {
-	Current WeatherAPIResponseCurrent    `json:"current"`
-	Daily   []WeatherAPIResponseForecast `json:"daily"`
-}
-
-func MakeWeatherAPICall(lat float64, lon float64) (WeatherAPIResponse, error) {
-	apiURL, err := url.Parse("https://api.openweathermap.org/data/2.5/onecall")
+func MakeWeatherAPICall(lat float64, lon float64, date time.Time) (string, string, error) {
+	point, err := MakeWeatherAPIPointRequest(lat, lon)
 	if err != nil {
-		return WeatherAPIResponse{}, err
+		return "", "", nil
 	}
 
-	q := apiURL.Query()
-	q.Add("lat", fmt.Sprint(lat))
-	q.Add("lon", fmt.Sprint(lon))
-	q.Add("exclude", "minutely,hourly,alerts")
-	q.Add("units", "imperial")
-	q.Add("appid", os.Getenv("WEATHER_API_KEY"))
-	apiURL.RawQuery = q.Encode()
-
-	httpResponse, err := http.Get(apiURL.String())
+	httpResponse, err := http.Get(point.ForecastURL)
 	if err != nil {
-		return WeatherAPIResponse{}, err
+		return "", "", nil
 	}
 
 	responseBytes, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return WeatherAPIResponse{}, err
+		return "", "", nil
 	}
 
-	var response WeatherAPIResponse
+	var response NOAAWeatherForecastResponse
 	err = json.Unmarshal(responseBytes, &response)
-
 	if err != nil {
-		return WeatherAPIResponse{}, err
+		return "", "", nil
 	}
 
-	return response, err
+	for i, p := range response.Properties.Periods {
+		if date.After(p.StartTime) && date.Before(p.EndTime) {
+			radarURL := ""
+			if i == 0 {
+				radarURL = fmt.Sprintf("https://radar.weather.gov/ridge/lite/%s_loop.gif", point.RadarStation)
+			}
+			return p.DetailedForecast, radarURL, nil
+		}
+	}
+
+	return "", "", ErrorWeatherForecastNotAvailable
+}
+
+func MakeWeatherAPIPointRequest(lat float64, lon float64) (NOAAWeatherPointProperties, error) {
+	httpResponse, err := http.Get(fmt.Sprintf("https://api.weather.gov/points/%f,%f", lat, lon))
+	if err != nil {
+		return NOAAWeatherPointProperties{}, err
+	}
+
+	responseBytes, err := ioutil.ReadAll(httpResponse.Body)
+	if err != nil {
+		return NOAAWeatherPointProperties{}, err
+	}
+
+	var pointResponse NOAAWeatherPointResponse
+	err = json.Unmarshal(responseBytes, &pointResponse)
+
+	return pointResponse.Properties, err
 }

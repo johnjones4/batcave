@@ -7,13 +7,13 @@ import (
 )
 
 type DisplayIntent struct {
-	Display           Display                            `json:"display"`
+	Display           Displayable                        `json:"displayable"`
 	GoogleRefreshInfo service.GoogleStreamRefreshRequest `json:"googleRefreshInfo"`
 	LastURL           string                             `json:"lastUrl"`
 }
 
 func NewDisplayIntent(m ParsedRequestMessage) (DisplayIntent, error) {
-	display, err := FindDisplayInString(m.Original.Message)
+	display, err := FindDisplayableInString(m.Original.Message)
 	if err != nil {
 		return DisplayIntent{}, err
 	}
