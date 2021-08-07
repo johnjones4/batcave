@@ -12,11 +12,12 @@ services:
       - DEFAULT_WEATHER_LAT=38.907192
       - DEFAULT_WEATHER_LON=-77.036873
       - KV_FILE_PATH=/data/kv.json
-      - DISPLAY_MANIFEST_PATH=/data/displays.json
+      - DISPLAYABLES_MANIFEST_PATH=/data/displays.json
       - DEVICE_MANIFEST_PATH=/data/devices.json
       - KASA_MQTT_URL=tcp://mosquitto:1883
       - HTTP_SERVER=0.0.0.0:8080
       - LOG_DIR=/data/logs
+      - CALENDARS_MANIFEST_PATH=/data/calendars.json
     env_file:
       - secrets.env
     depends_on:
