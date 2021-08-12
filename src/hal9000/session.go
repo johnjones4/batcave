@@ -46,7 +46,7 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, err
 
 	nextState, response, err := s.State().ProcessIncomingMessage(s.Caller, m)
 	if err != nil {
-		return ResponseMessage{}, err
+		return MessageError(err), nil
 	}
 
 	exchange := HistoricalExchange{

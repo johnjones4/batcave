@@ -1,6 +1,8 @@
 package hal9000
 
 import (
+	"fmt"
+
 	"github.com/jdkato/prose/v2"
 	"github.com/olebedev/when"
 	"github.com/sbl/ner"
@@ -25,4 +27,8 @@ type ParsedRequestMessage struct {
 
 func MessageOk() ResponseMessage {
 	return ResponseMessage{"Ok", "", nil}
+}
+
+func MessageError(err error) ResponseMessage {
+	return ResponseMessage{fmt.Sprintf("Encoutered error: %s", err), "", nil}
 }
