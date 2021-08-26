@@ -70,6 +70,16 @@ func RefreshGoogleTokenIfNeeded() error {
 	return nil
 }
 
+func StartGoogleTokenRefreshCycle() {
+	for {
+		err := RefreshGoogleTokenIfNeeded()
+		if err != nil {
+			fmt.Println(err)
+		}
+		time.Sleep(12 * time.Hour)
+	}
+}
+
 type GoogleStreamURLResponseStreamUrls struct {
 	RTSPUrl string `json:"rtspUrl"`
 }
