@@ -1,6 +1,7 @@
 package hal9000
 
 import (
+	"fmt"
 	"hal9000/util"
 	"time"
 
@@ -46,6 +47,7 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, err
 
 	nextState, response, err := s.State().ProcessIncomingMessage(s.Caller, m)
 	if err != nil {
+		fmt.Println(err) //todo error logging
 		return MessageError(err), nil
 	}
 

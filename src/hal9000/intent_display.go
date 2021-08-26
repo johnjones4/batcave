@@ -41,6 +41,7 @@ func (i DisplayIntent) Execute(lastState State) (State, ResponseMessage, error) 
 			URL:   url,
 			Extra: i,
 		}
+		fmt.Println(m)
 		return lastState, m, nil
 	}
 

@@ -56,10 +56,11 @@ func MakeWeatherAPICall(lat float64, lon float64, date time.Time) (string, strin
 		return "", "", nil
 	}
 
-	for i, p := range response.Properties.Periods {
+	now := time.Now()
+	for _, p := range response.Properties.Periods {
 		if date.After(p.StartTime) && date.Before(p.EndTime) {
 			radarURL := ""
-			if i == 0 {
+			if now.After(p.StartTime) && now.Before(p.EndTime) {
 				radarURL = fmt.Sprintf("https://radar.weather.gov/ridge/lite/%s_loop.gif", point.RadarStation)
 			}
 			return p.DetailedForecast, radarURL, nil
