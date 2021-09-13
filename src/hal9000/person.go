@@ -3,7 +3,6 @@ package hal9000
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"hal9000/util"
 	"io/ioutil"
 	"os"
@@ -57,8 +56,7 @@ func GetPersonByName(name string) (Person, error) {
 	return Person{}, ErrorPersonNotFound
 }
 
-func SendMessageToPerson(sender Person, recipient Person, m string) error {
-	message := fmt.Sprintf("Message from %s: \"%s\"", sender.Names[0], m)
+func SendMessageToPerson(recipient Person, message util.ResponseMessage) error {
 	sessions := GetUserSessions(recipient)
 	if len(sessions) == 0 {
 		ics := GetInterfacesForPerson(recipient, "")
@@ -70,7 +68,7 @@ func SendMessageToPerson(sender Person, recipient Person, m string) error {
 		}
 	}
 	for _, ses := range sessions {
-		err := ses.BreakIn(ResponseMessage{message, "", nil})
+		err := ses.BreakIn(message)
 		if err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package hal9000
 import (
 	"errors"
 	"hal9000/service"
+	"hal9000/util"
 )
 
 type ControlIntent struct {
@@ -19,7 +20,7 @@ func NewControlIntent(m ParsedRequestMessage, on bool) (ControlIntent, error) {
 	return ControlIntent{Device: device, On: on}, nil
 }
 
-func (i ControlIntent) Execute(lastState State) (State, ResponseMessage, error) {
+func (i ControlIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
 	var err error
 	if i.Device.Type == DeviceTypeGroup {
 		for _, device := range i.Device.Devices() {
@@ -32,7 +33,7 @@ func (i ControlIntent) Execute(lastState State) (State, ResponseMessage, error) 
 		err = ExecuteOnDevice(i.Device, i.On)
 	}
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 
 	return lastState, MessageOk(), nil

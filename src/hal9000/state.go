@@ -20,7 +20,7 @@ import (
 
 type State interface {
 	Name() string
-	ProcessIncomingMessage(c Person, m RequestMessage) (State, ResponseMessage, error)
+	ProcessIncomingMessage(c Person, m RequestMessage) (State, util.ResponseMessage, error)
 }
 
 func InitStateByName(name string) State {
@@ -90,30 +90,30 @@ type DefaultState struct{}
 
 func (s DefaultState) Name() string { return util.StateTypeDefault }
 
-func (s DefaultState) ProcessIncomingMessage(caller Person, input RequestMessage) (State, ResponseMessage, error) {
+func (s DefaultState) ProcessIncomingMessage(caller Person, input RequestMessage) (State, util.ResponseMessage, error) {
 	class := model.Predict(input.Message)
 
 	intentLabel, ok := subtypeMap[class]
 	if !ok {
-		return nil, ResponseMessage{}, fmt.Errorf("no alias for intent %d", class)
+		return nil, util.ResponseMessage{}, fmt.Errorf("no alias for intent %d", class)
 	}
 	fmt.Println(intentLabel)
 
 	nerTokens := ner.Tokenize(input.Message)
 	es, err := nerExtractor.Extract(nerTokens)
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 
 	doc, err := prose.NewDocument(input.Message)
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 	tokens := doc.Tokens()
 
 	dateInfo, err := dateExtractor.Parse(input.Message, time.Now())
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 
 	inputMessage := ParsedRequestMessage{
@@ -125,7 +125,7 @@ func (s DefaultState) ProcessIncomingMessage(caller Person, input RequestMessage
 
 	intent, err := GetIntentForIncomingMessage(intentLabel, caller, inputMessage)
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 
 	return intent.Execute(s)

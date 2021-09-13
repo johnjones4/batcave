@@ -2,17 +2,12 @@ package hal9000
 
 import (
 	"fmt"
+	"hal9000/util"
 
 	"github.com/jdkato/prose/v2"
 	"github.com/olebedev/when"
 	"github.com/sbl/ner"
 )
-
-type ResponseMessage struct {
-	Text  string      `json:"text"`
-	URL   string      `json:"url"`
-	Extra interface{} `json:"extra"`
-}
 
 type RequestMessage struct {
 	Message string `json:"message"`
@@ -25,10 +20,10 @@ type ParsedRequestMessage struct {
 	DateInfo      *when.Result
 }
 
-func MessageOk() ResponseMessage {
-	return ResponseMessage{"Ok", "", nil}
+func MessageOk() util.ResponseMessage {
+	return util.ResponseMessage{"Ok", "", nil}
 }
 
-func MessageError(err error) ResponseMessage {
-	return ResponseMessage{fmt.Sprintf("Encoutered error: %s", err), "", nil}
+func MessageError(err error) util.ResponseMessage {
+	return util.ResponseMessage{fmt.Sprintf("Encoutered error: %s", err), "", nil}
 }

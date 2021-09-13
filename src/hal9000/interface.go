@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
+	"hal9000/util"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,7 +15,7 @@ type Interface interface {
 	Type() string
 	ID() string
 	IsStillValid() bool
-	SendMessage(message ResponseMessage) error
+	SendMessage(message util.ResponseMessage) error
 }
 
 type InterfaceTypeSMS struct {
@@ -36,7 +37,7 @@ func (i InterfaceTypeSMS) IsStillValid() bool {
 	return true
 }
 
-func (i InterfaceTypeSMS) SendMessage(m ResponseMessage) error {
+func (i InterfaceTypeSMS) SendMessage(m util.ResponseMessage) error {
 	accountSid := os.Getenv("TWILIO_SID")
 	authToken := os.Getenv("TWILIO_AUTH_TOKEN")
 

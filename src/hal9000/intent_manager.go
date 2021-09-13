@@ -2,10 +2,11 @@ package hal9000
 
 import (
 	"fmt"
+	"hal9000/util"
 )
 
 type Intent interface {
-	Execute(lastState State) (State, ResponseMessage, error)
+	Execute(lastState State) (State, util.ResponseMessage, error)
 }
 
 func ErrorNotImplemented(intentType string) error {

@@ -1,11 +1,14 @@
 package hal9000
 
-import "hal9000/util"
+import (
+	"fmt"
+	"hal9000/util"
+)
 
 type MessageIntent struct {
-	Caller  Person `json:"caller"`
-	Person  Person `json:"person"`
-	Message string `json:"message"`
+	Caller  Person               `json:"caller"`
+	Person  Person               `json:"person"`
+	Message util.ResponseMessage `json:"message"`
 }
 
 func NewMessageIntent(c Person, m ParsedRequestMessage) (MessageIntent, error) {
@@ -14,15 +17,19 @@ func NewMessageIntent(c Person, m ParsedRequestMessage) (MessageIntent, error) {
 		return MessageIntent{}, err
 	}
 
-	sendMessage := util.ConcatTokensInRange(m.Tokens, messageStart, len(m.Tokens))
+	sendMessage := util.ResponseMessage{
+		Text:  fmt.Sprintf("Message from %s: \"%s\"", c.Names[0], util.ConcatTokensInRange(m.Tokens, messageStart, len(m.Tokens))),
+		URL:   "",
+		Extra: nil,
+	}
 
 	return MessageIntent{c, person, sendMessage}, nil
 }
 
-func (i MessageIntent) Execute(lastState State) (State, ResponseMessage, error) {
-	err := SendMessageToPerson(i.Caller, i.Person, i.Message)
+func (i MessageIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
+	err := SendMessageToPerson(i.Person, i.Message)
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 
 	return lastState, MessageOk(), nil

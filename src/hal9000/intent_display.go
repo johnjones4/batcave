@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"hal9000/service"
+	"hal9000/util"
 )
 
 type DisplayIntent struct {
@@ -21,7 +22,7 @@ func NewDisplayIntent(m ParsedRequestMessage) (DisplayIntent, error) {
 	return DisplayIntent{Display: display}, nil
 }
 
-func (i DisplayIntent) Execute(lastState State) (State, ResponseMessage, error) {
+func (i DisplayIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
 	if i.Display.Type == DisplayTypeVideo && i.Display.Source == DisplaySourceGoogle {
 		var url string
 		var refreshInfo service.GoogleStreamRefreshRequest
@@ -32,11 +33,11 @@ func (i DisplayIntent) Execute(lastState State) (State, ResponseMessage, error) 
 			url, refreshInfo, err = service.GetGoogleVideoStreamURL(i.Display.ID)
 		}
 		if err != nil {
-			return nil, ResponseMessage{}, err
+			return nil, util.ResponseMessage{}, err
 		}
 		i.GoogleRefreshInfo = refreshInfo
 		i.LastURL = url
-		m := ResponseMessage{
+		m := util.ResponseMessage{
 			Text:  fmt.Sprintf("Here's the %s.", i.Display.Names[0]),
 			URL:   url,
 			Extra: i,
@@ -45,5 +46,5 @@ func (i DisplayIntent) Execute(lastState State) (State, ResponseMessage, error) 
 		return lastState, m, nil
 	}
 
-	return nil, ResponseMessage{}, errors.New("unable to handle display type")
+	return nil, util.ResponseMessage{}, errors.New("unable to handle display type")
 }
