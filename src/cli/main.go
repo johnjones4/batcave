@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"hal9000"
+	"hal9000/util"
 	"net/url"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ func responseHandler(c *websocket.Conn, response chan<- string) {
 			ended = true
 			return
 		}
-		var resp hal9000.ResponseMessage
+		var resp util.ResponseMessage
 		err = json.Unmarshal(message, &resp)
 		if err != nil {
 			fmt.Println("Error: ", err)

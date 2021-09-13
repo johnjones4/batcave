@@ -33,14 +33,17 @@ func NewWeatherIntent(m ParsedRequestMessage) (WeatherIntent, error) {
 	return WeatherIntent{locale, date}, nil
 }
 
-func (i WeatherIntent) Execute(lastState State) (State, ResponseMessage, error) {
+func (i WeatherIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
 	forecast, radarUrl, err := GetWeather(i.Date, i.Locale)
 	if err != nil {
-		return lastState, ResponseMessage{}, err
+		return lastState, util.ResponseMessage{}, err
 	}
 
 	responseMessage := FormulateWeatherResponsePreamble(i.Date, i.Locale) + forecast
-	return lastState, ResponseMessage{responseMessage, radarUrl, nil}, nil
+	return lastState, util.ResponseMessage{
+		Text:  responseMessage,
+		URL:   radarUrl,
+		Extra: nil}, nil
 }
 
 func FormulateWeatherResponsePreamble(date time.Time, locale string) string {
@@ -81,5 +84,5 @@ func GetWeather(date time.Time, locale string) (string, string, error) {
 		lon = location.Lng
 	}
 
-	return service.MakeWeatherAPICall(lat, lon, date)
+	return service.MakeWeatherAPIForecastCall(lat, lon, date)
 }

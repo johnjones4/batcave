@@ -8,11 +8,11 @@ import (
 )
 
 type HistoricalExchange struct {
-	Timestamp  time.Time       `json:"timestamp"`
-	Request    RequestMessage  `json:"request"`
-	Response   ResponseMessage `json:"response"`
-	StartState string          `json:"startState"`
-	EndState   string          `json:"endState"`
+	Timestamp  time.Time            `json:"timestamp"`
+	Request    RequestMessage       `json:"request"`
+	Response   util.ResponseMessage `json:"response"`
+	StartState string               `json:"startState"`
+	EndState   string               `json:"endState"`
 }
 
 type Session struct {
@@ -41,7 +41,7 @@ func (s *Session) State() State {
 	return InitStateByName(s.StateString)
 }
 
-func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, error) {
+func (s *Session) ProcessIncomingMessage(m RequestMessage) (util.ResponseMessage, error) {
 	requestTime := time.Now()
 
 	nextState, response, err := s.State().ProcessIncomingMessage(s.Caller, m)
@@ -68,7 +68,7 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (ResponseMessage, err
 	return response, nil
 }
 
-func (s *Session) BreakIn(m ResponseMessage) error {
+func (s *Session) BreakIn(m util.ResponseMessage) error {
 	util.LogEvent("break_in", map[string]interface{}{
 		"session": s.ID,
 		"message": m,

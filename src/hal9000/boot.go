@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"hal9000/service"
 	"hal9000/util"
+	"os"
+	"strings"
 )
 
 type LogStep struct {
@@ -13,7 +15,7 @@ type LogStep struct {
 
 type BackgroundJob struct {
 	Name string
-	Fn   func()
+	Fn   func(*chan util.ResponseMessage)
 }
 
 func BootUp() error {
@@ -36,14 +38,34 @@ func BootUp() error {
 		fmt.Println("done")
 	}
 
+	alertedUserNames := strings.Split(os.Getenv("ALERTED_USER_NAMES"), ",")
+	users := make([]Person, len(alertedUserNames))
+	for i, alertedUserName := range alertedUserNames {
+		person, err := GetPersonByName(alertedUserName)
+		if err != nil {
+			return err
+		}
+		users[i] = person
+	}
+
 	bgs := [](BackgroundJob){
 		BackgroundJob{"google token refresh", service.StartGoogleTokenRefreshCycle},
+		BackgroundJob{"weather alert scanner", service.StartWeatherAlertLoop},
 	}
+	alertChan := make(chan util.ResponseMessage)
 	for _, bg := range bgs {
 		fmt.Printf("Starting up %s ... ", bg.Name)
-		go bg.Fn()
+		go bg.Fn(&alertChan)
 		fmt.Println("done")
 	}
 
-	return nil
+	for {
+		alert := <-alertChan
+		for _, user := range users {
+			err := SendMessageToPerson(user, alert)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
 }

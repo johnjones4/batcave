@@ -70,7 +70,7 @@ func RefreshGoogleTokenIfNeeded() error {
 	return nil
 }
 
-func StartGoogleTokenRefreshCycle() {
+func StartGoogleTokenRefreshCycle(_ *chan util.ResponseMessage) {
 	for {
 		err := RefreshGoogleTokenIfNeeded()
 		if err != nil {

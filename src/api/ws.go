@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hal9000"
+	"hal9000/util"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -31,7 +32,7 @@ func (i InterfaceTypeWebsocket) IsStillValid() bool {
 	return i.Open
 }
 
-func (i InterfaceTypeWebsocket) SendMessage(m hal9000.ResponseMessage) error {
+func (i InterfaceTypeWebsocket) SendMessage(m util.ResponseMessage) error {
 	responseBytes, err := json.Marshal(m)
 	if err != nil {
 		return err

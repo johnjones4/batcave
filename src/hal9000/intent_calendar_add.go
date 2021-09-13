@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"hal9000/service"
+	"hal9000/util"
 	"strings"
 	"time"
 )
@@ -36,11 +37,11 @@ func NewCalendarAddIntent(m ParsedRequestMessage) (CalendarAddIntent, error) {
 	}, nil
 }
 
-func (i CalendarAddIntent) Execute(lastState State) (State, ResponseMessage, error) {
+func (i CalendarAddIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
 	err := service.CreateNewEvent(i.Title, i.Start, i.End)
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 	response := fmt.Sprintf("Scheduled \"%s\" for %s at %s", i.Title, i.Start.Format("Monday, January 2"), i.Start.Format("3:04pm"))
-	return lastState, ResponseMessage{Text: response}, nil
+	return lastState, util.ResponseMessage{Text: response}, nil
 }

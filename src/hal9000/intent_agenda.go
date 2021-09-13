@@ -2,6 +2,7 @@ package hal9000
 
 import (
 	"fmt"
+	"hal9000/util"
 	"time"
 )
 
@@ -23,10 +24,10 @@ func NewCalendarAgendaIntent(m ParsedRequestMessage) (CalendarAgendaIntent, erro
 	return CalendarAgendaIntent{beginningOfDay, endOfDay}, nil
 }
 
-func (i CalendarAgendaIntent) Execute(lastState State) (State, ResponseMessage, error) {
+func (i CalendarAgendaIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
 	events, err := GetAgendaForDateRange(i.Start, i.End)
 	if err != nil {
-		return nil, ResponseMessage{}, err
+		return nil, util.ResponseMessage{}, err
 	}
 	s := ""
 	if len(events) != 1 {
@@ -44,5 +45,5 @@ func (i CalendarAgendaIntent) Execute(lastState State) (State, ResponseMessage, 
 			message += "\n"
 		}
 	}
-	return lastState, ResponseMessage{Text: message}, nil
+	return lastState, util.ResponseMessage{Text: message}, nil
 }
