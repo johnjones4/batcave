@@ -67,6 +67,13 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (util.ResponseMessage
 
 	s.StateString = nextState.Name()
 
+	if !s.Interface.SupportsVisuals() && response.URL != "" {
+		visualInterfaces := GetVisualInterfacesForPerson(s.Caller)
+		for _, iface := range visualInterfaces {
+
+		}
+	}
+
 	return response, nil
 }
 

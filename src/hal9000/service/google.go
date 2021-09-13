@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -28,14 +27,10 @@ type GoogleRefreshTokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-type GoogleDeviceCommandRequest struct {
-	Command string      `json:"command"`
-	Params  interface{} `json:"params"`
-}
-
 func RefreshGoogleTokenIfNeeded() error {
 	expiration := util.KVStoreInstance.GetInt(KVKeyGoogleAuthExpiration, 0)
 	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
+	fmt.Println("token info", expiration, accessToken, time.Unix(int64(expiration), 0), time.Now())
 	if accessToken == "" || expiration == 0 || time.Unix(int64(expiration), 0).Before(time.Now()) {
 		refreshToken := os.Getenv("GOOGLE_REFRESH_TOKEN")
 
@@ -56,6 +51,7 @@ func RefreshGoogleTokenIfNeeded() error {
 		if err != nil {
 			return err
 		}
+		fmt.Println(string(bytes))
 
 		var response GoogleRefreshTokenResponse
 		err = json.Unmarshal(bytes, &response)
@@ -76,137 +72,9 @@ func StartGoogleTokenRefreshCycle(_ *chan util.ResponseMessage) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		time.Sleep(12 * time.Hour)
+		time.Sleep(time.Minute)
 	}
 }
-
-type GoogleStreamURLResponseStreamUrls struct {
-	RTSPUrl string `json:"rtspUrl"`
-}
-
-type GoogleStreamURLResponseResults struct {
-	StreamUrls           GoogleStreamURLResponseStreamUrls `json:"streamUrls"`
-	StreamToken          string                            `json:"streamToken"`
-	StreamExtensionToken string                            `json:"streamExtensionToken"`
-	ExpiresAt            time.Time                         `json:"expiresAt"`
-}
-
-type GoogleStreamURLResponse struct {
-	Results GoogleStreamURLResponseResults `json:"results"`
-}
-
-type GoogleStreamRefreshRequest struct {
-	StreamExtensionToken string    `json:"streamExtensionToken"`
-	ExpiresAt            time.Time `json:"expiresAt"`
-}
-
-func GetGoogleVideoStreamURL(deviceId string) (string, GoogleStreamRefreshRequest, error) {
-	err := RefreshGoogleTokenIfNeeded()
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
-	if accessToken == "" {
-		return "", GoogleStreamRefreshRequest{}, errors.New("no access token available for google")
-	}
-
-	url := fmt.Sprintf("https://smartdevicemanagement.googleapis.com/v1/enterprises/%s/devices/%s:executeCommand", os.Getenv("GOOGLE_ACCOUNT_ID"), deviceId)
-
-	reqObject := GoogleDeviceCommandRequest{"sdm.devices.commands.CameraLiveStream.GenerateRtspStream", map[string]string{}}
-	body, err := json.Marshal(reqObject)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	req, err := http.NewRequest("POST", url, ioutil.NopCloser(bytes.NewBuffer(body)))
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-
-	client := &http.Client{}
-	httpResp, err := client.Do(req)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	respBytes, err := ioutil.ReadAll(httpResp.Body)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	var response GoogleStreamURLResponse
-	err = json.Unmarshal(respBytes, &response)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	return response.Results.StreamUrls.RTSPUrl, GoogleStreamRefreshRequest{response.Results.StreamExtensionToken, response.Results.ExpiresAt}, nil
-}
-
-func RefreshGoogleVideoStreamURL(oldUrl, deviceId, extensionToken string) (string, GoogleStreamRefreshRequest, error) {
-	err := RefreshGoogleTokenIfNeeded()
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
-	if accessToken == "" {
-		return "", GoogleStreamRefreshRequest{}, errors.New("no access token available for google")
-	}
-
-	requrl := fmt.Sprintf("https://smartdevicemanagement.googleapis.com/v1/enterprises/%s/devices/%s:executeCommand", os.Getenv("GOOGLE_ACCOUNT_ID"), deviceId)
-
-	reqObject := GoogleDeviceCommandRequest{"sdm.devices.commands.CameraLiveStream.ExtendRtspStream", map[string]string{
-		"streamExtensionToken": extensionToken,
-	}}
-	body, err := json.Marshal(reqObject)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	req, err := http.NewRequest("POST", requrl, ioutil.NopCloser(bytes.NewBuffer(body)))
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-
-	client := &http.Client{}
-	httpResp, err := client.Do(req)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	respBytes, err := ioutil.ReadAll(httpResp.Body)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	var response GoogleStreamURLResponse
-	err = json.Unmarshal(respBytes, &response)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	parsedUrl, err := url.Parse(oldUrl)
-	if err != nil {
-		return "", GoogleStreamRefreshRequest{}, err
-	}
-
-	q := parsedUrl.Query()
-	q.Del("auth")
-	q.Add("auth", response.Results.StreamToken)
-	parsedUrl.RawQuery = q.Encode()
-
-	return parsedUrl.String(), GoogleStreamRefreshRequest{response.Results.StreamExtensionToken, response.Results.ExpiresAt}, nil
-}
-
-//TODO subscribe to stream
 
 func CreateNewEvent(title string, start, end time.Time) error {
 	err := RefreshGoogleTokenIfNeeded()
@@ -222,6 +90,9 @@ func CreateNewEvent(title string, start, end time.Time) error {
 	config := &oauth2.Config{}
 	ctx := context.Background()
 	calendarService, err := calendar.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, &oauth2.Token{AccessToken: accessToken})))
+	if err != nil {
+		return err
+	}
 
 	event := &calendar.Event{
 		Summary: title,
@@ -236,7 +107,7 @@ func CreateNewEvent(title string, start, end time.Time) error {
 	}
 
 	calendarId := "primary"
-	event, err = calendarService.Events.Insert(calendarId, event).Do()
+	_, err = calendarService.Events.Insert(calendarId, event).Do()
 
 	return err
 }

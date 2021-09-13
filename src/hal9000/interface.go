@@ -15,6 +15,7 @@ type Interface interface {
 	Type() string
 	ID() string
 	IsStillValid() bool
+	SupportsVisuals() bool
 	SendMessage(message util.ResponseMessage) error
 }
 
@@ -35,6 +36,10 @@ func (i InterfaceTypeSMS) ID() string {
 
 func (i InterfaceTypeSMS) IsStillValid() bool {
 	return true
+}
+
+func (i InterfaceTypeSMS) SupportsVisuals() bool {
+	return false
 }
 
 func (i InterfaceTypeSMS) SendMessage(m util.ResponseMessage) error {
@@ -86,6 +91,16 @@ func GetInterfacesForPerson(p Person, id string) []Interface {
 				transInterfaces = append(transInterfaces[:i], transInterfaces[i+1:]...)
 			}
 			transientInterfaceStore[p.ID] = transInterfaces
+		}
+	}
+	return interfaces
+}
+
+func GetVisualInterfacesForPerson(p Person) []Interface {
+	interfaces := make([]Interface, 0)
+	for _, iface := range GetInterfacesForPerson(p, "") {
+		if iface.SupportsVisuals() {
+			interfaces = append(interfaces, iface)
 		}
 	}
 	return interfaces

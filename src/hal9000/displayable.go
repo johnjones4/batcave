@@ -15,7 +15,7 @@ const (
 
 type Displayable struct {
 	Names  []string `json:"names"`
-	ID     string   `json:"id"`
+	URL    string   `json:"url"`
 	Type   string   `json:"type"`
 	Source string   `json:"source"`
 }

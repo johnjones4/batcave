@@ -59,13 +59,17 @@ func BootUp() error {
 		fmt.Println("done")
 	}
 
-	for {
-		alert := <-alertChan
-		for _, user := range users {
-			err := SendMessageToPerson(user, alert)
-			if err != nil {
-				fmt.Println(err)
+	go (func() {
+		for {
+			alert := <-alertChan
+			for _, user := range users {
+				err := SendMessageToPerson(user, alert)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
-	}
+	})()
+
+	return nil
 }

@@ -3,14 +3,11 @@ package hal9000
 import (
 	"errors"
 	"fmt"
-	"hal9000/service"
 	"hal9000/util"
 )
 
 type DisplayIntent struct {
-	Display           Displayable                        `json:"displayable"`
-	GoogleRefreshInfo service.GoogleStreamRefreshRequest `json:"googleRefreshInfo"`
-	LastURL           string                             `json:"lastUrl"`
+	Display Displayable `json:"displayable"`
 }
 
 func NewDisplayIntent(m ParsedRequestMessage) (DisplayIntent, error) {
@@ -24,25 +21,11 @@ func NewDisplayIntent(m ParsedRequestMessage) (DisplayIntent, error) {
 
 func (i DisplayIntent) Execute(lastState State) (State, util.ResponseMessage, error) {
 	if i.Display.Type == DisplayTypeVideo && i.Display.Source == DisplaySourceGoogle {
-		var url string
-		var refreshInfo service.GoogleStreamRefreshRequest
-		var err error
-		if i.GoogleRefreshInfo.StreamExtensionToken != "" && i.LastURL != "" {
-			url, refreshInfo, err = service.RefreshGoogleVideoStreamURL(i.LastURL, i.Display.ID, i.GoogleRefreshInfo.StreamExtensionToken)
-		} else {
-			url, refreshInfo, err = service.GetGoogleVideoStreamURL(i.Display.ID)
-		}
-		if err != nil {
-			return nil, util.ResponseMessage{}, err
-		}
-		i.GoogleRefreshInfo = refreshInfo
-		i.LastURL = url
 		m := util.ResponseMessage{
 			Text:  fmt.Sprintf("Here's the %s.", i.Display.Names[0]),
-			URL:   url,
+			URL:   i.Display.URL,
 			Extra: i,
 		}
-		fmt.Println(m)
 		return lastState, m, nil
 	}
 

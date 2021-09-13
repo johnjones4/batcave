@@ -73,7 +73,7 @@ func (store *FileKVStore) GetInt(key string, defaultVal int) int {
 func (store *FileKVStore) Set(key string, value interface{}, expiration time.Time) error {
 	store.data[key] = fmt.Sprint(value)
 
-	bytes, err := json.Marshal(KVStoreInstance)
+	bytes, err := json.Marshal(store.data)
 	if err != nil {
 		return err
 	}
