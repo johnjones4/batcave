@@ -68,9 +68,20 @@ func (s *Session) ProcessIncomingMessage(m RequestMessage) (util.ResponseMessage
 	s.StateString = nextState.Name()
 
 	if !s.Interface.SupportsVisuals() && response.URL != "" {
-		visualInterfaces := GetVisualInterfacesForPerson(s.Caller)
-		for _, iface := range visualInterfaces {
-
+		sessions := GetUserSessions(s.Caller)
+		if len(sessions) == 0 {
+			ics := GetVisualInterfacesForPerson(s.Caller)
+			for _, ic := range ics {
+				sessions = append(sessions, NewSession(s.Caller, ic))
+			}
+		}
+		for _, ses := range sessions {
+			if ses.Interface.SupportsVisuals() {
+				err := ses.BreakIn(response)
+				if err != nil {
+					fmt.Println(err) //todo error logging
+				}
+			}
 		}
 	}
 

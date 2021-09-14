@@ -14,9 +14,9 @@ const DefaultNewEventLengthMinutes = 30
 var SchedulerWords = []string{"schedule", "add", "to calendar", "agenda", "to my calendar", "on", "at"}
 
 type CalendarAddIntent struct {
-	Title string    `json:"title"`
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
+	Title string
+	Start time.Time
+	End   time.Time
 }
 
 func NewCalendarAddIntent(m ParsedRequestMessage) (CalendarAddIntent, error) {

@@ -12,8 +12,8 @@ import (
 )
 
 type WeatherIntent struct {
-	Locale string    `json:"locale"`
-	Date   time.Time `json:"date"`
+	Locale string
+	Date   time.Time
 }
 
 func NewWeatherIntent(m ParsedRequestMessage) (WeatherIntent, error) {

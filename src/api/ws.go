@@ -8,13 +8,15 @@ import (
 	"hal9000"
 	"hal9000/util"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 )
 
 type InterfaceTypeWebsocket struct {
-	Connection *websocket.Conn
-	Open       bool
+	Connection       *websocket.Conn
+	Open             bool
+	VisualsSupported bool
 }
 
 func (i InterfaceTypeWebsocket) Type() string {
@@ -30,6 +32,10 @@ func (i InterfaceTypeWebsocket) ID() string {
 
 func (i InterfaceTypeWebsocket) IsStillValid() bool {
 	return i.Open
+}
+
+func (i InterfaceTypeWebsocket) SupportsVisuals() bool {
+	return i.VisualsSupported
 }
 
 func (i InterfaceTypeWebsocket) SendMessage(m util.ResponseMessage) error {
@@ -53,6 +59,12 @@ func wsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	visualsStr := req.URL.Query().Get("visuals")
+	visuals := false
+	if visualsStr != "" {
+		visuals, _ = strconv.ParseBool(visualsStr)
+	}
+
 	person, err := hal9000.GetPersonByID(userId)
 	if err != nil {
 		errorResponse(w, err)
@@ -67,7 +79,7 @@ func wsHandler(w http.ResponseWriter, req *http.Request) {
 
 	defer c.Close()
 
-	iface := InterfaceTypeWebsocket{c, true}
+	iface := InterfaceTypeWebsocket{c, true, visuals}
 	hal9000.RegisterTransientInterface(person, iface)
 	ses := hal9000.NewSession(person, iface)
 

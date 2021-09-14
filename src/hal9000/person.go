@@ -21,6 +21,10 @@ func (p Person) GetNames() []string {
 	return p.Names
 }
 
+func (p Person) GetOriginName() string {
+	return p.Names[0]
+}
+
 var ErrorPersonNotFound = errors.New("person not found")
 
 func InitPeople() error {

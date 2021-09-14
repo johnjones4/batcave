@@ -7,8 +7,8 @@ import (
 )
 
 type ControlIntent struct {
-	Device Device `json:"device"`
-	On     bool   `json:"on"`
+	Device Device
+	On     bool
 }
 
 func NewControlIntent(m ParsedRequestMessage, on bool) (ControlIntent, error) {

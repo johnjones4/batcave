@@ -7,7 +7,7 @@ import (
 )
 
 type DisplayIntent struct {
-	Display Displayable `json:"displayable"`
+	Display Displayable
 }
 
 func NewDisplayIntent(m ParsedRequestMessage) (DisplayIntent, error) {

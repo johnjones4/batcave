@@ -6,19 +6,23 @@ import (
 )
 
 type MessageIntent struct {
-	Caller  Person               `json:"caller"`
-	Person  Person               `json:"person"`
-	Message util.ResponseMessage `json:"message"`
+	Caller  MessageSender
+	Person  Person
+	Message util.ResponseMessage
 }
 
-func NewMessageIntent(c Person, m ParsedRequestMessage) (MessageIntent, error) {
+type MessageSender interface {
+	GetOriginName() string
+}
+
+func NewMessageIntent(c MessageSender, m ParsedRequestMessage) (MessageIntent, error) {
 	person, messageStart, err := GetPersonInParsedRequestMessage(m)
 	if err != nil {
 		return MessageIntent{}, err
 	}
 
 	sendMessage := util.ResponseMessage{
-		Text:  fmt.Sprintf("Message from %s: \"%s\"", c.Names[0], util.ConcatTokensInRange(m.Tokens, messageStart, len(m.Tokens))),
+		Text:  fmt.Sprintf("Message from %s: \"%s\"", c.GetOriginName(), util.ConcatTokensInRange(m.Tokens, messageStart, len(m.Tokens))),
 		URL:   "",
 		Extra: nil,
 	}

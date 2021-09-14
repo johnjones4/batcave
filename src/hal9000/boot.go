@@ -25,6 +25,7 @@ func BootUp() error {
 		LogStep{"message parser", InitializeDefaultIncomingMessageParser},
 		LogStep{"people", InitPeople},
 		LogStep{"displayables", InitDisplayables},
+		LogStep{"jobs", InitJobs},
 		LogStep{"devices", InitDevices},
 		LogStep{"calendars", InitCalendarSchedules},
 		LogStep{"kasa", service.InitKasaConnection},
