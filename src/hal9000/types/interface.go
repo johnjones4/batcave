@@ -11,6 +11,6 @@ type Interface interface {
 type InterfaceStore interface {
 	Register(person Person, iface Interface)
 	GetInterfacesForPerson(p Person, id string) []Interface
-	GeVisualtInterfacesForPerson(p Person) []Interface
+	GetVisualInterfacesForPerson(p Person) []Interface
 	DetermineInterfaceOwner(runtime Runtime, iface Interface) (Person, error)
 }

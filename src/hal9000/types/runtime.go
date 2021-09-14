@@ -9,6 +9,7 @@ type Runtime interface {
 	Jobs() JobProvider
 	Weather() WeatherProvider
 	Google() GoogleProvider
+	Parser() ParserProvider
 	KVStore() KVStore
 	Logger() Logger
 	AlertQueue() AlertQueue

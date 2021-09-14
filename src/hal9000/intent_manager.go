@@ -10,24 +10,24 @@ func ErrorNotImplemented(intentType string) error {
 	return fmt.Errorf("not implemented: %s", intentType)
 }
 
-func GetIntentForIncomingMessage(runtime types.Runtime, intentType string, caller types.Person, m types.ParsedRequestMessage) (types.Intent, error) {
-	if intentType == "message" {
+func GetIntentForIncomingMessage(runtime types.Runtime, caller types.Person, m types.ParsedRequestMessage) (types.Intent, error) {
+	if m.IntentLabel == "message" {
 		return intents.NewMessageIntent(runtime, caller, m)
-	} else if intentType == "control_on" {
+	} else if m.IntentLabel == "control_on" {
 		return intents.NewControlIntent(runtime, m, true)
-	} else if intentType == "control_off" {
+	} else if m.IntentLabel == "control_off" {
 		return intents.NewControlIntent(runtime, m, false)
-	} else if intentType == "display" {
+	} else if m.IntentLabel == "display" {
 		return intents.NewDisplayIntent(runtime, m)
-	} else if intentType == "weather" {
+	} else if m.IntentLabel == "weather" {
 		return intents.NewWeatherIntent(m)
-	} else if intentType == "agenda" {
+	} else if m.IntentLabel == "agenda" {
 		return intents.NewCalendarAgendaIntent(m)
-	} else if intentType == "calendar_add" {
+	} else if m.IntentLabel == "calendar_add" {
 		return intents.NewCalendarAddIntent(m)
-	} else if intentType == "job" {
-		return nil, ErrorNotImplemented(intentType) //TODO
+	} else if m.IntentLabel == "job" {
+		return nil, ErrorNotImplemented(m.IntentLabel) //TODO
 	} else {
-		return nil, fmt.Errorf("no intent for %s", intentType)
+		return nil, fmt.Errorf("no intent for %s", m.IntentLabel)
 	}
 }

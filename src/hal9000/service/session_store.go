@@ -25,6 +25,17 @@ func (ss *sessionStoreConcrete) SaveSession(ses types.Session) {
 	ss.sessions = append(ss.sessions, ses)
 }
 
+func (ss *sessionStoreConcrete) GetVisualUserSessions(p types.Person) []types.Session {
+	allSessions := ss.GetUserSessions(p)
+	visualSessions := make([]types.Session, 0)
+	for _, s := range allSessions {
+		if s.Interface.SupportsVisuals() {
+			visualSessions = append(visualSessions, s)
+		}
+	}
+	return visualSessions
+}
+
 func (ss *sessionStoreConcrete) GetUserSessions(p types.Person) []types.Session {
 	usessions := make([]types.Session, 0)
 	unregs := make([]int, 0)

@@ -25,4 +25,5 @@ type ParsedRequestMessage struct {
 	NamedEntities []ner.Entity
 	Tokens        []prose.Token
 	DateInfo      *when.Result
+	IntentLabel   string
 }

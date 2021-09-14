@@ -43,7 +43,7 @@ func (is *interfaceStoreConcrete) GetInterfacesForPerson(p types.Person, id stri
 	return interfaces
 }
 
-func (is *interfaceStoreConcrete) GeVisualtInterfacesForPerson(p types.Person) []types.Interface {
+func (is *interfaceStoreConcrete) GetVisualInterfacesForPerson(p types.Person) []types.Interface {
 	interfaces := make([]types.Interface, 0)
 	for _, iface := range is.GetInterfacesForPerson(p, "") {
 		if iface.SupportsVisuals() {

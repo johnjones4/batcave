@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type HistoricalExchange struct {
+type SessionLogInfo struct {
 	Timestamp  time.Time             `json:"timestamp"`
 	Request    types.RequestMessage  `json:"request"`
 	Response   types.ResponseMessage `json:"response"`
@@ -17,59 +17,51 @@ type HistoricalExchange struct {
 	EndState   string                `json:"endState"`
 }
 
-func NewSession(caller types.Person, ic types.Interface) Session {
-	ses := Session{
+func NewSession(runtime types.Runtime, caller types.Person, ic types.Interface) types.Session {
+	ses := types.Session{
 		Caller:      caller,
 		ID:          uuid.NewString(),
 		Start:       time.Now(),
 		Interface:   ic,
 		StateString: util.StateTypeDefault,
-		History:     make([]HistoricalExchange, 0),
 	}
-	SaveSession(ses)
+	runtime.SessionStore().SaveSession(ses)
 	return ses
 }
 
-func (s *Session) State() types.State {
-	return InitStateByName(s.StateString)
-}
-
-func (s *Session) ProcessIncomingMessage(m types.RequestMessage) (types.ResponseMessage, error) {
+func ProcessIncomingMessage(runtime types.Runtime, s *types.Session, m types.RequestMessage) (types.ResponseMessage, error) {
 	requestTime := time.Now()
 
-	nextState, response, err := s.State().ProcessIncomingMessage(s.Caller, m)
+	nextState, response, err := InitStateByName(s.StateString).ProcessIncomingMessage(runtime, s.Caller, m)
 	if err != nil {
-		fmt.Println(err) //todo error logging
+		runtime.Logger().LogError(err)
 		return util.MessageError(err), nil
 	}
 
-	exchange := HistoricalExchange{
-		Timestamp:  requestTime,
-		Request:    m,
-		Response:   response,
-		StartState: s.StateString,
-		EndState:   nextState.Name(),
-	}
-	s.History = append(s.History, exchange)
-
-	util.LogEvent("exchange", map[string]interface{}{
-		"session":  s.ID,
-		"exchange": exchange,
+	runtime.Logger().LogEvent("exchange", map[string]interface{}{
+		"session": s.ID,
+		"exchange": SessionLogInfo{
+			Timestamp:  requestTime,
+			Request:    m,
+			Response:   response,
+			StartState: s.StateString,
+			EndState:   nextState.Name(),
+		},
 	})
 
 	s.StateString = nextState.Name()
 
 	if !s.Interface.SupportsVisuals() && response.URL != "" {
-		sessions := GetUserSessions(s.Caller)
+		sessions := runtime.SessionStore().GetVisualUserSessions(s.Caller)
 		if len(sessions) == 0 {
-			ics := GetVisualInterfacesForPerson(s.Caller)
+			ics := runtime.InterfaceStore().GetVisualInterfacesForPerson(s.Caller)
 			for _, ic := range ics {
-				sessions = append(sessions, NewSession(s.Caller, ic))
+				sessions = append(sessions, NewSession(runtime, s.Caller, ic))
 			}
 		}
 		for _, ses := range sessions {
 			if ses.Interface.SupportsVisuals() {
-				err := ses.BreakIn(response)
+				err := BreakIn(runtime, s, response)
 				if err != nil {
 					fmt.Println(err) //todo error logging
 				}
@@ -80,8 +72,8 @@ func (s *Session) ProcessIncomingMessage(m types.RequestMessage) (types.Response
 	return response, nil
 }
 
-func (s *Session) BreakIn(m types.ResponseMessage) error {
-	util.LogEvent("break_in", map[string]interface{}{
+func BreakIn(runtime types.Runtime, s *types.Session, m types.ResponseMessage) error {
+	runtime.Logger().LogEvent("break_in", map[string]interface{}{
 		"session": s.ID,
 		"message": m,
 	})

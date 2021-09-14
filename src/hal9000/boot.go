@@ -80,6 +80,10 @@ func (rt *runtimeConcrete) InterfaceStore() types.InterfaceStore {
 	return rt.interfaceStore
 }
 
+func (rt *runtimeConcrete) Parser() types.ParserProvider {
+	return rt.parser
+}
+
 func BootUp() (types.Runtime, error) {
 	rt := runtimeConcrete{}
 

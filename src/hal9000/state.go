@@ -16,12 +16,16 @@ type DefaultState struct{}
 
 func (s DefaultState) Name() string { return util.StateTypeDefault }
 
-func (s DefaultState) ProcessIncomingMessage(caller types.Person, input types.RequestMessage) (types.State, types.ResponseMessage, error) {
-
-	intent, err := GetIntentForIncomingMessage(intentLabel, caller, inputMessage)
+func (s DefaultState) ProcessIncomingMessage(r types.Runtime, caller types.Person, input types.RequestMessage) (types.State, types.ResponseMessage, error) {
+	inputMessage, err := r.Parser().ProcessMessage(input)
 	if err != nil {
 		return nil, types.ResponseMessage{}, err
 	}
 
-	return intent.Execute(s)
+	intent, err := GetIntentForIncomingMessage(r, caller, inputMessage)
+	if err != nil {
+		return nil, types.ResponseMessage{}, err
+	}
+
+	return intent.Execute(r, s)
 }

@@ -76,7 +76,6 @@ func (pp parserProviderConcrete) ProcessMessage(input types.RequestMessage) (typ
 	if !ok {
 		return types.ParsedRequestMessage{}, fmt.Errorf("no alias for intent %d", class)
 	}
-	fmt.Println(intentLabel)
 
 	nerTokens := ner.Tokenize(input.Message)
 	es, err := pp.nerExtractor.Extract(nerTokens)
@@ -100,5 +99,6 @@ func (pp parserProviderConcrete) ProcessMessage(input types.RequestMessage) (typ
 		NamedEntities: es,
 		Tokens:        tokens,
 		DateInfo:      dateInfo,
+		IntentLabel:   intentLabel,
 	}, nil
 }
