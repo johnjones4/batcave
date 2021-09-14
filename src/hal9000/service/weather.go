@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hal9000/types"
 	"hal9000/util"
 	"io/ioutil"
 	"net/http"
@@ -14,77 +15,51 @@ import (
 
 var ErrorWeatherForecastNotAvailable = errors.New("weather forecast not available")
 
-type NOAAWeatherPointProperties struct {
-	ForecastURL  string `json:"forecast"`
-	ForecastZone string `json:"forecastZone"`
-	RadarStation string `json:"radarStation"`
+type weatherProviderConcrete struct {
+	defaultLat float64
+	defaultLon float64
 }
 
-type NOAAWeatherPointResponse struct {
-	Properties NOAAWeatherPointProperties `json:"properties"`
-}
-
-type NOAAWeatherForecastPeriod struct {
-	StartTime        time.Time `json:"startTime"`
-	EndTime          time.Time `json:"endTime"`
-	DetailedForecast string    `json:"detailedForecast"`
-}
-
-type NOAAWeatherForecastProperties struct {
-	Periods []NOAAWeatherForecastPeriod `json:"periods"`
-}
-
-type NOAAWeatherForecastResponse struct {
-	Properties NOAAWeatherForecastProperties `json:"properties"`
-}
-
-type NOAAWeatherAlertFeatureProperties struct {
-	ID            string   `json:"id"`
-	AffectedZones []string `json:"affectedZones"`
-	Headline      string   `json:"headline"`
-}
-
-type NOAAWeatherAlertFeature struct {
-	Properties NOAAWeatherAlertFeatureProperties `json:"properties"`
-}
-
-type NOAAWeatherAlertResponse struct {
-	Features []NOAAWeatherAlertFeature `json:"features"`
-}
-
-func StartWeatherAlertLoop(alertChan *chan util.ResponseMessage) {
+func InitWeatherProvider(runtime types.Runtime) (types.WeatherProvider, error) {
 	lat, err := strconv.ParseFloat(os.Getenv("DEFAULT_WEATHER_LAT"), 64)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return nil, err
 	}
 	lon, err := strconv.ParseFloat(os.Getenv("DEFAULT_WEATHER_LON"), 64)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return nil, err
 	}
-
-	previouslyHandledAlerts := util.NewStringBuffer(1000)
-
-	for {
-		_, radar, _ := MakeWeatherAPIForecastCall(lat, lon, time.Now())
-		alerts, err := MakeWeatherAPIAlertCall(lat, lon)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			for _, alert := range alerts {
-				if !previouslyHandledAlerts.Contains(alert.Properties.ID) {
-					*alertChan <- util.ResponseMessage{Text: fmt.Sprintf("Weather alert: %s", alert.Properties.Headline), URL: radar, Extra: nil}
-					previouslyHandledAlerts.Push(alert.Properties.ID)
+	wp := weatherProviderConcrete{lat, lon}
+	go (func() {
+		previouslyHandledAlerts := util.NewStringBuffer(1000)
+		for {
+			_, radar, _ := wp.MakeWeatherAPIForecastCall(lat, lon, time.Now())
+			alerts, err := wp.MakeWeatherAPIAlertCall(lat, lon)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				for _, alert := range alerts {
+					if !previouslyHandledAlerts.Contains(alert.Properties.ID) {
+						m := types.ResponseMessage{Text: fmt.Sprintf("Weather alert: %s", alert.Properties.Headline), URL: radar, Extra: nil}
+						// queue.Enqueue(m)
+						//TODO
+						fmt.Println(m)
+						previouslyHandledAlerts.Push(alert.Properties.ID)
+					}
 				}
 			}
+			time.Sleep(time.Hour / 2)
 		}
-		time.Sleep(time.Hour / 2)
-	}
+	})()
+	return wp, nil
 }
 
-func MakeWeatherAPIAlertCall(lat float64, lon float64) ([]NOAAWeatherAlertFeature, error) {
-	point, err := MakeWeatherAPIPointRequest(lat, lon)
+func (wp weatherProviderConcrete) DefaultLatLon() (float64, float64) {
+	return wp.defaultLat, wp.defaultLon
+}
+
+func (wp weatherProviderConcrete) MakeWeatherAPIAlertCall(lat float64, lon float64) ([]types.NOAAWeatherAlertFeature, error) {
+	point, err := wp.MakeWeatherAPIPointRequest(lat, lon)
 	if err != nil {
 		return nil, err
 	}
@@ -99,13 +74,13 @@ func MakeWeatherAPIAlertCall(lat float64, lon float64) ([]NOAAWeatherAlertFeatur
 		return nil, err
 	}
 
-	var response NOAAWeatherAlertResponse
+	var response types.NOAAWeatherAlertResponse
 	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return nil, err
 	}
 
-	features := make([]NOAAWeatherAlertFeature, 0)
+	features := make([]types.NOAAWeatherAlertFeature, 0)
 	for _, feature := range response.Features {
 		if util.ContainsString(feature.Properties.AffectedZones, point.ForecastZone) {
 			features = append(features, feature)
@@ -116,8 +91,8 @@ func MakeWeatherAPIAlertCall(lat float64, lon float64) ([]NOAAWeatherAlertFeatur
 	return features, nil
 }
 
-func MakeWeatherAPIForecastCall(lat float64, lon float64, date time.Time) (string, string, error) {
-	point, err := MakeWeatherAPIPointRequest(lat, lon)
+func (wp weatherProviderConcrete) MakeWeatherAPIForecastCall(lat float64, lon float64, date time.Time) (string, string, error) {
+	point, err := wp.MakeWeatherAPIPointRequest(lat, lon)
 	if err != nil {
 		return "", "", nil
 	}
@@ -132,7 +107,7 @@ func MakeWeatherAPIForecastCall(lat float64, lon float64, date time.Time) (strin
 		return "", "", nil
 	}
 
-	var response NOAAWeatherForecastResponse
+	var response types.NOAAWeatherForecastResponse
 	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return "", "", nil
@@ -152,18 +127,18 @@ func MakeWeatherAPIForecastCall(lat float64, lon float64, date time.Time) (strin
 	return "", "", ErrorWeatherForecastNotAvailable
 }
 
-func MakeWeatherAPIPointRequest(lat float64, lon float64) (NOAAWeatherPointProperties, error) {
+func (wp weatherProviderConcrete) MakeWeatherAPIPointRequest(lat float64, lon float64) (types.NOAAWeatherPointProperties, error) {
 	httpResponse, err := http.Get(fmt.Sprintf("https://api.weather.gov/points/%f,%f", lat, lon))
 	if err != nil {
-		return NOAAWeatherPointProperties{}, err
+		return types.NOAAWeatherPointProperties{}, err
 	}
 
 	responseBytes, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return NOAAWeatherPointProperties{}, err
+		return types.NOAAWeatherPointProperties{}, err
 	}
 
-	var pointResponse NOAAWeatherPointResponse
+	var pointResponse types.NOAAWeatherPointResponse
 	err = json.Unmarshal(responseBytes, &pointResponse)
 
 	return pointResponse.Properties, err

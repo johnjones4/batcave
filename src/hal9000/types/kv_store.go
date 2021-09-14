@@ -1,4 +1,4 @@
-package util
+package types
 
 import "time"
 
@@ -10,5 +10,3 @@ type KVStore interface {
 	Set(key string, value interface{}, expiration time.Time) error
 	SetBytes(key string, value []byte, expiration time.Time) error
 }
-
-var KVStoreInstance KVStore

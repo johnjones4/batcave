@@ -2,32 +2,29 @@ package hal9000
 
 import (
 	"fmt"
-	"hal9000/util"
+	"hal9000/intents"
+	"hal9000/types"
 )
-
-type Intent interface {
-	Execute(lastState State) (State, util.ResponseMessage, error)
-}
 
 func ErrorNotImplemented(intentType string) error {
 	return fmt.Errorf("not implemented: %s", intentType)
 }
 
-func GetIntentForIncomingMessage(intentType string, caller Person, m ParsedRequestMessage) (Intent, error) {
+func GetIntentForIncomingMessage(runtime types.Runtime, intentType string, caller types.Person, m types.ParsedRequestMessage) (types.Intent, error) {
 	if intentType == "message" {
-		return NewMessageIntent(caller, m)
+		return intents.NewMessageIntent(runtime, caller, m)
 	} else if intentType == "control_on" {
-		return NewControlIntent(m, true)
+		return intents.NewControlIntent(runtime, m, true)
 	} else if intentType == "control_off" {
-		return NewControlIntent(m, false)
+		return intents.NewControlIntent(runtime, m, false)
 	} else if intentType == "display" {
-		return NewDisplayIntent(m)
+		return intents.NewDisplayIntent(runtime, m)
 	} else if intentType == "weather" {
-		return NewWeatherIntent(m)
+		return intents.NewWeatherIntent(m)
 	} else if intentType == "agenda" {
-		return NewCalendarAgendaIntent(m)
+		return intents.NewCalendarAgendaIntent(m)
 	} else if intentType == "calendar_add" {
-		return NewCalendarAddIntent(m)
+		return intents.NewCalendarAddIntent(m)
 	} else if intentType == "job" {
 		return nil, ErrorNotImplemented(intentType) //TODO
 	} else {

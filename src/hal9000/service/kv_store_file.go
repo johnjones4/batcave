@@ -1,30 +1,29 @@
-package util
+package service
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"hal9000/types"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
 )
 
-func InitFileKVStore() error {
+func InitFileKVStore() (types.KVStore, error) {
 	bytes, err := ioutil.ReadFile(os.Getenv("KV_FILE_PATH"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var data map[string]string
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	KVStoreInstance = &FileKVStore{data}
-
-	return nil
+	return &FileKVStore{data}, nil
 }
 
 type FileKVStore struct {

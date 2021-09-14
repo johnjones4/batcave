@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hal9000/util"
+	"hal9000/types"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -22,14 +22,31 @@ const (
 	KVKeyGoogleAuthAccessToken = "google_auth_access_token"
 )
 
+type googleProviderConcrete struct {
+}
+
+func InitGoogleProvider(runtime types.Runtime) (types.GoogleProvider, error) {
+	gp := googleProviderConcrete{}
+	go (func() {
+		for {
+			err := gp.RefreshAuthToken(runtime)
+			if err != nil {
+				fmt.Println(err)
+			}
+			time.Sleep(time.Minute)
+		}
+	})()
+	return gp, nil
+}
+
 type GoogleRefreshTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-func RefreshGoogleTokenIfNeeded() error {
-	expiration := util.KVStoreInstance.GetInt(KVKeyGoogleAuthExpiration, 0)
-	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
+func (gp googleProviderConcrete) RefreshAuthToken(runtime types.Runtime) error {
+	expiration := runtime.KVStore().GetInt(KVKeyGoogleAuthExpiration, 0)
+	accessToken := runtime.KVStore().GetString(KVKeyGoogleAuthAccessToken, "")
 	fmt.Println("token info", expiration, accessToken, time.Unix(int64(expiration), 0), time.Now())
 	if accessToken == "" || expiration == 0 || time.Unix(int64(expiration), 0).Before(time.Now()) {
 		refreshToken := os.Getenv("GOOGLE_REFRESH_TOKEN")
@@ -59,30 +76,20 @@ func RefreshGoogleTokenIfNeeded() error {
 			return err
 		}
 
-		util.KVStoreInstance.Set(KVKeyGoogleAuthExpiration, int(time.Now().Unix())+(response.ExpiresIn/2), time.Time{})
-		util.KVStoreInstance.Set(KVKeyGoogleAuthAccessToken, response.AccessToken, time.Time{})
+		runtime.KVStore().Set(KVKeyGoogleAuthExpiration, int(time.Now().Unix())+(response.ExpiresIn/2), time.Time{})
+		runtime.KVStore().Set(KVKeyGoogleAuthAccessToken, response.AccessToken, time.Time{})
 	}
 
 	return nil
 }
 
-func StartGoogleTokenRefreshCycle(_ *chan util.ResponseMessage) {
-	for {
-		err := RefreshGoogleTokenIfNeeded()
-		if err != nil {
-			fmt.Println(err)
-		}
-		time.Sleep(time.Minute)
-	}
-}
-
-func CreateNewEvent(title string, start, end time.Time) error {
-	err := RefreshGoogleTokenIfNeeded()
+func (gp googleProviderConcrete) CreateNewEvent(runtime types.Runtime, e types.Event) error {
+	err := gp.RefreshAuthToken(runtime)
 	if err != nil {
 		return err
 	}
 
-	accessToken := util.KVStoreInstance.GetString(KVKeyGoogleAuthAccessToken, "")
+	accessToken := runtime.KVStore().GetString(KVKeyGoogleAuthAccessToken, "")
 	if accessToken == "" {
 		return errors.New("no access token available for google")
 	}
@@ -95,14 +102,14 @@ func CreateNewEvent(title string, start, end time.Time) error {
 	}
 
 	event := &calendar.Event{
-		Summary: title,
+		Summary: e.GetName(),
 		Start: &calendar.EventDateTime{
-			DateTime: start.Format(time.RFC3339),
-			TimeZone: start.Local().String(),
+			DateTime: e.GetStartTime().Format(time.RFC3339),
+			TimeZone: e.GetStartTime().Local().String(),
 		},
 		End: &calendar.EventDateTime{
-			DateTime: end.Format(time.RFC3339),
-			TimeZone: start.Local().String(),
+			DateTime: e.GetEndTime().Format(time.RFC3339),
+			TimeZone: e.GetEndTime().Local().String(),
 		},
 	}
 

@@ -1,4 +1,0 @@
-## TODO
-  * Abode
-  * Todo
-  * Portfolio

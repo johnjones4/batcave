@@ -1,0 +1,66 @@
+package service
+
+import (
+	"errors"
+	"hal9000/types"
+)
+
+var ErrorSessionNotFound = errors.New("session not found")
+
+type sessionStoreConcrete struct {
+	sessions []types.Session
+}
+
+func InitSessionStore() types.SessionStore {
+	return &sessionStoreConcrete{make([]types.Session, 0)}
+}
+
+func (ss *sessionStoreConcrete) SaveSession(ses types.Session) {
+	for i, ses1 := range ss.sessions {
+		if ses1.ID == ses.ID {
+			ss.sessions[i] = ses
+			return
+		}
+	}
+	ss.sessions = append(ss.sessions, ses)
+}
+
+func (ss *sessionStoreConcrete) GetUserSessions(p types.Person) []types.Session {
+	usessions := make([]types.Session, 0)
+	unregs := make([]int, 0)
+	for i, ses := range ss.sessions {
+		if ses.Caller.GetID() == p.GetID() {
+			if ses.Interface.IsStillValid() {
+				usessions = append(usessions, ses)
+			} else {
+				unregs = append(unregs, i)
+			}
+		}
+	}
+	if len(unregs) > 0 {
+		newSessions := ss.sessions
+		for _, i := range unregs {
+			newSessions = append(newSessions[:i], newSessions[i+1:]...)
+		}
+		ss.sessions = newSessions
+	}
+	return usessions
+}
+
+func (ss *sessionStoreConcrete) GetSessionWithInterfaceID(id string) (types.Session, error) {
+	for _, ses := range ss.sessions {
+		if ses.Interface.ID() == id {
+			return ses, nil
+		}
+	}
+	return types.Session{}, ErrorSessionNotFound
+}
+
+func (ss *sessionStoreConcrete) GetSessionById(id string) (types.Session, error) {
+	for _, ses := range ss.sessions {
+		if ses.ID == id {
+			return ses, nil
+		}
+	}
+	return types.Session{}, ErrorSessionNotFound
+}

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"hal9000/types"
 	"sort"
 
 	"github.com/jdkato/prose/v2"
@@ -57,16 +58,12 @@ func GetContiguousUniformTokens(tokens []prose.Token, tags []string) []Contigiou
 	return output
 }
 
-type Nameable interface {
-	GetNames() []string
-}
-
 type NameableSequenceItem struct {
 	Name     string
-	Nameable Nameable
+	Nameable types.Nameable
 }
 
-func GenerateNameableSequence(nameables []Nameable) []NameableSequenceItem {
+func GenerateNameableSequence(nameables []types.Nameable) []NameableSequenceItem {
 	nameableSeq := make([]NameableSequenceItem, 0)
 	for _, n := range nameables {
 		for _, name := range n.GetNames() {
