@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"hal9000"
-	"hal9000/util"
+	"hal9000/types"
 	"net/url"
 	"os"
 	"strings"
@@ -40,7 +39,7 @@ func responseHandler(c *websocket.Conn, response chan<- string) {
 			ended = true
 			return
 		}
-		var resp util.ResponseMessage
+		var resp types.ResponseMessage
 		err = json.Unmarshal(message, &resp)
 		if err != nil {
 			fmt.Println("Error: ", err)
@@ -79,7 +78,7 @@ func main() {
 				connection.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			req := hal9000.RequestMessage{Message: input}
+			req := types.RequestMessage{Message: input}
 			err := connection.WriteJSON(req)
 			if err != nil {
 				ended = true
