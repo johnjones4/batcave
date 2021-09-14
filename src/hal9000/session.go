@@ -61,7 +61,11 @@ func ProcessIncomingMessage(runtime types.Runtime, s *types.Session, m types.Req
 		}
 		for _, ses := range sessions {
 			if ses.Interface.SupportsVisuals() {
-				err := BreakIn(runtime, s, response)
+				runtime.Logger().LogEvent("visual_override", map[string]interface{}{
+					"session": ses.ID,
+					"message": response,
+				})
+				err := ses.Interface.SendMessage(response)
 				if err != nil {
 					fmt.Println(err) //todo error logging
 				}
@@ -70,12 +74,4 @@ func ProcessIncomingMessage(runtime types.Runtime, s *types.Session, m types.Req
 	}
 
 	return response, nil
-}
-
-func BreakIn(runtime types.Runtime, s *types.Session, m types.ResponseMessage) error {
-	runtime.Logger().LogEvent("break_in", map[string]interface{}{
-		"session": s.ID,
-		"message": m,
-	})
-	return s.Interface.SendMessage(m)
 }

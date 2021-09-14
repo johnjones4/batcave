@@ -13,14 +13,14 @@ func main() {
 	fmt.Println("Booting up ...")
 	godotenv.Load()
 
-	err := hal9000.BootUp()
+	runtime, err := hal9000.BootUp()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/sms", handleSMS)
+	http.HandleFunc("/ws", wsHandler(runtime))
+	http.HandleFunc("/sms", handleSMS(runtime))
 
 	fmt.Println("Ready")
 

@@ -33,7 +33,7 @@ func InitAlertQueue(runtime types.Runtime) (types.AlertQueue, error) {
 			q.mutex.Lock()
 			for _, m := range q.queue {
 				for _, user := range users {
-					err := runtime.People().SendMessageToPerson(user, m)
+					err := runtime.People().SendMessageToPerson(runtime, user, m)
 					if err != nil {
 						fmt.Println(err)
 					}

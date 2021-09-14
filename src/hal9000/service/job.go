@@ -2,8 +2,8 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"hal9000/types"
+	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"time"
@@ -26,8 +26,6 @@ func (j JobConcrete) GetInterval() time.Duration {
 func (j JobConcrete) GetName() string {
 	return j.Name
 }
-
-var ErrorJobNotFound = errors.New("job not found")
 
 type jobProviderConcrete struct {
 	jobs []types.Job
@@ -61,7 +59,7 @@ func (jp jobProviderConcrete) FindJobById(id string) (types.Job, error) {
 			return job, nil
 		}
 	}
-	return nil, ErrorJobNotFound
+	return nil, util.ErrorJobNotFound
 }
 
 func (jp jobProviderConcrete) UpdateJobStatus(job types.Job, status types.JobStatus) error {

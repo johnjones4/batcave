@@ -2,19 +2,12 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"hal9000/types"
+	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
 )
-
-const (
-	DisplaySourceGoogle = "google"
-	DisplayTypeVideo    = "video"
-)
-
-var ErrorDisplayNotFound = errors.New("display not found")
 
 type DisplayableConcrete struct {
 	Names  []string `json:"names"`
@@ -70,5 +63,5 @@ func (dp displayablesProviderConcrete) FindDisplayableInString(str string) (type
 			}
 		}
 	}
-	return nil, ErrorDisplayNotFound
+	return nil, util.ErrorDisplayNotFound
 }

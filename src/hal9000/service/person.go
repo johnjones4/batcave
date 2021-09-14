@@ -2,15 +2,15 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"hal9000/types"
 	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
-)
+	"time"
 
-var ErrorPersonNotFound = errors.New("person not found")
+	"github.com/google/uuid"
+)
 
 type PersonConcrete struct {
 	ID          string   `json:"id"`
@@ -53,10 +53,6 @@ func InitPersonProvider() (types.PersonProvider, error) {
 		people[i] = p
 	}
 
-	// for _, p := range people {
-	// RegisterTransientInterface(p, InterfaceTypeSMS{p.PhoneNumber}) TODO
-	// }
-
 	return personProviderConcrete{people}, nil
 }
 
@@ -76,26 +72,38 @@ func (pp personProviderConcrete) GetPersonByName(name string) (types.Person, err
 			return nameable.Nameable.(types.Person), nil
 		}
 	}
-	return nil, ErrorPersonNotFound
+	return nil, util.ErrorPersonNotFound
 }
 
-func (pp personProviderConcrete) SendMessageToPerson(recipient types.Person, message types.ResponseMessage) error {
-	// sessions := GetUserSessions(recipient)
-	// if len(sessions) == 0 {
-	// 	ics := GetInterfacesForPerson(recipient, "")
-	// 	if len(ics) == 0 {
-	// 		return ErrorNoInterfacesAvailable(recipient)
-	// 	}
-	// 	for _, ic := range ics {
-	// 		sessions = append(sessions, NewSession(recipient, ic))
-	// 	}
-	// }
-	// for _, ses := range sessions {
-	// 	err := ses.BreakIn(message)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// } TODO
+func (pp personProviderConcrete) SendMessageToPerson(runtime types.Runtime, recipient types.Person, message types.ResponseMessage) error {
+	sessions := runtime.SessionStore().GetUserSessions(recipient)
+	if len(sessions) == 0 {
+		ics := runtime.InterfaceStore().GetInterfacesForPerson(recipient, "")
+		if len(ics) == 0 {
+			return util.ErrorNoInterfacesAvailable(recipient)
+		}
+		for _, ic := range ics {
+			ses := types.Session{
+				Caller:      recipient,
+				ID:          uuid.NewString(),
+				Start:       time.Now(),
+				Interface:   ic,
+				StateString: util.StateTypeDefault,
+			}
+			runtime.SessionStore().SaveSession(ses)
+			sessions = append(sessions, ses)
+		}
+	}
+	for _, ses := range sessions {
+		runtime.Logger().LogEvent("break_in", map[string]interface{}{
+			"session": ses.ID,
+			"message": message,
+		})
+		err := ses.Interface.SendMessage(message)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -105,5 +113,5 @@ func (pp personProviderConcrete) GetPersonByID(id string) (types.Person, error) 
 			return person, nil
 		}
 	}
-	return nil, ErrorPersonNotFound
+	return nil, util.ErrorPersonNotFound
 }

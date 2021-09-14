@@ -26,7 +26,7 @@ func GetIntentForIncomingMessage(runtime types.Runtime, caller types.Person, m t
 	} else if m.IntentLabel == "calendar_add" {
 		return intents.NewCalendarAddIntent(m)
 	} else if m.IntentLabel == "job" {
-		return nil, ErrorNotImplemented(m.IntentLabel) //TODO
+		return nil, ErrorNotImplemented(m.IntentLabel)
 	} else {
 		return nil, fmt.Errorf("no intent for %s", m.IntentLabel)
 	}

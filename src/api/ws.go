@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hal9000"
-	"hal9000/util"
+	"hal9000/types"
 	"net/http"
 	"strconv"
 
@@ -38,7 +38,7 @@ func (i InterfaceTypeWebsocket) SupportsVisuals() bool {
 	return i.VisualsSupported
 }
 
-func (i InterfaceTypeWebsocket) SendMessage(m util.ResponseMessage) error {
+func (i InterfaceTypeWebsocket) SendMessage(m types.ResponseMessage) error {
 	responseBytes, err := json.Marshal(m)
 	if err != nil {
 		return err
@@ -52,72 +52,74 @@ func (i InterfaceTypeWebsocket) SendMessage(m util.ResponseMessage) error {
 
 var upgrader = websocket.Upgrader{}
 
-func wsHandler(w http.ResponseWriter, req *http.Request) {
-	userId := req.URL.Query().Get("user")
-	if userId == "" {
-		errorResponse(w, errors.New("no user id provided"))
-		return
-	}
-
-	visualsStr := req.URL.Query().Get("visuals")
-	visuals := false
-	if visualsStr != "" {
-		visuals, _ = strconv.ParseBool(visualsStr)
-	}
-
-	person, err := hal9000.GetPersonByID(userId)
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
-
-	c, err := upgrader.Upgrade(w, req, nil)
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
-
-	defer c.Close()
-
-	iface := InterfaceTypeWebsocket{c, true, visuals}
-	hal9000.RegisterTransientInterface(person, iface)
-	ses := hal9000.NewSession(person, iface)
-
-	for {
-		_, request, err := c.ReadMessage()
-		if err != nil {
-			fmt.Println(err)
-			iface.Open = false
+func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		userId := req.URL.Query().Get("user")
+		if userId == "" {
+			errorResponse(w, errors.New("no user id provided"))
 			return
 		}
 
-		var halReq hal9000.RequestMessage
-		err = json.Unmarshal(request, &halReq)
+		visualsStr := req.URL.Query().Get("visuals")
+		visuals := false
+		if visualsStr != "" {
+			visuals, _ = strconv.ParseBool(visualsStr)
+		}
+
+		person, err := runtime.People().GetPersonByID(userId)
 		if err != nil {
-			fmt.Println(err)
-			iface.Open = false
+			errorResponse(w, err)
 			return
 		}
 
-		response, err := ses.ProcessIncomingMessage(halReq)
+		c, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			fmt.Println(err)
-			iface.Open = false
+			errorResponse(w, err)
 			return
 		}
 
-		err = ses.Interface.SendMessage(response)
-		if err != nil {
-			fmt.Println(err)
-			iface.Open = false
-			return
-		}
+		defer c.Close()
 
-		hal9000.SaveSession(ses)
-		if err != nil {
-			fmt.Println(err)
-			iface.Open = false
-			return
+		iface := InterfaceTypeWebsocket{c, true, visuals}
+		runtime.InterfaceStore().Register(person, iface)
+		ses := hal9000.NewSession(runtime, person, iface)
+
+		for {
+			_, request, err := c.ReadMessage()
+			if err != nil {
+				fmt.Println(err)
+				iface.Open = false
+				return
+			}
+
+			var halReq types.RequestMessage
+			err = json.Unmarshal(request, &halReq)
+			if err != nil {
+				fmt.Println(err)
+				iface.Open = false
+				return
+			}
+
+			response, err := hal9000.ProcessIncomingMessage(runtime, &ses, halReq)
+			if err != nil {
+				fmt.Println(err)
+				iface.Open = false
+				return
+			}
+
+			err = ses.Interface.SendMessage(response)
+			if err != nil {
+				fmt.Println(err)
+				iface.Open = false
+				return
+			}
+
+			runtime.SessionStore().SaveSession(ses)
+			if err != nil {
+				fmt.Println(err)
+				iface.Open = false
+				return
+			}
 		}
 	}
 }

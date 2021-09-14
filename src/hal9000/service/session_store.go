@@ -1,11 +1,9 @@
 package service
 
 import (
-	"errors"
 	"hal9000/types"
+	"hal9000/util"
 )
-
-var ErrorSessionNotFound = errors.New("session not found")
 
 type sessionStoreConcrete struct {
 	sessions []types.Session
@@ -64,7 +62,7 @@ func (ss *sessionStoreConcrete) GetSessionWithInterfaceID(id string) (types.Sess
 			return ses, nil
 		}
 	}
-	return types.Session{}, ErrorSessionNotFound
+	return types.Session{}, util.ErrorSessionNotFound
 }
 
 func (ss *sessionStoreConcrete) GetSessionById(id string) (types.Session, error) {
@@ -73,5 +71,5 @@ func (ss *sessionStoreConcrete) GetSessionById(id string) (types.Session, error)
 			return ses, nil
 		}
 	}
-	return types.Session{}, ErrorSessionNotFound
+	return types.Session{}, util.ErrorSessionNotFound
 }

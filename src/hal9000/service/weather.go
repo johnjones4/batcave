@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hal9000/types"
 	"hal9000/util"
@@ -12,8 +11,6 @@ import (
 	"strconv"
 	"time"
 )
-
-var ErrorWeatherForecastNotAvailable = errors.New("weather forecast not available")
 
 type weatherProviderConcrete struct {
 	defaultLat float64
@@ -41,8 +38,7 @@ func InitWeatherProvider(runtime types.Runtime) (types.WeatherProvider, error) {
 				for _, alert := range alerts {
 					if !previouslyHandledAlerts.Contains(alert.Properties.ID) {
 						m := types.ResponseMessage{Text: fmt.Sprintf("Weather alert: %s", alert.Properties.Headline), URL: radar, Extra: nil}
-						// queue.Enqueue(m)
-						//TODO
+						runtime.AlertQueue().Enqueue(m)
 						fmt.Println(m)
 						previouslyHandledAlerts.Push(alert.Properties.ID)
 					}
@@ -124,7 +120,7 @@ func (wp weatherProviderConcrete) MakeWeatherAPIForecastCall(lat float64, lon fl
 		}
 	}
 
-	return "", "", ErrorWeatherForecastNotAvailable
+	return "", "", util.ErrorWeatherForecastNotAvailable
 }
 
 func (wp weatherProviderConcrete) MakeWeatherAPIPointRequest(lat float64, lon float64) (types.NOAAWeatherPointProperties, error) {

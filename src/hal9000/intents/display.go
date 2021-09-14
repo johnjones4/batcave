@@ -3,8 +3,8 @@ package intents
 import (
 	"errors"
 	"fmt"
-	"hal9000/service"
 	"hal9000/types"
+	"hal9000/util"
 )
 
 type displayIntent struct {
@@ -21,7 +21,7 @@ func NewDisplayIntent(runtime types.Runtime, m types.ParsedRequestMessage) (disp
 }
 
 func (i displayIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
-	if i.display.GetType() == service.DisplayTypeVideo && i.display.GetSource() == service.DisplaySourceGoogle {
+	if i.display.GetType() == util.DisplayTypeVideo && i.display.GetSource() == util.DisplaySourceGoogle {
 		m := types.ResponseMessage{
 			Text:  fmt.Sprintf("Here's the %s.", i.display.GetNames()[0]),
 			URL:   i.display.GetURL(),

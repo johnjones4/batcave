@@ -2,19 +2,11 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"hal9000/types"
 	"hal9000/util"
 	"io/ioutil"
 	"os"
 	"strings"
-)
-
-var ErrorDeviceNotFound = errors.New("device not found")
-
-const (
-	DeviceTypeKasa  = "kasa"
-	DeviceTypeGroup = "group"
 )
 
 type DeviceConcrete struct {
@@ -59,7 +51,7 @@ func InitDeviceProvider() (types.DeviceProvider, error) {
 		return nil, err
 	}
 	var devicesConcrete []DeviceConcrete
-	err = json.Unmarshal(bytes, &devicesConcrete) //TODO
+	err = json.Unmarshal(bytes, &devicesConcrete)
 	if err != nil {
 		return nil, err
 	}
@@ -92,5 +84,5 @@ func (dp deviceProviderConcrete) FindDeviceInString(str string) (types.Device, e
 			return nameable.Nameable.(types.Device), nil
 		}
 	}
-	return nil, ErrorDeviceNotFound
+	return nil, util.ErrorDeviceNotFound
 }

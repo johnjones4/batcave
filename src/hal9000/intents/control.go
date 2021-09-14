@@ -2,7 +2,6 @@ package intents
 
 import (
 	"errors"
-	"hal9000/service"
 	"hal9000/types"
 	"hal9000/util"
 )
@@ -23,7 +22,7 @@ func NewControlIntent(runtime types.Runtime, m types.ParsedRequestMessage, on bo
 
 func (i controlIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
 	var err error
-	if i.device.GetType() == service.DeviceTypeGroup {
+	if i.device.GetType() == util.DeviceTypeGroup {
 		for _, device := range i.device.GetDevices(runtime) {
 			err = ExecuteOnDevice(runtime, device, i.on)
 			if err != nil {
@@ -41,7 +40,7 @@ func (i controlIntent) Execute(runtime types.Runtime, lastState types.State) (ty
 }
 
 func ExecuteOnDevice(runtime types.Runtime, device types.Device, on bool) error {
-	if device.GetType() == service.DeviceTypeKasa {
+	if device.GetType() == util.DeviceTypeKasa {
 		return runtime.Kasa().SetKasaDeviceStatus(device.GetID(), on)
 	} else {
 		return errors.New("unable to handle device type")

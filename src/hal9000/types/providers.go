@@ -10,7 +10,7 @@ type Logger interface {
 type PersonProvider interface {
 	People() []Person
 	GetPersonByName(name string) (Person, error)
-	SendMessageToPerson(recipient Person, message ResponseMessage) error
+	SendMessageToPerson(runtime Runtime, recipient Person, message ResponseMessage) error
 	GetPersonByID(id string) (Person, error)
 }
 

@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"hal9000"
+	"hal9000/types"
+	"hal9000/util"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -37,48 +39,50 @@ func validateTwilioRequest(authToken string, URL string, request *http.Request, 
 	return nil
 }
 
-func handleSMS(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
-	formValues, err := url.ParseQuery(string(body))
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
-	err = validateTwilioRequest(os.Getenv("TWILIO_AUTH_TOKEN"), os.Getenv("SMS_ENDPOINT_URL"), req, formValues)
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
-
-	iface := hal9000.InterfaceTypeSMS{Number: formValues.Get("From")}
-	ses, err := hal9000.GetSessionWithInterfaceID(iface.ID())
-	if err == hal9000.ErrorSessionNotFound {
-		owner, err := hal9000.DetermineOwnerOfInterface(iface)
+func handleSMS(runtime types.Runtime) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			errorResponse(w, err)
 			return
 		}
-		ses = hal9000.NewSession(owner, iface)
-	} else if err != nil {
-		errorResponse(w, err)
-		return
-	}
+		formValues, err := url.ParseQuery(string(body))
+		if err != nil {
+			errorResponse(w, err)
+			return
+		}
+		err = validateTwilioRequest(os.Getenv("TWILIO_AUTH_TOKEN"), os.Getenv("SMS_ENDPOINT_URL"), req, formValues)
+		if err != nil {
+			errorResponse(w, err)
+			return
+		}
 
-	response, err := ses.ProcessIncomingMessage(hal9000.RequestMessage{Message: formValues.Get("Body")})
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
+		iface := hal9000.InterfaceTypeSMS{Number: formValues.Get("From")}
+		ses, err := runtime.SessionStore().GetSessionWithInterfaceID(iface.ID())
+		if err == util.ErrorSessionNotFound {
+			owner, err := runtime.InterfaceStore().DetermineInterfaceOwner(runtime, iface)
+			if err != nil {
+				errorResponse(w, err)
+				return
+			}
+			ses = hal9000.NewSession(runtime, owner, iface)
+		} else if err != nil {
+			errorResponse(w, err)
+			return
+		}
 
-	err = ses.Interface.SendMessage(response)
-	if err != nil {
-		errorResponse(w, err)
-		return
+		response, err := hal9000.ProcessIncomingMessage(runtime, &ses, types.RequestMessage{Message: formValues.Get("Body")})
+		if err != nil {
+			errorResponse(w, err)
+			return
+		}
+
+		err = ses.Interface.SendMessage(response)
+		if err != nil {
+			errorResponse(w, err)
+			return
+		}
+		w.WriteHeader(200)
+		w.Write([]byte(""))
 	}
-	w.WriteHeader(200)
-	w.Write([]byte(""))
 }
