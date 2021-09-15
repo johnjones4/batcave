@@ -40,12 +40,12 @@ func (i InterfaceTypeSocket) SendMessage(m types.ResponseMessage) error {
 }
 
 func (i InterfaceTypeSocket) SendPrompt(p string) error {
-	_, err := i.Connection.Write([]byte(fmt.Sprintf("%s>>>", p)))
+	_, err := i.Connection.Write([]byte(fmt.Sprintf("%s> ", p)))
 	return err
 }
 
 func (i InterfaceTypeSocket) SendError(err error) error {
-	_, err1 := i.Connection.Write([]byte(fmt.Sprintf("ERROR: %s", fmt.Sprint(err))))
+	_, err1 := i.Connection.Write([]byte(fmt.Sprintf("ERROR: %s\n", fmt.Sprint(err))))
 	return err1
 }
 
@@ -99,6 +99,9 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 	for {
 		iface.SendPrompt("HAL9000")
 		input := <-readChannel
+		if strings.ToLower(input) == "exit" {
+			return
+		}
 		halReq := types.RequestMessage{Message: input}
 
 		response, err := hal9000.ProcessIncomingMessage(runtime, &ses, halReq)
