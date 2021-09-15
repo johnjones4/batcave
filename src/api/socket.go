@@ -52,6 +52,8 @@ func (i InterfaceTypeSocket) SendError(err error) error {
 func handleConnection(runtime types.Runtime, conn net.Conn) {
 	defer conn.Close()
 
+	iface := InterfaceTypeSocket{conn, true}
+
 	readChannel := make(chan string)
 	go (func() {
 		lastBuff := []byte{}
@@ -60,6 +62,7 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 			n, err := conn.Read(buff)
 			if err != nil {
 				runtime.Logger().LogError(err)
+				iface.Open = false
 				return
 			} else {
 				newLine := -1
@@ -80,8 +83,6 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 		}
 	})()
 
-	iface := InterfaceTypeSocket{conn, true}
-
 	iface.SendPrompt("USER ID")
 
 	userId := <-readChannel
@@ -99,6 +100,7 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 		iface.SendPrompt("HAL9000")
 		input := <-readChannel
 		if strings.ToLower(input) == "exit" {
+			iface.Open = false
 			return
 		}
 		halReq := types.RequestMessage{Message: input}
