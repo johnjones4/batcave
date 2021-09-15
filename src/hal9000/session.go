@@ -32,7 +32,7 @@ func NewSession(runtime types.Runtime, caller types.Person, ic types.Interface) 
 func ProcessIncomingMessage(runtime types.Runtime, s *types.Session, m types.RequestMessage) (types.ResponseMessage, error) {
 	requestTime := time.Now()
 
-	nextState, response, err := InitStateByName(s.StateString).ProcessIncomingMessage(runtime, s.Caller, m)
+	nextState, response, err := initStateByName(s.StateString).ProcessIncomingMessage(runtime, s.Caller, m)
 	if err != nil {
 		runtime.Logger().LogError(err)
 		return util.MessageError(err), nil

@@ -19,6 +19,8 @@ func main() {
 		return
 	}
 
+	go startSocketServer(runtime)
+
 	http.HandleFunc("/ws", wsHandler(runtime))
 	http.HandleFunc("/sms", handleSMS(runtime))
 

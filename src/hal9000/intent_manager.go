@@ -6,7 +6,7 @@ import (
 	"hal9000/types"
 )
 
-func ErrorNotImplemented(intentType string) error {
+func errorNotImplemented(intentType string) error {
 	return fmt.Errorf("not implemented: %s", intentType)
 }
 
@@ -26,7 +26,7 @@ func GetIntentForIncomingMessage(runtime types.Runtime, caller types.Person, m t
 	} else if m.IntentLabel == "calendar_add" {
 		return intents.NewCalendarAddIntent(m)
 	} else if m.IntentLabel == "job" {
-		return nil, ErrorNotImplemented(m.IntentLabel)
+		return nil, errorNotImplemented(m.IntentLabel)
 	} else {
 		return nil, fmt.Errorf("no intent for %s", m.IntentLabel)
 	}
