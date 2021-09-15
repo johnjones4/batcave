@@ -62,7 +62,6 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 				runtime.Logger().LogError(err)
 				return
 			} else {
-				fmt.Printf("got %d bytes\n", n)
 				newLine := -1
 				for i, b := range buff[:n] {
 					if b == '\n' || b == '\r' {
@@ -74,7 +73,6 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 					lastBuff = append(lastBuff, buff[:n]...)
 				} else {
 					nextStr := strings.Trim(string(append(lastBuff, buff[:newLine]...)), " \n\r\t")
-					fmt.Println(nextStr)
 					lastBuff = buff[newLine:n]
 					readChannel <- nextStr
 				}

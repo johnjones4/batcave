@@ -87,7 +87,7 @@ func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 		for {
 			_, request, err := c.ReadMessage()
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 				iface.Open = false
 				return
 			}
@@ -95,28 +95,28 @@ func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 			var halReq types.RequestMessage
 			err = json.Unmarshal(request, &halReq)
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 				iface.Open = false
 				return
 			}
 
 			response, err := hal9000.ProcessIncomingMessage(runtime, &ses, halReq)
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 				iface.Open = false
 				return
 			}
 
 			err = ses.Interface.SendMessage(response)
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 				iface.Open = false
 				return
 			}
 
 			runtime.SessionStore().SaveSession(ses)
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 				iface.Open = false
 				return
 			}
