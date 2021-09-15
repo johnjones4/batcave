@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"hal9000/types"
 	"hal9000/util"
 	"io/ioutil"
@@ -31,7 +32,7 @@ type jobProviderConcrete struct {
 	jobs []types.Job
 }
 
-func InitJobProvider() (types.JobProvider, error) {
+func InitJobProvider(runtime types.Runtime) (types.JobProvider, error) {
 	bytes, err := ioutil.ReadFile(os.Getenv("JOBS_MANIFEST_PATH"))
 	if err != nil {
 		return nil, err
@@ -45,12 +46,34 @@ func InitJobProvider() (types.JobProvider, error) {
 	for i, j := range jobsConcrete {
 		jobs[i] = j
 	}
-	return jobProviderConcrete{jobs}, nil
-}
+	jp := jobProviderConcrete{jobs}
 
-func (jp jobProviderConcrete) StartAbnormalJobWatchLoop(runtime types.Runtime) error {
-	return nil
-	//TODO
+	go (func() {
+		for {
+			for _, j := range jp.jobs {
+				var status types.JobStatus
+				key := keyForJob(j)
+				err := runtime.KVStore().GetInterface(key, &status)
+				if err != nil {
+					runtime.Logger().LogError(err)
+				} else {
+					expectedUpdate := status.LastUpdate.Add(j.GetInterval())
+					if expectedUpdate.Before(time.Now()) {
+						err = jp.ReportJobStatus(runtime, j, types.JobStatusInfo{
+							State:       types.JobStateLate,
+							Description: fmt.Sprintf("Expected update at %s", expectedUpdate.Format(time.RFC1123)),
+						})
+						if err != nil {
+							runtime.Logger().LogError(err)
+						}
+					}
+				}
+			}
+			time.Sleep(time.Hour)
+		}
+	})()
+
+	return jp, nil
 }
 
 func (jp jobProviderConcrete) FindJobById(id string) (types.Job, error) {
@@ -62,26 +85,24 @@ func (jp jobProviderConcrete) FindJobById(id string) (types.Job, error) {
 	return nil, util.ErrorJobNotFound
 }
 
-func (jp jobProviderConcrete) UpdateJobStatus(job types.Job, status types.JobStatus) error {
-	return nil //TODO
-}
+func (jp jobProviderConcrete) ReportJobStatus(runtime types.Runtime, job types.Job, info types.JobStatusInfo) error {
+	status := types.JobStatus{
+		Info:       info,
+		LastUpdate: time.Now(),
+	}
 
-func (jp jobProviderConcrete) SendJobAlert(job types.Job, status types.JobStatus) error {
-	return nil //TODO
-}
+	key := keyForJob(job)
+	err := runtime.KVStore().SetInterface(key, status, time.Time{})
+	if err != nil {
+		return err
+	}
 
-func (jp jobProviderConcrete) ReportJobStatus(id string, status types.JobStatus) error {
-	job, err := jp.FindJobById(id)
-	if err != nil {
-		return err
-	}
-	err = jp.UpdateJobStatus(job, status)
-	if err != nil {
-		return err
-	}
-	err = jp.SendJobAlert(job, status)
-	if err != nil {
-		return err
-	}
+	m := types.ResponseMessage{Text: fmt.Sprintf("Job status update: %s: %s / %s", job.GetName(), status.Info.State, status.Info.Description)}
+	runtime.AlertQueue().Enqueue(m)
+
 	return nil
+}
+
+func keyForJob(job types.Job) string {
+	return fmt.Sprintf("job_%s", job.GetID())
 }

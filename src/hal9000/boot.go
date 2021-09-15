@@ -129,11 +129,11 @@ func BootUp() (types.Runtime, error) {
 			return nil
 		}},
 		LogStep{"jobs", func() error {
-			// jobs, err := service.InitJobProvider()
-			// if err != nil {
-			// 	return err
-			// }
-			// rt.jobs = jobs
+			jobs, err := service.InitJobProvider(&rt)
+			if err != nil {
+				return err
+			}
+			rt.jobs = jobs
 			return nil
 		}},
 		LogStep{"devices", func() error {

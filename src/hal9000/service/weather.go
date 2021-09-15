@@ -33,13 +33,12 @@ func InitWeatherProvider(runtime types.Runtime) (types.WeatherProvider, error) {
 			_, radar, _ := wp.MakeWeatherAPIForecastCall(lat, lon, time.Now())
 			alerts, err := wp.MakeWeatherAPIAlertCall(lat, lon)
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 			} else {
 				for _, alert := range alerts {
 					if !previouslyHandledAlerts.Contains(alert.Properties.ID) {
 						m := types.ResponseMessage{Text: fmt.Sprintf("Weather alert: %s", alert.Properties.Headline), URL: radar, Extra: nil}
 						runtime.AlertQueue().Enqueue(m)
-						fmt.Println(m)
 						previouslyHandledAlerts.Push(alert.Properties.ID)
 					}
 				}

@@ -44,9 +44,14 @@ type JobState string
 const (
 	JobStateNormal   = "normal"
 	JobStateAbnormal = "abnormal"
+	JobStateLate     = "late"
 )
 
+type JobStatusInfo struct {
+	State       JobState `json:"state"`
+	Description string   `json:"description"`
+}
 type JobStatus struct {
-	State      JobState  `json:"state"`
-	LastUpdate time.Time `json:"lastUpdate"`
+	Info       JobStatusInfo `json:"info"`
+	LastUpdate time.Time     `json:"lastUpdate"`
 }

@@ -1,7 +1,6 @@
 package hal9000
 
 import (
-	"fmt"
 	"hal9000/types"
 	"hal9000/util"
 	"time"
@@ -67,7 +66,7 @@ func ProcessIncomingMessage(runtime types.Runtime, s *types.Session, m types.Req
 				})
 				err := ses.Interface.SendMessage(response)
 				if err != nil {
-					fmt.Println(err) //todo error logging
+					runtime.Logger().LogError(err)
 				}
 			}
 		}

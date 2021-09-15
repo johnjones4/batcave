@@ -88,3 +88,19 @@ func (store *FileKVStore) Set(key string, value interface{}, expiration time.Tim
 func (store *FileKVStore) SetBytes(key string, value []byte, expiration time.Time) error {
 	return store.Set(key, base64.StdEncoding.EncodeToString([]byte(value)), expiration)
 }
+
+func (store *FileKVStore) GetInterface(key string, iface interface{}) error {
+	bytes := store.GetBytes(key, []byte{})
+	if len(bytes) == 0 {
+		return nil
+	}
+	return json.Unmarshal(bytes, iface)
+}
+
+func (store *FileKVStore) SetInterface(key string, iface interface{}, expiration time.Time) error {
+	bytes, err := json.Marshal(iface)
+	if err != nil {
+		return err
+	}
+	return store.SetBytes(key, bytes, expiration)
+}

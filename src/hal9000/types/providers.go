@@ -33,9 +33,7 @@ type KasaProvider interface {
 
 type JobProvider interface {
 	FindJobById(id string) (Job, error)
-	UpdateJobStatus(job Job, status JobStatus) error
-	SendJobAlert(job Job, status JobStatus) error
-	ReportJobStatus(id string, status JobStatus) error
+	ReportJobStatus(runtime Runtime, job Job, info JobStatusInfo) error
 }
 
 type WeatherProvider interface {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"hal9000/types"
 	"io/ioutil"
 	"net/http"
@@ -31,7 +30,7 @@ func InitGoogleProvider(runtime types.Runtime) (types.GoogleProvider, error) {
 		for {
 			err := gp.RefreshAuthToken(runtime)
 			if err != nil {
-				fmt.Println(err)
+				runtime.Logger().LogError(err)
 			}
 			time.Sleep(time.Minute)
 		}
@@ -47,7 +46,6 @@ type GoogleRefreshTokenResponse struct {
 func (gp googleProviderConcrete) RefreshAuthToken(runtime types.Runtime) error {
 	expiration := runtime.KVStore().GetInt(KVKeyGoogleAuthExpiration, 0)
 	accessToken := runtime.KVStore().GetString(KVKeyGoogleAuthAccessToken, "")
-	fmt.Println("token info", expiration, accessToken, time.Unix(int64(expiration), 0), time.Now())
 	if accessToken == "" || expiration == 0 || time.Unix(int64(expiration), 0).Before(time.Now()) {
 		refreshToken := os.Getenv("GOOGLE_REFRESH_TOKEN")
 
@@ -68,7 +66,6 @@ func (gp googleProviderConcrete) RefreshAuthToken(runtime types.Runtime) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(bytes))
 
 		var response GoogleRefreshTokenResponse
 		err = json.Unmarshal(bytes, &response)

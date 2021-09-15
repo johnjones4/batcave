@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"hal9000/types"
 	"os"
 	"strings"
@@ -35,7 +34,7 @@ func InitAlertQueue(runtime types.Runtime) (types.AlertQueue, error) {
 				for _, user := range users {
 					err := runtime.People().SendMessageToPerson(runtime, user, m)
 					if err != nil {
-						fmt.Println(err)
+						runtime.Logger().LogError(err)
 					}
 				}
 			}
