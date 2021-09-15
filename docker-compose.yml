@@ -25,6 +25,7 @@ services:
       - mosquitto
     ports:
       - 8080:8080
+      - 9090:9090
     volumes:
       - hal:/data
   mqtt2kasa:
