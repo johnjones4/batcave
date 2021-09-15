@@ -4,23 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"hal9000/types"
-	"os"
-	"path"
+	"log"
 	"time"
 )
 
 type loggerConcrete struct {
-	file *os.File
+	log *log.Logger
 }
 
 func InitLogger() (types.Logger, error) {
-	_ = os.Mkdir(os.Getenv("LOG_DIR"), os.ModePerm|os.ModeDir)
-	logFile := path.Join(os.Getenv("LOG_DIR"), fmt.Sprintf("%d.txt", int(time.Now().Unix())))
-	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return nil, err
-	}
-	return loggerConcrete{f}, nil
+	l := log.Default()
+	return loggerConcrete{l}, nil
 }
 
 func (l loggerConcrete) LogEvent(event string, info interface{}) {
@@ -30,16 +24,12 @@ func (l loggerConcrete) LogEvent(event string, info interface{}) {
 		Info:      info,
 	})
 	if err != nil {
-		fmt.Println(err)
+		l.LogError(err)
 		return
 	}
-	_, err = l.file.WriteString(string(eventBytes) + "\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	l.log.Printf("EVENT|%s\n", string(eventBytes))
 }
 
 func (l loggerConcrete) LogError(err error) {
-	fmt.Println(err)
+	l.log.Printf("ERROR|%s\n", fmt.Sprint(err))
 }
