@@ -18,7 +18,6 @@ services:
       - KASA_MQTT_URL=tcp://mosquitto:1883
       - HTTP_SERVER=0.0.0.0:8080
       - SOCKET_SERVER=0.0.0.0:9090
-      - LOG_DIR=/data/logs
       - CALENDARS_MANIFEST_PATH=/data/calendars.json
     env_file:
       - secrets.env

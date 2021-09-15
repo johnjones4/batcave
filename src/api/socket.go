@@ -60,6 +60,7 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 			n, err := conn.Read(buff)
 			if err != nil {
 				runtime.Logger().LogError(err)
+				return
 			} else {
 				fmt.Printf("got %d bytes\n", n)
 				newLine := -1
@@ -106,21 +107,21 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 
 		response, err := hal9000.ProcessIncomingMessage(runtime, &ses, halReq)
 		if err != nil {
-			fmt.Println(err)
+			runtime.Logger().LogError(err)
 			iface.Open = false
 			return
 		}
 
 		err = ses.Interface.SendMessage(response)
 		if err != nil {
-			fmt.Println(err)
+			runtime.Logger().LogError(err)
 			iface.Open = false
 			return
 		}
 
 		runtime.SessionStore().SaveSession(ses)
 		if err != nil {
-			fmt.Println(err)
+			runtime.Logger().LogError(err)
 			iface.Open = false
 			return
 		}
