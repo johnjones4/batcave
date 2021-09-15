@@ -35,8 +35,18 @@ func (i InterfaceTypeSocket) SupportsVisuals() bool {
 }
 
 func (i InterfaceTypeSocket) SendMessage(m types.ResponseMessage) error {
-	_, err := i.Connection.Write([]byte(m.Text))
+	_, err := i.Connection.Write([]byte(m.Text + "\n"))
 	return err
+}
+
+func (i InterfaceTypeSocket) SendPrompt(p string) error {
+	_, err := i.Connection.Write([]byte(fmt.Sprintf("%s>>>", p)))
+	return err
+}
+
+func (i InterfaceTypeSocket) SendError(err error) error {
+	_, err1 := i.Connection.Write([]byte(fmt.Sprintf("ERROR: %s", fmt.Sprint(err))))
+	return err1
 }
 
 func handleConnection(runtime types.Runtime, conn net.Conn) {
@@ -71,18 +81,23 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 		}
 	})()
 
+	iface := InterfaceTypeSocket{conn, true}
+
+	iface.SendPrompt("USER ID")
+
 	userId := <-readChannel
 	person, err := runtime.People().GetPersonByID(userId)
 	if err != nil {
 		runtime.Logger().LogError(err)
+		iface.SendError(err)
 		return
 	}
 
-	iface := InterfaceTypeSocket{conn, true}
 	runtime.InterfaceStore().Register(person, iface)
 	ses := hal9000.NewSession(runtime, person, iface)
 
 	for {
+		iface.SendPrompt("HAL9000")
 		input := <-readChannel
 		halReq := types.RequestMessage{Message: input}
 
