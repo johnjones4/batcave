@@ -101,7 +101,7 @@ func (pp personProviderConcrete) SendMessageToPerson(runtime types.Runtime, reci
 		})
 		err := ses.Interface.SendMessage(message)
 		if err != nil {
-			return err
+			runtime.Logger().LogError(err)
 		}
 	}
 	return nil

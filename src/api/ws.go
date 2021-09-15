@@ -19,38 +19,44 @@ type InterfaceTypeWebsocket struct {
 	VisualsSupported bool
 }
 
-func (i InterfaceTypeWebsocket) Type() string {
+func (i *InterfaceTypeWebsocket) Type() string {
 	return "websocket"
 }
 
-func (i InterfaceTypeWebsocket) ID() string {
+func (i *InterfaceTypeWebsocket) ID() string {
 	h := sha1.New()
 	h.Write([]byte(i.Connection.RemoteAddr().String()))
 	bs := h.Sum(nil)
 	return fmt.Sprintf("ws-%x", bs)
 }
 
-func (i InterfaceTypeWebsocket) IsStillValid() bool {
+func (i *InterfaceTypeWebsocket) IsStillValid() bool {
 	return i.Open
 }
 
-func (i InterfaceTypeWebsocket) SupportsVisuals() bool {
+func (i *InterfaceTypeWebsocket) SupportsVisuals() bool {
 	return i.VisualsSupported
 }
 
-func (i InterfaceTypeWebsocket) SendMessage(m types.ResponseMessage) error {
+func (i *InterfaceTypeWebsocket) SendMessage(m types.ResponseMessage) error {
 	responseBytes, err := json.Marshal(m)
 	if err != nil {
+		i.Open = false
 		return err
 	}
 	err = i.Connection.WriteMessage(websocket.TextMessage, responseBytes)
 	if err != nil {
+		i.Open = false
 		return err
 	}
 	return nil
 }
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -81,8 +87,8 @@ func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 		defer c.Close()
 
 		iface := InterfaceTypeWebsocket{c, true, visuals}
-		runtime.InterfaceStore().Register(person, iface)
-		ses := hal9000.NewSession(runtime, person, iface)
+		runtime.InterfaceStore().Register(person, &iface)
+		ses := hal9000.NewSession(runtime, person, &iface)
 
 		for {
 			_, request, err := c.ReadMessage()

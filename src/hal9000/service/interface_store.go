@@ -33,12 +33,12 @@ func (is *interfaceStoreConcrete) GetInterfacesForPerson(p types.Person, id stri
 				removeSet = append(removeSet, i)
 			}
 		}
-		if len(removeSet) > 0 {
-			for _, i := range removeSet {
-				ifaces = append(ifaces[:i], ifaces[i+1:]...)
-			}
-			is.interfaces[p.GetID()] = ifaces
-		}
+		// if len(removeSet) > 0 {
+		// 	for _, i := range removeSet {
+		// 		ifaces = append(ifaces[:i], ifaces[i+1:]...)
+		// 	}
+		// 	is.interfaces[p.GetID()] = ifaces
+		// }TODO
 	}
 	return interfaces
 }

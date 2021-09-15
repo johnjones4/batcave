@@ -46,13 +46,15 @@ func (ss *sessionStoreConcrete) GetUserSessions(p types.Person) []types.Session 
 			}
 		}
 	}
-	if len(unregs) > 0 {
-		newSessions := ss.sessions
-		for _, i := range unregs {
-			newSessions = append(newSessions[:i], newSessions[i+1:]...)
-		}
-		ss.sessions = newSessions
-	}
+	// if len(unregs) > 0 {
+	// newSessions := ss.sessions
+	// for _, i := range unregs {
+	// 	if i < len(newSessions) {
+	// 		newSessions = append(newSessions[:i], newSessions[i+1:]...)
+	// 	}
+	// }
+	// ss.sessions = newSessions TODO
+	// }
 	return usessions
 }
 

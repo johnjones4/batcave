@@ -27,7 +27,7 @@ func (l loggerConcrete) LogEvent(event string, info interface{}) {
 		l.LogError(err)
 		return
 	}
-	l.log.Printf("EVENT|%s\n", string(eventBytes))
+	l.log.Printf("EVENT|%s|%s\n", event, string(eventBytes))
 }
 
 func (l loggerConcrete) LogError(err error) {
