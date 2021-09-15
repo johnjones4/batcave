@@ -117,6 +117,7 @@ func startSocketServer(runtime types.Runtime) {
 	}
 	for {
 		conn, err := ln.Accept()
+		fmt.Printf("new connection from %s\n", conn.RemoteAddr().String())
 		if err != nil {
 			runtime.Logger().LogError(err)
 		} else {
