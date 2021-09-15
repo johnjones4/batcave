@@ -8,6 +8,7 @@ services:
       - NER_MODEL_PATH=/usr/src/MITIE-0.7//MITIE-models/english/ner_model.dat
       - MODEL_FILE=/data/trained_subtype.data
       - SUBTYPE_MAP_FILE=/data/subtype_map.json
+      - JOBS_MANIFEST_PATH=/data/jobs.json
       - PEOPLE_MANIFEST_PATH=/data/people.json
       - DEFAULT_WEATHER_LAT=38.907192
       - DEFAULT_WEATHER_LON=-77.036873
