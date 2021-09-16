@@ -1,15 +1,27 @@
+:root {
+  --color-red: #e84855;
+  --color-green: #21a179;
+  --color-black: #272727;
+  --color-white: #f9f9f9;
+  --color-blue: #48acf0;
+  --font-michroma:  'Michroma', sans-serif
+}
+
+
 body {
+  font-family: var(--font-michroma);
   margin: 0;
   padding: 0;
-  background: black;
+  background: var(--color-black);
+  color: var(--color-white);
 }
 
 .App {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-auto-rows: 1fr;
-  grid-gap: 10px;
-  padding: 10px;
+  grid-gap: 40px;
+  padding: 40px;
   position: fixed;
   top: 0;
   left: 0;
@@ -19,6 +31,8 @@ body {
 
 .Visual {
   position: relative;
+  border: solid 4px var(--color-white);
+  background: black;
 }
 
 .Visual-image {
@@ -58,11 +72,10 @@ body {
   grid-column: 2;
   grid-row: 2;
   position: relative;
-  background: white;
 }
 
 .Chat-log {
-  overflow: scroll;
+  overflow-y: scroll;
   position: absolute;
   top: 0;
   left: 0;
@@ -76,24 +89,21 @@ body {
   padding: 0;
 }
 
-.Chat-log li {
+.Chat-item {
+  padding: 5px;
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 
-.Chat-item {
-  padding-top: 5px;
-}
-
-
 .Chat-item-hal {
-  background: gray;
+  background: var(--color-blue);
 }
 
 .Chat-item-sender {
-  font-weight: bold;
+  text-decoration: underline;
   margin-right: 5px;
+  width: 60px;
+  display: inline-block;
 }
 
 .Chat-input {
@@ -106,12 +116,29 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
+  border: solid 2px var(--color-white);
 }
 
 .Chat-input-text {
   flex-grow: 1;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--color-white);
+  font-family: var(--font-michroma);
+  padding: 0 10px;
+}
+
+.Chat-input-text:focus {
+  border: none;
+  outline: none;
 }
 
 .Chat-input-button {
-
+  border: none;
+  color: none;
+  font-family: var(--font-michroma);
+  background: var(--color-green);
+  color: var(--color-white);
+  padding: 0 20px;
 }
