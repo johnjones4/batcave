@@ -50,16 +50,16 @@ func InitDisplayablesProvider() (types.DisplayablesProvider, error) {
 	for i, d := range displayablesConcrete {
 		displayables[i] = d
 	}
-	return displayablesProviderConcrete{displayables}, nil
+	return &displayablesProviderConcrete{displayables}, nil
 }
 
-func (dp displayablesProviderConcrete) FindDisplayableInString(str string) (types.Displayable, error) {
+func (dp *displayablesProviderConcrete) FindDisplayableInString(str string) (*types.Displayable, error) {
 	lcStr := strings.ToLower(str)
 	for _, displayable := range dp.displayables {
 		for _, name := range displayable.GetNames() {
 			lcName := strings.ToLower(name)
 			if strings.Contains(lcStr, lcName) {
-				return displayable, nil
+				return &displayable, nil
 			}
 		}
 	}

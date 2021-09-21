@@ -31,7 +31,7 @@ func NewWeatherIntent(m types.ParsedRequestMessage) (weatherIntent, error) {
 	return weatherIntent{locale, date}, nil
 }
 
-func (i weatherIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
+func (i weatherIntent) Execute(runtime *types.Runtime, lastState *types.State) (*types.State, types.ResponseMessage, error) {
 	forecast, radarUrl, err := getWeather(runtime, i.date, i.locale)
 	if err != nil {
 		return lastState, types.ResponseMessage{}, err
@@ -62,8 +62,8 @@ func formulateWeatherResponsePreamble(date time.Time, locale string) string {
 	return message
 }
 
-func getWeather(runtime types.Runtime, date time.Time, locale string) (string, string, error) {
-	lat, lon := runtime.Weather().DefaultLatLon() //TODo location provider
+func getWeather(runtime *types.Runtime, date time.Time, locale string) (string, string, error) {
+	lat, lon := (*(*runtime).Weather()).DefaultLatLon() //TODo location provider
 
 	if locale != "" {
 		geocoder := openstreetmap.Geocoder()
@@ -75,5 +75,5 @@ func getWeather(runtime types.Runtime, date time.Time, locale string) (string, s
 		lon = location.Lng
 	}
 
-	return runtime.Weather().MakeWeatherAPIForecastCall(lat, lon, date)
+	return (*(*runtime).Weather()).MakeWeatherAPIForecastCall(lat, lon, date)
 }

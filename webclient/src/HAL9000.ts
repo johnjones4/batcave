@@ -29,7 +29,10 @@ export class HAL9000 {
             }
         }
         this.webSocket.onerror = (e) => {
-            this.delegate.handleError(e)
+            window.location.reload()
+        }
+        this.webSocket.onclose = () => {
+            window.location.reload()
         }
     }
 

@@ -49,10 +49,11 @@ func (i InterfaceTypeSocket) SendError(err error) error {
 	return err1
 }
 
-func handleConnection(runtime types.Runtime, conn net.Conn) {
+func handleConnection(runtime *types.Runtime, conn net.Conn) {
 	defer conn.Close()
 
 	iface := InterfaceTypeSocket{conn, true}
+	var iface1 types.Interface = &iface
 
 	readChannel := make(chan string)
 	go (func() {
@@ -61,7 +62,7 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 			buff := make([]byte, 1024)
 			n, err := conn.Read(buff)
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 				iface.Open = false
 				return
 			} else {
@@ -86,15 +87,15 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 	iface.SendPrompt("USER ID")
 
 	userId := <-readChannel
-	person, err := runtime.People().GetPersonByID(userId)
+	person, err := (*(*runtime).People()).GetPersonByID(userId)
 	if err != nil {
-		runtime.Logger().LogError(err)
+		(*(*runtime).Logger()).LogError(err)
 		iface.SendError(err)
 		return
 	}
 
-	runtime.InterfaceStore().Register(person, iface)
-	ses := hal9000.NewSession(runtime, person, iface)
+	(*(*runtime).InterfaceStore()).Register(person, &iface1)
+	ses := hal9000.NewSession(runtime, person, &iface1)
 
 	for {
 		iface.SendPrompt("HAL9000")
@@ -107,38 +108,41 @@ func handleConnection(runtime types.Runtime, conn net.Conn) {
 
 		response, err := hal9000.ProcessIncomingMessage(runtime, &ses, halReq)
 		if err != nil {
-			runtime.Logger().LogError(err)
+			(*(*runtime).Logger()).LogError(err)
 			iface.Open = false
 			return
 		}
 
-		err = ses.Interface.SendMessage(response)
+		err = (*ses.Interface).SendMessage(response)
 		if err != nil {
-			runtime.Logger().LogError(err)
+			(*(*runtime).Logger()).LogError(err)
 			iface.Open = false
 			return
 		}
 
-		runtime.SessionStore().SaveSession(ses)
+		(*(*runtime).SessionStore()).SaveSession(&ses)
 		if err != nil {
-			runtime.Logger().LogError(err)
+			(*(*runtime).Logger()).LogError(err)
 			iface.Open = false
 			return
 		}
 	}
 }
 
-func startSocketServer(runtime types.Runtime) {
+func startSocketServer(runtime *types.Runtime) {
 	ln, err := net.Listen("tcp", os.Getenv("SOCKET_SERVER"))
 	if err != nil {
-		runtime.Logger().LogError(err)
+		(*(*runtime).Logger()).LogError(err)
 		return
 	}
 	for {
 		conn, err := ln.Accept()
-		fmt.Printf("new connection from %s\n", conn.RemoteAddr().String())
+		(*(*runtime).Logger()).LogEvent("connection", ConnectionEvent{
+			Source: conn.RemoteAddr().String(),
+			Type:   ConnectionTypeSocket,
+		})
 		if err != nil {
-			runtime.Logger().LogError(err)
+			(*(*runtime).Logger()).LogError(err)
 		} else {
 			go handleConnection(runtime, conn)
 		}

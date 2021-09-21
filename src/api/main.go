@@ -19,10 +19,11 @@ func main() {
 		return
 	}
 
-	go startSocketServer(runtime)
+	go startSocketServer(&runtime)
 
-	http.HandleFunc("/ws", wsHandler(runtime))
-	http.HandleFunc("/sms", handleSMS(runtime))
+	http.HandleFunc("/api/ws", wsHandler(&runtime))
+	http.HandleFunc("/api/sms", handleSMS(&runtime))
+	http.HandleFunc("/api/job", jobHandler(&runtime))
 
 	fmt.Println("Ready")
 

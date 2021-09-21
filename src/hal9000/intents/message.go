@@ -8,7 +8,7 @@ import (
 
 type messageIntent struct {
 	caller  messageSender
-	person  types.Person
+	person  *types.Person
 	message types.ResponseMessage
 }
 
@@ -16,7 +16,7 @@ type messageSender interface {
 	GetOriginName() string
 }
 
-func NewMessageIntent(runtime types.Runtime, c messageSender, m types.ParsedRequestMessage) (messageIntent, error) {
+func NewMessageIntent(runtime *types.Runtime, c messageSender, m types.ParsedRequestMessage) (messageIntent, error) {
 	person, messageStart, err := getPersonInParsedRequestMessage(runtime, m)
 	if err != nil {
 		return messageIntent{}, err
@@ -31,8 +31,8 @@ func NewMessageIntent(runtime types.Runtime, c messageSender, m types.ParsedRequ
 	return messageIntent{c, person, sendMessage}, nil
 }
 
-func (i messageIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
-	err := runtime.People().SendMessageToPerson(runtime, i.person, i.message)
+func (i messageIntent) Execute(runtime *types.Runtime, lastState *types.State) (*types.State, types.ResponseMessage, error) {
+	err := (*(*runtime).People()).SendMessageToPerson(runtime, i.person, i.message)
 	if err != nil {
 		return nil, types.ResponseMessage{}, err
 	}
@@ -40,9 +40,9 @@ func (i messageIntent) Execute(runtime types.Runtime, lastState types.State) (ty
 	return lastState, util.MessageOk(), nil
 }
 
-func getPersonInParsedRequestMessage(runtime types.Runtime, m types.ParsedRequestMessage) (types.Person, int, error) {
+func getPersonInParsedRequestMessage(runtime *types.Runtime, m types.ParsedRequestMessage) (*types.Person, int, error) {
 	for _, entity := range m.NamedEntities {
-		person, err := runtime.People().GetPersonByName(entity.Name)
+		person, err := (*(*runtime).People()).GetPersonByName(entity.Name)
 		if err != nil && err != util.ErrorPersonNotFound {
 			return nil, 0, err
 		} else if err != util.ErrorPersonNotFound {
@@ -55,7 +55,7 @@ func getPersonInParsedRequestMessage(runtime types.Runtime, m types.ParsedReques
 		for i := 0; i < len(nounSet.Tokens); i++ {
 			for j := len(nounSet.Tokens); j >= i+1; j-- {
 				nounStr := util.ConcatTokensInRange(nounSet.Tokens, i, j)
-				person, err := runtime.People().GetPersonByName(nounStr)
+				person, err := (*(*runtime).People()).GetPersonByName(nounStr)
 				if err != nil && err != util.ErrorPersonNotFound {
 					return nil, 0, err
 				} else if err != util.ErrorPersonNotFound {

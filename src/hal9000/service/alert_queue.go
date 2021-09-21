@@ -12,16 +12,16 @@ type alertQueueConcrete struct {
 	queue []types.ResponseMessage
 }
 
-func InitAlertQueue(runtime types.Runtime) (types.AlertQueue, error) {
+func InitAlertQueue(runtime *types.Runtime) (types.AlertQueue, error) {
 	q := alertQueueConcrete{
 		mutex: sync.Mutex{},
 		queue: make([]types.ResponseMessage, 0),
 	}
 
 	alertedUserNames := strings.Split(os.Getenv("ALERTED_USER_NAMES"), ",")
-	users := make([]types.Person, len(alertedUserNames))
+	users := make([]*types.Person, len(alertedUserNames))
 	for i, alertedUserName := range alertedUserNames {
-		person, err := runtime.People().GetPersonByName(alertedUserName)
+		person, err := (*(*runtime).People()).GetPersonByName(alertedUserName)
 		if err != nil {
 			return nil, err
 		}
@@ -32,9 +32,9 @@ func InitAlertQueue(runtime types.Runtime) (types.AlertQueue, error) {
 			q.mutex.Lock()
 			for _, m := range q.queue {
 				for _, user := range users {
-					err := runtime.People().SendMessageToPerson(runtime, user, m)
+					err := (*(*runtime).People()).SendMessageToPerson(runtime, user, m)
 					if err != nil {
-						runtime.Logger().LogError(err)
+						(*(*runtime).Logger()).LogError(err)
 					}
 				}
 			}

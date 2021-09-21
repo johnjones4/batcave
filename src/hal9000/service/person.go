@@ -56,11 +56,15 @@ func InitPersonProvider() (types.PersonProvider, error) {
 	return personProviderConcrete{people}, nil
 }
 
-func (pp personProviderConcrete) People() []types.Person {
-	return pp.people
+func (pp personProviderConcrete) People() []*types.Person {
+	peeps := make([]*types.Person, len(pp.people))
+	for i, p := range pp.people {
+		peeps[i] = &p
+	}
+	return peeps
 }
 
-func (pp personProviderConcrete) GetPersonByName(name string) (types.Person, error) {
+func (pp personProviderConcrete) GetPersonByName(name string) (*types.Person, error) {
 	nameables := make([]types.Nameable, len(pp.people))
 	for i, p := range pp.people {
 		nameables[i] = p
@@ -69,18 +73,19 @@ func (pp personProviderConcrete) GetPersonByName(name string) (types.Person, err
 	lcName := strings.ToLower(name)
 	for _, nameable := range sortedNameables {
 		if strings.ToLower(nameable.Name) == lcName {
-			return nameable.Nameable.(types.Person), nil
+			person := nameable.Nameable.(types.Person)
+			return &person, nil
 		}
 	}
 	return nil, util.ErrorPersonNotFound
 }
 
-func (pp personProviderConcrete) SendMessageToPerson(runtime types.Runtime, recipient types.Person, message types.ResponseMessage) error {
-	sessions := runtime.SessionStore().GetUserSessions(recipient)
+func (pp personProviderConcrete) SendMessageToPerson(runtime *types.Runtime, recipient *types.Person, message types.ResponseMessage) error {
+	sessions := (*(*runtime).SessionStore()).GetUserSessions(recipient)
 	if len(sessions) == 0 {
-		ics := runtime.InterfaceStore().GetInterfacesForPerson(recipient, "")
+		ics := (*(*runtime).InterfaceStore()).GetInterfacesForPerson(recipient, "")
 		if len(ics) == 0 {
-			return util.ErrorNoInterfacesAvailable(recipient)
+			return util.ErrorNoInterfacesAvailable(*recipient)
 		}
 		for _, ic := range ics {
 			ses := types.Session{
@@ -90,27 +95,27 @@ func (pp personProviderConcrete) SendMessageToPerson(runtime types.Runtime, reci
 				Interface:   ic,
 				StateString: util.StateTypeDefault,
 			}
-			runtime.SessionStore().SaveSession(ses)
-			sessions = append(sessions, ses)
+			(*(*runtime).SessionStore()).SaveSession(&ses)
+			sessions = append(sessions, &ses)
 		}
 	}
 	for _, ses := range sessions {
-		runtime.Logger().LogEvent("break_in", map[string]interface{}{
+		(*(*runtime).Logger()).LogEvent("break_in", map[string]interface{}{
 			"session": ses.ID,
 			"message": message,
 		})
-		err := ses.Interface.SendMessage(message)
+		err := (*ses.Interface).SendMessage(message)
 		if err != nil {
-			runtime.Logger().LogError(err)
+			(*(*runtime).Logger()).LogError(err)
 		}
 	}
 	return nil
 }
 
-func (pp personProviderConcrete) GetPersonByID(id string) (types.Person, error) {
+func (pp personProviderConcrete) GetPersonByID(id string) (*types.Person, error) {
 	for _, person := range pp.people {
 		if person.GetID() == id {
-			return person, nil
+			return &person, nil
 		}
 	}
 	return nil, util.ErrorPersonNotFound

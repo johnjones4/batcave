@@ -17,7 +17,7 @@ type weatherProviderConcrete struct {
 	defaultLon float64
 }
 
-func InitWeatherProvider(runtime types.Runtime) (types.WeatherProvider, error) {
+func InitWeatherProvider(runtime *types.Runtime) (types.WeatherProvider, error) {
 	lat, err := strconv.ParseFloat(os.Getenv("DEFAULT_WEATHER_LAT"), 64)
 	if err != nil {
 		return nil, err
@@ -33,12 +33,12 @@ func InitWeatherProvider(runtime types.Runtime) (types.WeatherProvider, error) {
 			_, radar, _ := wp.MakeWeatherAPIForecastCall(lat, lon, time.Now())
 			alerts, err := wp.MakeWeatherAPIAlertCall(lat, lon)
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 			} else {
 				for _, alert := range alerts {
 					if !previouslyHandledAlerts.Contains(alert.Properties.ID) {
 						m := types.ResponseMessage{Text: fmt.Sprintf("Weather alert: %s", alert.Properties.Headline), URL: radar, Extra: nil}
-						runtime.AlertQueue().Enqueue(m)
+						(*(*runtime).AlertQueue()).Enqueue(m)
 						previouslyHandledAlerts.Push(alert.Properties.ID)
 					}
 				}

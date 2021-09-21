@@ -32,7 +32,7 @@ type jobProviderConcrete struct {
 	jobs []types.Job
 }
 
-func InitJobProvider(runtime types.Runtime) (types.JobProvider, error) {
+func InitJobProvider(runtime *types.Runtime) (types.JobProvider, error) {
 	bytes, err := ioutil.ReadFile(os.Getenv("JOBS_MANIFEST_PATH"))
 	if err != nil {
 		return nil, err
@@ -53,18 +53,18 @@ func InitJobProvider(runtime types.Runtime) (types.JobProvider, error) {
 			for _, j := range jp.jobs {
 				var status types.JobStatus
 				key := keyForJob(j)
-				err := runtime.KVStore().GetInterface(key, &status)
+				err := (*(*runtime).KVStore()).GetInterface(key, &status)
 				if err != nil {
-					runtime.Logger().LogError(err)
+					(*(*runtime).Logger()).LogError(err)
 				} else {
 					expectedUpdate := status.LastUpdate.Add(j.GetInterval())
 					if expectedUpdate.Before(time.Now()) {
-						err = jp.ReportJobStatus(runtime, j, types.JobStatusInfo{
+						err = jp.ReportJobStatus(runtime, &j, &types.JobStatusInfo{
 							State:       types.JobStateLate,
 							Description: fmt.Sprintf("Expected update at %s", expectedUpdate.Format(time.RFC1123)),
 						})
 						if err != nil {
-							runtime.Logger().LogError(err)
+							(*(*runtime).Logger()).LogError(err)
 						}
 					}
 				}
@@ -73,32 +73,32 @@ func InitJobProvider(runtime types.Runtime) (types.JobProvider, error) {
 		}
 	})()
 
-	return jp, nil
+	return &jp, nil
 }
 
-func (jp jobProviderConcrete) FindJobById(id string) (types.Job, error) {
+func (jp *jobProviderConcrete) FindJobById(id string) (*types.Job, error) {
 	for _, job := range jp.jobs {
 		if job.GetID() == id {
-			return job, nil
+			return &job, nil
 		}
 	}
 	return nil, util.ErrorJobNotFound
 }
 
-func (jp jobProviderConcrete) ReportJobStatus(runtime types.Runtime, job types.Job, info types.JobStatusInfo) error {
+func (jp *jobProviderConcrete) ReportJobStatus(runtime *types.Runtime, job *types.Job, info *types.JobStatusInfo) error {
 	status := types.JobStatus{
-		Info:       info,
+		Info:       *info,
 		LastUpdate: time.Now(),
 	}
 
-	key := keyForJob(job)
-	err := runtime.KVStore().SetInterface(key, status, time.Time{})
+	key := keyForJob(*job)
+	err := (*(*runtime).KVStore()).SetInterface(key, status, time.Time{})
 	if err != nil {
 		return err
 	}
 
-	m := types.ResponseMessage{Text: fmt.Sprintf("Job status update: %s: %s / %s", job.GetName(), status.Info.State, status.Info.Description)}
-	runtime.AlertQueue().Enqueue(m)
+	m := types.ResponseMessage{Text: fmt.Sprintf("Job status update: %s: %s / %s", (*job).GetName(), status.Info.State, status.Info.Description)}
+	(*(*runtime).AlertQueue()).Enqueue(m)
 
 	return nil
 }

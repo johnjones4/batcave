@@ -7,12 +7,12 @@ import (
 )
 
 type controlIntent struct {
-	device types.Device
+	device *types.Device
 	on     bool
 }
 
-func NewControlIntent(runtime types.Runtime, m types.ParsedRequestMessage, on bool) (controlIntent, error) {
-	device, err := runtime.Devices().FindDeviceInString(m.Original.Message)
+func NewControlIntent(runtime *types.Runtime, m types.ParsedRequestMessage, on bool) (controlIntent, error) {
+	device, err := (*(*runtime).Devices()).FindDeviceInString(m.Original.Message)
 	if err != nil {
 		return controlIntent{}, err
 	}
@@ -20,10 +20,10 @@ func NewControlIntent(runtime types.Runtime, m types.ParsedRequestMessage, on bo
 	return controlIntent{device, on}, nil
 }
 
-func (i controlIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
+func (i controlIntent) Execute(runtime *types.Runtime, lastState *types.State) (*types.State, types.ResponseMessage, error) {
 	var err error
-	if i.device.GetType() == util.DeviceTypeGroup {
-		for _, device := range i.device.GetDevices(runtime) {
+	if (*i.device).GetType() == util.DeviceTypeGroup {
+		for _, device := range (*i.device).GetDevices(runtime) {
 			err = ExecuteOnDevice(runtime, device, i.on)
 			if err != nil {
 				break
@@ -39,9 +39,9 @@ func (i controlIntent) Execute(runtime types.Runtime, lastState types.State) (ty
 	return lastState, util.MessageOk(), nil
 }
 
-func ExecuteOnDevice(runtime types.Runtime, device types.Device, on bool) error {
-	if device.GetType() == util.DeviceTypeKasa {
-		return runtime.Kasa().SetKasaDeviceStatus(device.GetID(), on)
+func ExecuteOnDevice(runtime *types.Runtime, device *types.Device, on bool) error {
+	if (*device).GetType() == util.DeviceTypeKasa {
+		return (*(*runtime).Kasa()).SetKasaDeviceStatus((*device).GetID(), on)
 	} else {
 		return errors.New("unable to handle device type")
 	}

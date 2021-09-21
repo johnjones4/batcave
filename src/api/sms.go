@@ -39,7 +39,7 @@ func validateTwilioRequest(authToken string, URL string, request *http.Request, 
 	return nil
 }
 
-func handleSMS(runtime types.Runtime) func(w http.ResponseWriter, req *http.Request) {
+func handleSMS(runtime *types.Runtime) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -58,26 +58,28 @@ func handleSMS(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 		}
 
 		iface := hal9000.InterfaceTypeSMS{Number: formValues.Get("From")}
-		ses, err := runtime.SessionStore().GetSessionWithInterfaceID(iface.ID())
+		var iface1 types.Interface = &iface
+		ses, err := (*(*runtime).SessionStore()).GetSessionWithInterfaceID(iface.ID())
 		if err == util.ErrorSessionNotFound {
-			owner, err := runtime.InterfaceStore().DetermineInterfaceOwner(runtime, iface)
+			owner, err := (*(*runtime).InterfaceStore()).DetermineInterfaceOwner(runtime, &iface1)
 			if err != nil {
 				errorResponse(w, err)
 				return
 			}
-			ses = hal9000.NewSession(runtime, owner, iface)
+			newSes := hal9000.NewSession(runtime, owner, &iface1)
+			ses = &newSes
 		} else if err != nil {
 			errorResponse(w, err)
 			return
 		}
 
-		response, err := hal9000.ProcessIncomingMessage(runtime, &ses, types.RequestMessage{Message: formValues.Get("Body")})
+		response, err := hal9000.ProcessIncomingMessage(runtime, ses, types.RequestMessage{Message: formValues.Get("Body")})
 		if err != nil {
 			errorResponse(w, err)
 			return
 		}
 
-		err = ses.Interface.SendMessage(response)
+		err = (*ses.Interface).SendMessage(response)
 		if err != nil {
 			errorResponse(w, err)
 			return

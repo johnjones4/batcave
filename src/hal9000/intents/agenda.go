@@ -24,8 +24,8 @@ func NewCalendarAgendaIntent(m types.ParsedRequestMessage) (calendarAgendaIntent
 	return calendarAgendaIntent{beginningOfDay, endOfDay}, nil
 }
 
-func (i calendarAgendaIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
-	events, err := runtime.Agenda().GetAgendaForDateRange(i.start, i.end)
+func (i calendarAgendaIntent) Execute(runtime *types.Runtime, lastState *types.State) (*types.State, types.ResponseMessage, error) {
+	events, err := (*(*runtime).Agenda()).GetAgendaForDateRange(i.start, i.end)
 	if err != nil {
 		return nil, types.ResponseMessage{}, err
 	}

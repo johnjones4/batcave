@@ -48,8 +48,8 @@ func (ac calendarAddIntent) GetName() string {
 	return ac.title
 }
 
-func (i calendarAddIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
-	err := runtime.Google().CreateNewEvent(runtime, i)
+func (i calendarAddIntent) Execute(runtime *types.Runtime, lastState *types.State) (*types.State, types.ResponseMessage, error) {
+	err := (*(*runtime).Google()).CreateNewEvent(runtime, i)
 	if err != nil {
 		return nil, types.ResponseMessage{}, err
 	}

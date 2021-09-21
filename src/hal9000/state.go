@@ -7,17 +7,17 @@ import (
 
 func initStateByName(name string) types.State {
 	if name == util.StateTypeDefault {
-		return defaultState{}
+		return &defaultState{}
 	}
-	return defaultState{}
+	return &defaultState{}
 }
 
 type defaultState struct{}
 
-func (s defaultState) Name() string { return util.StateTypeDefault }
+func (s *defaultState) Name() string { return util.StateTypeDefault }
 
-func (s defaultState) ProcessIncomingMessage(r types.Runtime, caller types.Person, input types.RequestMessage) (types.State, types.ResponseMessage, error) {
-	inputMessage, err := r.Parser().ProcessMessage(input)
+func (s *defaultState) ProcessIncomingMessage(r *types.Runtime, caller *types.Person, input types.RequestMessage) (*types.State, types.ResponseMessage, error) {
+	inputMessage, err := (*(*r).Parser()).ProcessMessage(input)
 	if err != nil {
 		return nil, types.ResponseMessage{}, err
 	}
@@ -27,5 +27,6 @@ func (s defaultState) ProcessIncomingMessage(r types.Runtime, caller types.Perso
 		return nil, types.ResponseMessage{}, err
 	}
 
-	return intent.Execute(r, s)
+	var s1 types.State = s
+	return intent.Execute(r, &s1)
 }

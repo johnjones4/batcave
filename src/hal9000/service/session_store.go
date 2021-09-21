@@ -6,14 +6,14 @@ import (
 )
 
 type sessionStoreConcrete struct {
-	sessions []types.Session
+	sessions []*types.Session
 }
 
 func InitSessionStore() types.SessionStore {
-	return &sessionStoreConcrete{make([]types.Session, 0)}
+	return &sessionStoreConcrete{make([]*types.Session, 0)}
 }
 
-func (ss *sessionStoreConcrete) SaveSession(ses types.Session) {
+func (ss *sessionStoreConcrete) SaveSession(ses *types.Session) {
 	for i, ses1 := range ss.sessions {
 		if ses1.ID == ses.ID {
 			ss.sessions[i] = ses
@@ -23,23 +23,23 @@ func (ss *sessionStoreConcrete) SaveSession(ses types.Session) {
 	ss.sessions = append(ss.sessions, ses)
 }
 
-func (ss *sessionStoreConcrete) GetVisualUserSessions(p types.Person) []types.Session {
+func (ss *sessionStoreConcrete) GetVisualUserSessions(p *types.Person) []*types.Session {
 	allSessions := ss.GetUserSessions(p)
-	visualSessions := make([]types.Session, 0)
+	visualSessions := make([]*types.Session, 0)
 	for _, s := range allSessions {
-		if s.Interface.SupportsVisuals() {
+		if (*s.Interface).SupportsVisuals() {
 			visualSessions = append(visualSessions, s)
 		}
 	}
 	return visualSessions
 }
 
-func (ss *sessionStoreConcrete) GetUserSessions(p types.Person) []types.Session {
-	usessions := make([]types.Session, 0)
+func (ss *sessionStoreConcrete) GetUserSessions(p *types.Person) []*types.Session {
+	usessions := make([]*types.Session, 0)
 	unregs := make([]int, 0)
 	for i, ses := range ss.sessions {
-		if ses.Caller.GetID() == p.GetID() {
-			if ses.Interface.IsStillValid() {
+		if (*ses.Caller).GetID() == (*p).GetID() {
+			if (*ses.Interface).IsStillValid() {
 				usessions = append(usessions, ses)
 			} else {
 				unregs = append(unregs, i)
@@ -58,20 +58,20 @@ func (ss *sessionStoreConcrete) GetUserSessions(p types.Person) []types.Session 
 	return usessions
 }
 
-func (ss *sessionStoreConcrete) GetSessionWithInterfaceID(id string) (types.Session, error) {
+func (ss *sessionStoreConcrete) GetSessionWithInterfaceID(id string) (*types.Session, error) {
 	for _, ses := range ss.sessions {
-		if ses.Interface.ID() == id {
+		if (*ses.Interface).ID() == id {
 			return ses, nil
 		}
 	}
-	return types.Session{}, util.ErrorSessionNotFound
+	return nil, util.ErrorSessionNotFound
 }
 
-func (ss *sessionStoreConcrete) GetSessionById(id string) (types.Session, error) {
+func (ss *sessionStoreConcrete) GetSessionById(id string) (*types.Session, error) {
 	for _, ses := range ss.sessions {
 		if ses.ID == id {
 			return ses, nil
 		}
 	}
-	return types.Session{}, util.ErrorSessionNotFound
+	return nil, util.ErrorSessionNotFound
 }

@@ -6,27 +6,27 @@ import (
 )
 
 type interfaceStoreConcrete struct {
-	interfaces map[string][]types.Interface
+	interfaces map[string][]*types.Interface
 }
 
 func InitInterfaceStore() types.InterfaceStore {
-	return &interfaceStoreConcrete{make(map[string][]types.Interface)}
+	return &interfaceStoreConcrete{make(map[string][]*types.Interface)}
 }
 
-func (is *interfaceStoreConcrete) Register(person types.Person, iface types.Interface) {
-	if _, ok := is.interfaces[person.GetID()]; !ok {
-		is.interfaces[person.GetID()] = make([]types.Interface, 0)
+func (is *interfaceStoreConcrete) Register(person *types.Person, iface *types.Interface) {
+	if _, ok := is.interfaces[(*person).GetID()]; !ok {
+		is.interfaces[(*person).GetID()] = make([]*types.Interface, 0)
 	}
-	is.interfaces[person.GetID()] = append(is.interfaces[person.GetID()], iface)
+	is.interfaces[(*person).GetID()] = append(is.interfaces[(*person).GetID()], iface)
 }
 
-func (is *interfaceStoreConcrete) GetInterfacesForPerson(p types.Person, id string) []types.Interface {
-	interfaces := make([]types.Interface, 0)
-	if ifaces, ok := is.interfaces[p.GetID()]; ok {
+func (is *interfaceStoreConcrete) GetInterfacesForPerson(p *types.Person, id string) []*types.Interface {
+	interfaces := make([]*types.Interface, 0)
+	if ifaces, ok := is.interfaces[(*p).GetID()]; ok {
 		removeSet := make([]int, 0)
 		for i, iface := range ifaces {
-			if iface.IsStillValid() {
-				if id == "" || (id != "" && id == iface.ID()) {
+			if (*iface).IsStillValid() {
+				if id == "" || (id != "" && id == (*iface).ID()) {
 					interfaces = append(interfaces, iface)
 				}
 			} else {
@@ -43,21 +43,21 @@ func (is *interfaceStoreConcrete) GetInterfacesForPerson(p types.Person, id stri
 	return interfaces
 }
 
-func (is *interfaceStoreConcrete) GetVisualInterfacesForPerson(p types.Person) []types.Interface {
-	interfaces := make([]types.Interface, 0)
+func (is *interfaceStoreConcrete) GetVisualInterfacesForPerson(p *types.Person) []*types.Interface {
+	interfaces := make([]*types.Interface, 0)
 	for _, iface := range is.GetInterfacesForPerson(p, "") {
-		if iface.SupportsVisuals() {
+		if (*iface).SupportsVisuals() {
 			interfaces = append(interfaces, iface)
 		}
 	}
 	return interfaces
 }
 
-func (is *interfaceStoreConcrete) DetermineInterfaceOwner(runtime types.Runtime, iface types.Interface) (types.Person, error) {
+func (is *interfaceStoreConcrete) DetermineInterfaceOwner(runtime *types.Runtime, iface *types.Interface) (*types.Person, error) {
 	for owner, ifaces := range is.interfaces {
 		for _, _iface := range ifaces {
-			if iface.ID() == _iface.ID() {
-				return runtime.People().GetPersonByID(owner)
+			if (*iface).ID() == (*_iface).ID() {
+				return (*(*runtime).People()).GetPersonByID(owner)
 			}
 		}
 	}

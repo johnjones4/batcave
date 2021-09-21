@@ -8,15 +8,15 @@ type Logger interface {
 }
 
 type PersonProvider interface {
-	People() []Person
-	GetPersonByName(name string) (Person, error)
-	SendMessageToPerson(runtime Runtime, recipient Person, message ResponseMessage) error
-	GetPersonByID(id string) (Person, error)
+	People() []*Person
+	GetPersonByName(name string) (*Person, error)
+	SendMessageToPerson(runtime *Runtime, recipient *Person, message ResponseMessage) error
+	GetPersonByID(id string) (*Person, error)
 }
 
 type DeviceProvider interface {
-	Devices() []Device
-	FindDeviceInString(str string) (Device, error)
+	Devices() []*Device
+	FindDeviceInString(str string) (*Device, error)
 }
 
 type AgendaProvider interface {
@@ -24,7 +24,7 @@ type AgendaProvider interface {
 }
 
 type DisplayablesProvider interface {
-	FindDisplayableInString(str string) (Displayable, error)
+	FindDisplayableInString(str string) (*Displayable, error)
 }
 
 type KasaProvider interface {
@@ -32,8 +32,8 @@ type KasaProvider interface {
 }
 
 type JobProvider interface {
-	FindJobById(id string) (Job, error)
-	ReportJobStatus(runtime Runtime, job Job, info JobStatusInfo) error
+	FindJobById(id string) (*Job, error)
+	ReportJobStatus(runtime *Runtime, job *Job, info *JobStatusInfo) error
 }
 
 type WeatherProvider interface {
@@ -44,8 +44,8 @@ type WeatherProvider interface {
 }
 
 type GoogleProvider interface {
-	RefreshAuthToken(runtime Runtime) error
-	CreateNewEvent(runtime Runtime, event Event) error
+	RefreshAuthToken(runtime *Runtime) error
+	CreateNewEvent(runtime *Runtime, event Event) error
 }
 
 type ParserProvider interface {

@@ -8,11 +8,11 @@ import (
 )
 
 type displayIntent struct {
-	display types.Displayable
+	display *types.Displayable
 }
 
-func NewDisplayIntent(runtime types.Runtime, m types.ParsedRequestMessage) (displayIntent, error) {
-	display, err := runtime.Displays().FindDisplayableInString(m.Original.Message)
+func NewDisplayIntent(runtime *types.Runtime, m types.ParsedRequestMessage) (displayIntent, error) {
+	display, err := (*(*runtime).Displays()).FindDisplayableInString(m.Original.Message)
 	if err != nil {
 		return displayIntent{}, err
 	}
@@ -20,11 +20,11 @@ func NewDisplayIntent(runtime types.Runtime, m types.ParsedRequestMessage) (disp
 	return displayIntent{display}, nil
 }
 
-func (i displayIntent) Execute(runtime types.Runtime, lastState types.State) (types.State, types.ResponseMessage, error) {
-	if i.display.GetType() == util.DisplayTypeVideo && i.display.GetSource() == util.DisplaySourceGoogle {
+func (i displayIntent) Execute(runtime *types.Runtime, lastState *types.State) (*types.State, types.ResponseMessage, error) {
+	if (*i.display).GetType() == util.DisplayTypeVideo && (*i.display).GetSource() == util.DisplaySourceGoogle {
 		m := types.ResponseMessage{
-			Text:  fmt.Sprintf("Here's the %s.", i.display.GetNames()[0]),
-			URL:   i.display.GetURL(),
+			Text:  fmt.Sprintf("Here's the %s.", (*i.display).GetNames()[0]),
+			URL:   (*i.display).GetURL(),
 			Extra: i,
 		}
 		return lastState, m, nil

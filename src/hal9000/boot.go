@@ -28,64 +28,66 @@ type runtimeConcrete struct {
 	interfaceStore types.InterfaceStore
 }
 
-func (rt *runtimeConcrete) Devices() types.DeviceProvider {
-	return rt.devices
+func (rt *runtimeConcrete) Devices() *types.DeviceProvider {
+	return &rt.devices
 }
 
-func (rt *runtimeConcrete) Agenda() types.AgendaProvider {
-	return rt.agenda
+func (rt *runtimeConcrete) Agenda() *types.AgendaProvider {
+	return &rt.agenda
 }
 
-func (rt *runtimeConcrete) People() types.PersonProvider {
-	return rt.people
+func (rt *runtimeConcrete) People() *types.PersonProvider {
+	return &rt.people
 }
 
-func (rt *runtimeConcrete) Displays() types.DisplayablesProvider {
-	return rt.displayables
+func (rt *runtimeConcrete) Displays() *types.DisplayablesProvider {
+	return &rt.displayables
 }
 
-func (rt *runtimeConcrete) Kasa() types.KasaProvider {
-	return rt.kasa
+func (rt *runtimeConcrete) Kasa() *types.KasaProvider {
+	return &rt.kasa
 }
 
-func (rt *runtimeConcrete) Jobs() types.JobProvider {
-	return rt.jobs
+func (rt *runtimeConcrete) Jobs() *types.JobProvider {
+	return &rt.jobs
 }
 
-func (rt *runtimeConcrete) Weather() types.WeatherProvider {
-	return rt.weather
+func (rt *runtimeConcrete) Weather() *types.WeatherProvider {
+	return &rt.weather
 }
 
-func (rt *runtimeConcrete) Google() types.GoogleProvider {
-	return rt.google
+func (rt *runtimeConcrete) Google() *types.GoogleProvider {
+	return &rt.google
 }
 
-func (rt *runtimeConcrete) KVStore() types.KVStore {
-	return rt.kvStore
+func (rt *runtimeConcrete) KVStore() *types.KVStore {
+	return &rt.kvStore
 }
 
-func (rt *runtimeConcrete) Logger() types.Logger {
-	return rt.logger
+func (rt *runtimeConcrete) Logger() *types.Logger {
+	return &rt.logger
 }
 
-func (rt *runtimeConcrete) AlertQueue() types.AlertQueue {
-	return rt.alertQueue
+func (rt *runtimeConcrete) AlertQueue() *types.AlertQueue {
+	return &rt.alertQueue
 }
 
-func (rt *runtimeConcrete) SessionStore() types.SessionStore {
-	return rt.sessionStore
+func (rt *runtimeConcrete) SessionStore() *types.SessionStore {
+	return &rt.sessionStore
 }
 
-func (rt *runtimeConcrete) InterfaceStore() types.InterfaceStore {
-	return rt.interfaceStore
+func (rt *runtimeConcrete) InterfaceStore() *types.InterfaceStore {
+	return &rt.interfaceStore
 }
 
-func (rt *runtimeConcrete) Parser() types.ParserProvider {
-	return rt.parser
+func (rt *runtimeConcrete) Parser() *types.ParserProvider {
+	return &rt.parser
 }
 
 func BootUp() (types.Runtime, error) {
 	rt := runtimeConcrete{}
+	var rt1 types.Runtime
+	rt1 = &rt
 
 	fns := [](LogStep){
 		LogStep{"logger", func() error {
@@ -129,7 +131,8 @@ func BootUp() (types.Runtime, error) {
 			return nil
 		}},
 		LogStep{"jobs", func() error {
-			jobs, err := service.InitJobProvider(&rt)
+
+			jobs, err := service.InitJobProvider(&rt1)
 			if err != nil {
 				return err
 			}
@@ -161,7 +164,7 @@ func BootUp() (types.Runtime, error) {
 			return nil
 		}},
 		LogStep{"google", func() error {
-			google, err := service.InitGoogleProvider(&rt)
+			google, err := service.InitGoogleProvider(&rt1)
 			if err != nil {
 				return err
 			}
@@ -169,7 +172,7 @@ func BootUp() (types.Runtime, error) {
 			return nil
 		}},
 		LogStep{"weather", func() error {
-			weather, err := service.InitWeatherProvider(&rt)
+			weather, err := service.InitWeatherProvider(&rt1)
 			if err != nil {
 				return err
 			}
@@ -177,7 +180,7 @@ func BootUp() (types.Runtime, error) {
 			return nil
 		}},
 		LogStep{"alerts", func() error {
-			alertQueue, err := service.InitAlertQueue(&rt)
+			alertQueue, err := service.InitAlertQueue(&rt1)
 			if err != nil {
 				return err
 			}
@@ -190,9 +193,10 @@ func BootUp() (types.Runtime, error) {
 		}},
 		LogStep{"interface store", func() error {
 			rt.interfaceStore = service.InitInterfaceStore()
-			for _, person := range rt.People().People() {
-				sms := InterfaceTypeSMS{person.GetPhoneNumber()}
-				rt.interfaceStore.Register(person, sms)
+			for _, person := range (*rt.People()).People() {
+				var sms types.Interface
+				sms = InterfaceTypeSMS{(*person).GetPhoneNumber()}
+				rt.interfaceStore.Register(person, &sms)
 			}
 			return nil
 		}},

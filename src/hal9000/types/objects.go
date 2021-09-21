@@ -17,7 +17,7 @@ type Device interface {
 	GetNames() []string
 	GetID() string
 	GetType() string
-	GetDevices(runtime Runtime) []Device
+	GetDevices(runtime *Runtime) []*Device
 }
 
 type Event interface {

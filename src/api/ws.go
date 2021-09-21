@@ -58,7 +58,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Request) {
+func wsHandler(runtime *types.Runtime) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		userId := req.URL.Query().Get("user")
 		if userId == "" {
@@ -72,7 +72,7 @@ func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 			visuals, _ = strconv.ParseBool(visualsStr)
 		}
 
-		person, err := runtime.People().GetPersonByID(userId)
+		person, err := (*(*runtime).People()).GetPersonByID(userId)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -87,13 +87,14 @@ func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 		defer c.Close()
 
 		iface := InterfaceTypeWebsocket{c, true, visuals}
-		runtime.InterfaceStore().Register(person, &iface)
-		ses := hal9000.NewSession(runtime, person, &iface)
+		var iface1 types.Interface = &iface
+		(*(*runtime).InterfaceStore()).Register(person, &iface1)
+		ses := hal9000.NewSession(runtime, person, &iface1)
 
 		for {
 			_, request, err := c.ReadMessage()
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 				iface.Open = false
 				return
 			}
@@ -101,28 +102,28 @@ func wsHandler(runtime types.Runtime) func(w http.ResponseWriter, req *http.Requ
 			var halReq types.RequestMessage
 			err = json.Unmarshal(request, &halReq)
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 				iface.Open = false
 				return
 			}
 
 			response, err := hal9000.ProcessIncomingMessage(runtime, &ses, halReq)
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 				iface.Open = false
 				return
 			}
 
-			err = ses.Interface.SendMessage(response)
+			err = (*ses.Interface).SendMessage(response)
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 				iface.Open = false
 				return
 			}
 
-			runtime.SessionStore().SaveSession(ses)
+			(*(*runtime).SessionStore()).SaveSession(&ses)
 			if err != nil {
-				runtime.Logger().LogError(err)
+				(*(*runtime).Logger()).LogError(err)
 				iface.Open = false
 				return
 			}

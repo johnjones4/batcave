@@ -28,11 +28,11 @@ func (d DeviceConcrete) GetType() string {
 	return d.Type
 }
 
-func (d DeviceConcrete) GetDevices(runtime types.Runtime) []types.Device {
-	groupDevices := make([]types.Device, len(d.DeviceIDs))
+func (d DeviceConcrete) GetDevices(runtime *types.Runtime) []*types.Device {
+	groupDevices := make([]*types.Device, len(d.DeviceIDs))
 	for i, deviceId := range d.DeviceIDs {
-		for _, device := range runtime.Devices().Devices() {
-			if device.GetID() == deviceId {
+		for _, device := range (*(*runtime).Devices()).Devices() {
+			if (*device).GetID() == deviceId {
 				groupDevices[i] = device
 				break
 			}
@@ -62,8 +62,12 @@ func InitDeviceProvider() (types.DeviceProvider, error) {
 	return deviceProviderConcrete{devices}, nil
 }
 
-func (dp deviceProviderConcrete) Devices() []types.Device {
-	return dp.devices
+func (dp deviceProviderConcrete) Devices() []*types.Device {
+	dev := make([]*types.Device, len(dp.devices))
+	for i, d := range dp.devices {
+		dev[i] = &d
+	}
+	return dev
 }
 
 // type nameableDeviceSequenceItem struct {
@@ -71,7 +75,7 @@ func (dp deviceProviderConcrete) Devices() []types.Device {
 // 	nameable types.Device
 // }
 
-func (dp deviceProviderConcrete) FindDeviceInString(str string) (types.Device, error) {
+func (dp deviceProviderConcrete) FindDeviceInString(str string) (*types.Device, error) {
 	nameables := make([]types.Nameable, len(dp.devices))
 	for i, d := range dp.devices {
 		nameables[i] = d
@@ -81,7 +85,8 @@ func (dp deviceProviderConcrete) FindDeviceInString(str string) (types.Device, e
 	for _, nameable := range sortedNameables {
 		lcName := strings.ToLower(nameable.Name)
 		if strings.Contains(lcStr, lcName) {
-			return nameable.Nameable.(types.Device), nil
+			device := nameable.Nameable.(types.Device)
+			return &device, nil
 		}
 	}
 	return nil, util.ErrorDeviceNotFound
