@@ -9,13 +9,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func makeConfigRoute(config *types.Config) func(w http.ResponseWriter, req *http.Request) {
+func makeConfigRoute(config *types.Configuration) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		jsonResponse(w, *config)
 	}
 }
 
-func makeWeatherRoute(config *types.Config) func(w http.ResponseWriter, req *http.Request) {
+func makeWeatherRoute(config *types.Configuration) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		weatherInfo := make([]types.Weather, len(config.WeatherLocations))
 		for i, coord := range config.WeatherLocations {
@@ -30,9 +30,9 @@ func makeWeatherRoute(config *types.Config) func(w http.ResponseWriter, req *htt
 	}
 }
 
-func InitRouter(config *types.Config) http.Handler {
+func InitRouter(config *types.Configuration) http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/api/config", makeConfigRoute(config)).Methods("GET")
+	r.HandleFunc("/api/configuration", makeConfigRoute(config)).Methods("GET")
 	r.HandleFunc("/api/weather", makeWeatherRoute(config)).Methods("GET")
 
 	var handler http.Handler = r

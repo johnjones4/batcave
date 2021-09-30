@@ -5,7 +5,11 @@ type Coordinate struct {
 	Longitude float64 `json:"longitude"`
 }
 
-type Config struct {
-	LiveFeeds        []string     `json:"liveFeeds"`
+type IFrame struct {
+	URL   string `json:"url"`
+	Title string `json:"title"`
+}
+type Configuration struct {
+	IFrames          []IFrame     `json:"iframes"`
 	WeatherLocations []Coordinate `json:"weatherLocations"`
 }

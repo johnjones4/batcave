@@ -14,7 +14,7 @@ func start() error {
 		return err
 	}
 
-	var config types.Config
+	var config types.Configuration
 	err = json.Unmarshal(configFileBytes, &config)
 	if err != nil {
 		return err

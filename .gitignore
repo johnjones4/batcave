@@ -1,8 +1,0 @@
-.env
-.DS_Store
-logs
-main
-vendor
-config/**
-main1.zip
-secrets.env
