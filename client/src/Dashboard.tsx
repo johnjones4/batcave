@@ -40,6 +40,19 @@ export default class Dashboard extends Component<DashboardProps,DashboardState> 
         configuration: await this.configurationLoader.load(),
         weather: await this.weatherLoader.load()
       })
+      setInterval(() => this.reload(), 1000 * 60 * 5)
+    } catch (e: any) {
+      this.setState({
+        error: e
+      })
+    }
+  }
+
+  async reload() {
+    try {
+      this.setState({
+        weather: await this.weatherLoader.load()
+      })
     } catch (e: any) {
       this.setState({
         error: e
@@ -51,7 +64,7 @@ export default class Dashboard extends Component<DashboardProps,DashboardState> 
     return (
       <div className='Dashboard'>
         { this.state.configuration && this.state.configuration.iframes.map(iframe => (<IFrameWidget iframe={iframe} key={iframe.url} />)) }
-        { this.state.weather && this.state.weather.map(weather => (<ImageWidget src={weather.radarURL} key={weather.radarURL} />)) }
+        { this.state.weather && this.state.weather.map(weather => (<ImageWidget src={weather.radarURL} key={weather.radarURL} title='Radar' />)) }
         { this.state.weather && this.state.weather.map(weather => (<WeatherWidget weather={weather} key={weather.radarURL} />)) }
       </div>
     )

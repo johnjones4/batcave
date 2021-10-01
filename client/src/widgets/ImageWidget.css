@@ -1,5 +1,5 @@
 .Widget-ImageWidget {
-  grid-column: auto / span 2;
+  grid-column: auto / span 4;
 }
 
 .ImageWidget-div {
@@ -13,4 +13,5 @@
   height: 100%;
   background-size: contain;
   background-repeat: no-repeat;
+  background-position: center center;
 }

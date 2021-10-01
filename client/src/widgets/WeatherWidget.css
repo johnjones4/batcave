@@ -1,0 +1,43 @@
+.Widget-WeatherWidget {
+  grid-column: auto / span 6;
+}
+
+.Widget-WeatherWidget .Widget-inner-inner {
+  display: flex;
+  flex-direction: row;
+}
+
+.Weather-Forecast-Item {
+  margin-left: 20px;
+  /* font-size: 1em; */
+}
+
+.Weather-Forecast-Item:last-child {
+  margin-right: 20px;
+}
+
+.Weather-Forecast-Item-Temp:before {
+  content: 'Temperature: ';
+}
+
+.Weather-Forecast-Item-Wind:before {
+  content: 'Wind Speed: '
+}
+
+.Weather-Forecast-Item-Temp:before,
+.Weather-Forecast-Item-Wind:before {
+  font-size: 0.75em;
+  display: block;
+}
+
+.Weather-Forecast-Item-Icon {
+  float: left;
+  margin: 0 10px 20px 0;
+  width: 100px;
+}
+
+.Weather-Forecast-Item-Description {
+  clear: both;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-white);
+}
