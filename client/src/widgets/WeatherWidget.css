@@ -5,11 +5,14 @@
 .Widget-WeatherWidget .Widget-inner-inner {
   display: flex;
   flex-direction: row;
+
 }
 
 .Weather-Forecast-Item {
   margin-left: 20px;
-  /* font-size: 1em; */
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
 }
 
 .Weather-Forecast-Item:last-child {
