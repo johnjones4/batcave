@@ -9,7 +9,7 @@ interface IFrameProps {
 
 const IFrameWidget = (props: IFrameProps) => {
   return (
-    <Widget classNameSuffix='IFrame'>
+    <Widget classNameSuffix='IFrame' title={props.iframe.title}>
       <iframe title={props.iframe.title} src={props.iframe.url} className='IFrame-iframe' />
     </Widget>
   )

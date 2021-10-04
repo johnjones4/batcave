@@ -1,16 +1,6 @@
-export interface Coordinate {
-  latitude: number
-  longitude: number
-}
-
 export interface IFrame {
   url: string
   title: string
-}
-
-export interface Configuration {
-  iframes: [IFrame]
-  weatherLocations: [Coordinate]
 }
 
 export interface WeatherForecastItem {
@@ -27,4 +17,9 @@ export interface WeatherForecastItem {
 export interface Weather {
   radarURL: string
   forecast: [WeatherForecastItem]
+}
+
+export interface Response {
+  iframes: [IFrame]
+  weather: [Weather]
 }

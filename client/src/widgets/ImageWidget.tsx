@@ -4,11 +4,12 @@ import './ImageWidget.css'
 
 interface ImageWidgetProps {
   src: string
+  title: string
 }
 
 const ImageWidget = (props: ImageWidgetProps) => {
   return (
-    <Widget classNameSuffix='Image'>
+    <Widget classNameSuffix='Image' title={props.title}>
       <div className='ImageWidget-div' style={{backgroundImage: `url(${props.src})`}} />
     </Widget>
   )

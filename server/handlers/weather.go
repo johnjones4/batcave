@@ -7,6 +7,7 @@ import (
 	"main/types"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func GetWeather(coord types.Coordinate) (types.Weather, error) {
@@ -15,7 +16,7 @@ func GetWeather(coord types.Coordinate) (types.Weather, error) {
 		return types.Weather{}, nil
 	}
 
-	radarURL := fmt.Sprintf("https://radar.weather.gov/ridge/lite/%s_loop.gif", point.RadarStation)
+	radarURL := fmt.Sprintf("https://radar.weather.gov/ridge/lite/%s_loop.gif?v=%d", point.RadarStation, time.Now().Unix())
 
 	forecast, err := makeWeatherAPIForecastCall(point)
 	if err != nil {
