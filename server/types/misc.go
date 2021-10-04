@@ -13,6 +13,7 @@ type IFrame struct {
 type Configuration struct {
 	IFrames          []IFrame     `json:"iframes"`
 	WeatherLocations []Coordinate `json:"weatherLocations"`
+	RSSFeeds         []string     `json:"rssFeeds"`
 }
 
 type Response struct {
