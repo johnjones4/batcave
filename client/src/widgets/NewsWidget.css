@@ -1,0 +1,24 @@
+.Widget-NewsWidget {
+  grid-column: auto / span 6;
+}
+
+.Widget-NewsWidget .Widget-inner {
+  overflow-y: scroll;
+  padding: 0 20px 20px 20px;
+}
+
+.NewsWidget-Item {
+  border-bottom: 1px solid var(--color-blue);
+}
+
+.NewsWidget-Item h3 {
+  margin: 20px 0 0 0;
+}
+
+.NewsWidget-Item h4 {
+  margin: 5px 0;
+}
+
+.NewsWidget-Item p {
+  margin: 0 0 20px 0;
+}

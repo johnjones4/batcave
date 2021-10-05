@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type Coordinate struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
@@ -17,6 +19,14 @@ type Configuration struct {
 }
 
 type Response struct {
-	IFrames []IFrame  `json:"iframes"`
-	Weather []Weather `json:"weather"`
+	IFrames   []IFrame   `json:"iframes"`
+	Weather   []Weather  `json:"weather"`
+	NewsItems []NewsItem `json:"news"`
+}
+
+type NewsItem struct {
+	Headline    string    `json:"headline"`
+	Source      string    `json:"source"`
+	Description string    `json:"description"`
+	Date        time.Time `json:"time"`
 }

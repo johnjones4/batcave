@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -43,7 +44,7 @@ func logRequestHandler(h http.Handler) http.Handler {
 		ri.size = m.Written
 		ri.duration = m.Duration
 
-		fmt.Printf("%s - - [%s] \"%s %s\" %d %d\n", ri.ipaddr, time.Now().Format(time.RFC3339), ri.method, ri.uri, ri.code, ri.size)
+		log.Printf("%s \"%s %s\" %d %d\n", ri.ipaddr, ri.method, ri.uri, ri.code, ri.size)
 	}
 	return http.HandlerFunc(fn)
 }

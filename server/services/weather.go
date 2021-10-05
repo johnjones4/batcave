@@ -1,4 +1,4 @@
-package handlers
+package services
 
 import (
 	"encoding/json"
@@ -10,7 +10,23 @@ import (
 	"time"
 )
 
-func GetWeather(coord types.Coordinate) (types.Weather, error) {
+func StartWeatherUpdater(coords []types.Coordinate, updateChan chan []types.Weather, errorChan chan error) {
+	for {
+		weathers := make([]types.Weather, 0)
+		for _, coord := range coords {
+			weather, err := getWeather(coord)
+			if err != nil {
+				errorChan <- err
+			} else {
+				weathers = append(weathers, weather)
+			}
+		}
+		updateChan <- weathers
+		time.Sleep(time.Minute * 5)
+	}
+}
+
+func getWeather(coord types.Coordinate) (types.Weather, error) {
 	point, err := makeWeatherAPIPointRequest(coord)
 	if err != nil {
 		return types.Weather{}, nil

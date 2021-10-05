@@ -42,5 +42,5 @@
 .Weather-Forecast-Item-Description {
   clear: both;
   padding-top: 10px;
-  border-top: 1px solid var(--color-white);
+  border-top: 1px solid var(--color-blue);
 }

@@ -19,7 +19,14 @@ export interface Weather {
   forecast: [WeatherForecastItem]
 }
 
+export interface NewsItem {
+  headline: string
+  source: string
+  description: string
+}
+
 export interface Response {
   iframes: [IFrame]
   weather: [Weather]
+  news: [NewsItem]
 }
