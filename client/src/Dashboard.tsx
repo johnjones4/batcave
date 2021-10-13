@@ -50,7 +50,7 @@ export default class Dashboard extends Component<DashboardProps,DashboardState> 
         { this.state.response && this.state.response.iframes.map(iframe => (<IFrameWidget iframe={iframe} key={iframe.url} />)) }
         { this.state.response && this.state.response.weather.map(weather => (<ImageWidget src={weather.radarURL} key={weather.radarURL} title='Radar' />)) }
         { this.state.response && this.state.response.weather.map(weather => (<WeatherWidget weather={weather} key={weather.radarURL} />)) }
-        { this.state.response && (<NewsWidget news={this.state.response.news} />) }
+        {/* { this.state.response && (<NewsWidget news={this.state.response.news} />) } */}
       </div>
     )
   }
