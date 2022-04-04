@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  mqtt2kasa:
+    build: ./vendor/mqtt2kasa
+    restart: always
+    volumes:
+      - ./vendor/mqtt2kasa/data:/usr/src/app/data
+    depends_on:
+      - mosquitto
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    restart: always
+    ports:
+      - 1883:1883
+      - 9001:9001
+    volumes: 
+      - ./config:/mosquitto/config
+
+volumes:
+  mqtt2kasa:

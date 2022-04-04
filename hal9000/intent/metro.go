@@ -1,0 +1,41 @@
+package intent
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/johnjones4/hal-9000/hal9000/core"
+	"github.com/johnjones4/hal-9000/hal9000/service"
+)
+
+type Metro struct {
+	Service *service.Metro
+}
+
+func (c *Metro) SupportedComandsForState(s core.State) []string {
+	if s.State != core.StateDefault {
+		return []string{}
+	}
+	return []string{
+		"metro",
+	}
+}
+
+func (c *Metro) Execute(req core.Request) (core.Response, error) {
+	station, info, err := c.Service.GetArrivals(req.Location)
+	if err != nil {
+		return core.Response{}, err
+	}
+
+	arrivals := make([]string, len(info))
+	for i, arrival := range info {
+		arrivals[i] = fmt.Sprintf("%s %s (%s)", arrival.Line, arrival.Destination, arrival.Min)
+	}
+
+	return core.Response{
+		ResponseBody: core.ResponseBody{
+			Message: fmt.Sprintf("Upcoming arrivals for %s:\n%s", station.Name, strings.Join(arrivals, "\n")),
+		},
+		State: req.State,
+	}, nil
+}
