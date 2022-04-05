@@ -43,7 +43,7 @@ func makeRequestHandler(r *runtime.Runtime) usecase.Interactor {
 
 		request, err := r.Parse(in.InboundBody, state)
 		if err != nil {
-			return err //TODO
+			return wrappedError(err, core.ErrorCodeParsing)
 		}
 
 		response, err := r.Intents.ProcessRequest(request)
@@ -59,7 +59,7 @@ func makeRequestHandler(r *runtime.Runtime) usecase.Interactor {
 			return wrappedError(err, core.ErrorCodeLog)
 		}
 
-		err = r.StateStore.SetStateForUSer(request.State)
+		err = r.StateStore.SetStateForUser(request.State)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}

@@ -58,11 +58,6 @@ func (s *Server) newConnection(conn net.Conn) {
 			return err
 		}
 
-		state := core.State{
-			State: core.StateDefault,
-			User:  user,
-		}
-
 		conn.Write([]byte("ok\n"))
 
 		for {
@@ -74,6 +69,12 @@ func (s *Server) newConnection(conn net.Conn) {
 			cleanInput := strings.TrimSpace(input)
 
 			if cleanInput == "" {
+				continue
+			}
+
+			state, err := s.Runtime.StateStore.GetStateForUser(user)
+			if err != nil {
+				handleError(err)
 				continue
 			}
 
@@ -103,7 +104,11 @@ func (s *Server) newConnection(conn net.Conn) {
 				continue
 			}
 
-			state = res.State
+			err = s.Runtime.StateStore.SetStateForUser(state)
+			if err != nil {
+				handleError(err)
+				continue
+			}
 		}
 	}
 	err := handle()

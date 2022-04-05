@@ -10,6 +10,7 @@ const (
 	ErrorCodeReqestProcess    = 1002
 	ErrorCodeLog              = 1003
 	ErrorCodeToken            = 1004
+	ErrorCodeParsing          = 1005
 	ErrorCodeExpiredToken     = 2000
 	ErrorCodeUsernamePassword = 2001
 )
