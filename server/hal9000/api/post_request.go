@@ -5,22 +5,21 @@ import (
 	"net/http"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
-	"github.com/johnjones4/hal-9000/server/hal9000/intent"
 	"github.com/johnjones4/hal-9000/server/hal9000/learning"
+	"github.com/johnjones4/hal-9000/server/hal9000/runtime"
 	"github.com/johnjones4/hal-9000/server/hal9000/security"
-	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 
 	"github.com/swaggest/usecase"
 )
 
-func makeRequestHandler(intentSet *intent.IntentSet, userStore *storage.UserStore, stateStore *storage.StateStore, logger *learning.InteractionLogger, tm *security.TokenManager) usecase.Interactor {
+func makeRequestHandler(r *runtime.Runtime) usecase.Interactor {
 	type request struct {
 		core.InboundBody
 		Authorization string `header:"Authorization"`
 	}
 	return usecase.NewIOI(new(request), new(core.OutboundBody), func(ctx context.Context, input, output interface{}) error {
 		in := input.(*request)
-		username, err := tm.UsernameForToken(in.Authorization)
+		username, err := r.TokenManager.UsernameForToken(in.Authorization)
 		if err != nil {
 			if err == security.ErrorTokenExpired {
 				return apiError{
@@ -32,27 +31,27 @@ func makeRequestHandler(intentSet *intent.IntentSet, userStore *storage.UserStor
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		user, err := userStore.GetUser(username)
+		user, err := r.UserStore.GetUser(username)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		state, err := stateStore.GetStateForUser(user.User)
+		state, err := r.StateStore.GetStateForUser(user.User)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		request, err := intent.Parse(in.InboundBody, state)
+		request, err := r.Parse(in.InboundBody, state)
 		if err != nil {
 			return err //TODO
 		}
 
-		response, err := intentSet.ProcessRequest(request)
+		response, err := r.Intents.ProcessRequest(request)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeReqestProcess)
 		}
 
-		err = logger.Log(learning.InteractionEvent{
+		err = r.Logger.Log(learning.InteractionEvent{
 			Request:  request,
 			Response: response,
 		})
@@ -60,7 +59,7 @@ func makeRequestHandler(intentSet *intent.IntentSet, userStore *storage.UserStor
 			return wrappedError(err, core.ErrorCodeLog)
 		}
 
-		err = stateStore.SetStateForUSer(request.State)
+		err = r.StateStore.SetStateForUSer(request.State)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}

@@ -3,87 +3,31 @@ package api
 import (
 	"net/http"
 
-	"github.com/johnjones4/hal-9000/server/hal9000/core"
-	"github.com/johnjones4/hal-9000/server/hal9000/intent"
-	"github.com/johnjones4/hal-9000/server/hal9000/learning"
-	"github.com/johnjones4/hal-9000/server/hal9000/security"
-	"github.com/johnjones4/hal-9000/server/hal9000/service"
-	"github.com/johnjones4/hal-9000/server/hal9000/storage"
+	"github.com/johnjones4/hal-9000/server/hal9000/runtime"
+	"github.com/swaggest/rest/web"
 )
 
-func New(userStoreFile, stateStoreFile, logFile, tokenKey string) (http.Handler, error) {
-	kasa, err := service.NewKasa()
-	if err != nil {
-		return nil, err
-	}
-	intents := []core.Intent{
-		&intent.Forecast{
-			Service: service.NewNOAA(),
-		},
-		&intent.Metro{
-			Service: service.NewMetro(),
-		},
-		&intent.Schedule{
-			Service: service.NewGoogle(),
-		},
-		&intent.WeatherStation{
-			Service: service.NewWeatherStation(),
-		},
-		&intent.Lights{
-			Service: kasa,
-		},
-		&intent.Abode{
-			Service: service.NewAbode(),
-		},
-	}
-	h := intent.IntentSet{
-		Intents: append([]core.Intent{
-			&intent.Forecast{
-				Service: service.NewNOAA(),
-			},
-			&intent.Metro{
-				Service: service.NewMetro(),
-			},
-			&intent.Schedule{
-				Service: service.NewGoogle(),
-			},
-			&intent.WeatherStation{
-				Service: service.NewWeatherStation(),
-			},
-			&intent.Lights{
-				Service: kasa,
-			},
-			&intent.Abode{
-				Service: service.NewAbode(),
-			},
-		}, &intent.Info{
-			Intents: intents,
-		}),
-	}
+type API struct {
+	Host    string
+	Runtime *runtime.Runtime
+}
 
-	us := storage.NewUserStore(userStoreFile)
-	err = us.Load()
-	if err != nil {
-		return nil, err
-	}
+func (a *API) Run() error {
+	s := web.DefaultService()
 
-	ss := storage.NewStateStore(stateStoreFile)
-	err = ss.Load()
-	if err != nil {
-		return nil, err
-	}
+	// Init API documentation schema.
+	s.OpenAPI.Info.Title = "Basic Example"
+	s.OpenAPI.Info.WithDescription("This app showcases a trivial REST API.")
+	s.OpenAPI.Info.Version = "v1.2.3"
 
-	logger, err := learning.NewInteractionLogger(logFile)
-	if err != nil {
-		return nil, err
-	}
+	// Setup middlewares.
+	s.Use(
+		logRequest,
+	)
 
-	tm, err := security.NewTokenManager([]byte(tokenKey))
-	if err != nil {
-		return nil, err
-	}
+	s.Post("/api/login", makeLoginHandler(a.Runtime))
+	s.Post("/api/request", makeRequestHandler(a.Runtime))
+	s.Get("/api/commands", makeCommandsHandler(a.Runtime))
 
-	router := makeServer(&h, us, ss, logger, tm)
-	return router, nil
-
+	return http.ListenAndServe(a.Host, s)
 }

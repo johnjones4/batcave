@@ -1,4 +1,4 @@
-package intent
+package runtime
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 )
 
-func Parse(in core.InboundBody, state core.State) (core.Inbound, error) {
+func (r *Runtime) Parse(in core.InboundBody, state core.State) (core.Inbound, error) {
 	if len(in.Body) == 0 || in.Body[0] != '/' {
 		return core.Inbound{}, errors.New("input not recognized") //TODO
 	}

@@ -5,14 +5,13 @@ import (
 	"net/http"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
-	"github.com/johnjones4/hal-9000/server/hal9000/intent"
+	"github.com/johnjones4/hal-9000/server/hal9000/runtime"
 	"github.com/johnjones4/hal-9000/server/hal9000/security"
-	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 
 	"github.com/swaggest/usecase"
 )
 
-func makeCommandsHandler(intentSet *intent.IntentSet, userStore *storage.UserStore, stateStore *storage.StateStore, tm *security.TokenManager) usecase.Interactor {
+func makeCommandsHandler(r *runtime.Runtime) usecase.Interactor {
 	type request struct {
 		Authorization string `header:"Authorization"`
 	}
@@ -23,7 +22,7 @@ func makeCommandsHandler(intentSet *intent.IntentSet, userStore *storage.UserSto
 		in := input.(*request)
 		out := output.(*response)
 
-		username, err := tm.UsernameForToken(in.Authorization)
+		username, err := r.TokenManager.UsernameForToken(in.Authorization)
 		if err != nil {
 			if err == security.ErrorTokenExpired {
 				return apiError{
@@ -35,17 +34,17 @@ func makeCommandsHandler(intentSet *intent.IntentSet, userStore *storage.UserSto
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		user, err := userStore.GetUser(username)
+		user, err := r.UserStore.GetUser(username)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		state, err := stateStore.GetStateForUser(user.User)
+		state, err := r.StateStore.GetStateForUser(user.User)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		for _, intent := range intentSet.Intents {
+		for _, intent := range r.Intents.Intents {
 			for command, description := range intent.SupportedComandsForState(state) {
 				out.Commands[command] = description
 			}

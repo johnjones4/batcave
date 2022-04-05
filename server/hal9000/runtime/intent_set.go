@@ -1,8 +1,6 @@
-package intent
+package runtime
 
 import (
-	"fmt"
-
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 )
 
@@ -30,5 +28,10 @@ func (h *IntentSet) ProcessRequest(req core.Inbound) (core.Outbound, error) {
 			}
 		}
 	}
-	return core.Outbound{}, fmt.Errorf("no handler for %s", fmt.Sprint(req))
+	return core.Outbound{
+		OutboundBody: core.OutboundBody{
+			Body: "I do not understand",
+		},
+		State: req.State,
+	}, nil
 }
