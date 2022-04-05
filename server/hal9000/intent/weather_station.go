@@ -3,8 +3,8 @@ package intent
 import (
 	"fmt"
 
-	"github.com/johnjones4/hal-9000/hal9000/core"
-	"github.com/johnjones4/hal-9000/hal9000/service"
+	"github.com/johnjones4/hal-9000/server/hal9000/core"
+	"github.com/johnjones4/hal-9000/server/hal9000/service"
 )
 
 type WeatherStation struct {

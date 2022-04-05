@@ -3,12 +3,12 @@ package api
 import (
 	"net/http"
 
-	"github.com/johnjones4/hal-9000/hal9000/core"
-	"github.com/johnjones4/hal-9000/hal9000/intent"
-	"github.com/johnjones4/hal-9000/hal9000/learning"
-	"github.com/johnjones4/hal-9000/hal9000/security"
-	"github.com/johnjones4/hal-9000/hal9000/service"
-	"github.com/johnjones4/hal-9000/hal9000/storage"
+	"github.com/johnjones4/hal-9000/server/hal9000/core"
+	"github.com/johnjones4/hal-9000/server/hal9000/intent"
+	"github.com/johnjones4/hal-9000/server/hal9000/learning"
+	"github.com/johnjones4/hal-9000/server/hal9000/security"
+	"github.com/johnjones4/hal-9000/server/hal9000/service"
+	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 )
 
 func New(userStoreFile, stateStoreFile, logFile, tokenKey string) (http.Handler, error) {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/johnjones4/hal-9000/hal9000/core"
-	"github.com/johnjones4/hal-9000/hal9000/service"
-	"github.com/johnjones4/hal-9000/hal9000/util"
+	"github.com/johnjones4/hal-9000/server/hal9000/core"
+	"github.com/johnjones4/hal-9000/server/hal9000/service"
+	"github.com/johnjones4/hal-9000/server/hal9000/util"
 	"github.com/olebedev/when"
 	"github.com/olebedev/when/rules/common"
 	"github.com/olebedev/when/rules/en"

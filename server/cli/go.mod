@@ -2,10 +2,10 @@ module main
 
 go 1.17
 
-replace github.com/johnjones4/hal-9000/hal9000 => ../hal9000
+replace github.com/johnjones4/hal-9000/server/hal9000 => ../hal9000
 
 require (
-	github.com/johnjones4/hal-9000/hal9000 v0.0.0-00010101000000-000000000000
+	github.com/johnjones4/hal-9000/server/hal9000 v0.0.0-00010101000000-000000000000
 	github.com/joho/godotenv v1.4.0
 )
 

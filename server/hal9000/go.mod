@@ -1,4 +1,4 @@
-module github.com/johnjones4/hal-9000/hal9000
+module github.com/johnjones4/hal-9000/server/hal9000
 
 go 1.16
 

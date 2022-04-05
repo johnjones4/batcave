@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/johnjones4/hal-9000/hal9000/intent"
-	"github.com/johnjones4/hal-9000/hal9000/learning"
-	"github.com/johnjones4/hal-9000/hal9000/security"
-	"github.com/johnjones4/hal-9000/hal9000/storage"
+	"github.com/johnjones4/hal-9000/server/hal9000/intent"
+	"github.com/johnjones4/hal-9000/server/hal9000/learning"
+	"github.com/johnjones4/hal-9000/server/hal9000/security"
+	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/rest/web"

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/johnjones4/hal-9000/hal9000/core"
+	"github.com/johnjones4/hal-9000/server/hal9000/core"
 )
 
 const (
