@@ -10,25 +10,25 @@ type IntentSet struct {
 	Intents []core.Intent
 }
 
-func (h *IntentSet) ProcessRequest(req core.Request) (core.Response, error) {
+func (h *IntentSet) ProcessRequest(req core.Inbound) (core.Outbound, error) {
 	for _, commandHandler := range h.Intents {
 		for _, command := range commandHandler.SupportedComandsForState(req.State) {
 			if req.Command == command {
 				res, err := commandHandler.Execute(req)
 				if err != nil {
 					if ferr, ok := err.(core.FeedbackError); ok {
-						return core.Response{
-							ResponseBody: core.ResponseBody{
-								Message: ferr.Error(),
+						return core.Outbound{
+							OutboundBody: core.OutboundBody{
+								Body: ferr.Error(),
 							},
 							State: req.State,
 						}, nil
 					}
-					return core.Response{}, err
+					return core.Outbound{}, err
 				}
 				return res, nil
 			}
 		}
 	}
-	return core.Response{}, fmt.Errorf("no handler for %s", fmt.Sprint(req))
+	return core.Outbound{}, fmt.Errorf("no handler for %s", fmt.Sprint(req))
 }

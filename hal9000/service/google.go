@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -70,8 +69,6 @@ func (gp *Google) RefreshAuthToken() error {
 
 		gp.authExpiration = time.Now().Add(time.Duration(response.ExpiresIn * int(time.Second)))
 		gp.authAccessToken = response.AccessToken
-
-		log.Println(string(bytes), gp)
 	}
 
 	return nil

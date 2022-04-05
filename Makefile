@@ -9,3 +9,8 @@ backup-secrets:
 	cp vendor/mqtt2kasa/data/config.yaml ${dest}/mqtt2kasa-config.yaml
 	cp -R api/data ${dest}/
 	cp api/.env ${dest}/api.env
+
+load-secrets:
+	cp ${src}/mqtt2kasa-config.yaml vendor/mqtt2kasa/data/config.yaml
+	cp -R ${src}/data api/
+	cp ${src}/api.env api/.env

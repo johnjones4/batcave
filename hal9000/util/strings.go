@@ -37,3 +37,12 @@ func minimum(a, b, c int) int {
 	}
 	return c
 }
+
+func ArrayContains(a []string, v string) bool {
+	for _, v1 := range a {
+		if v == v1 {
+			return true
+		}
+	}
+	return false
+}

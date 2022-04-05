@@ -8,7 +8,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type DeviceGroup struct {
+type KasaDeviceGroup struct {
 	PreferredName string   `json:"preferredName"`
 	Names         []string `json:"names"`
 	Devices       []string `json:"devices"`
@@ -16,7 +16,7 @@ type DeviceGroup struct {
 
 type Kasa struct {
 	client       mqtt.Client
-	deviceGroups []DeviceGroup
+	deviceGroups []KasaDeviceGroup
 }
 
 func NewKasa() (*Kasa, error) {
@@ -25,7 +25,7 @@ func NewKasa() (*Kasa, error) {
 		return nil, err
 	}
 
-	var deviceGroups []DeviceGroup
+	var deviceGroups []KasaDeviceGroup
 	err = json.Unmarshal(devicesString, &deviceGroups)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func NewKasa() (*Kasa, error) {
 	}, nil
 }
 
-func (k *Kasa) DeviceGroups() []DeviceGroup {
+func (k *Kasa) DeviceGroups() []KasaDeviceGroup {
 	return k.deviceGroups
 }
 

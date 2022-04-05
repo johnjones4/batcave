@@ -20,15 +20,15 @@ func (w *WeatherStation) SupportedComandsForState(s core.State) []string {
 	}
 }
 
-func (w *WeatherStation) Execute(req core.Request) (core.Response, error) {
+func (w *WeatherStation) Execute(req core.Inbound) (core.Outbound, error) {
 	info, err := w.Service.GetWeather()
 	if err != nil {
-		return core.Response{}, err
+		return core.Outbound{}, err
 	}
 
-	return core.Response{
-		ResponseBody: core.ResponseBody{
-			Message: fmt.Sprintf("Weather station report:\nTemperature: %0.2f° F\nAverage wind speed: %0.2f m/s\nRelative humidity: %0.2f\nPressure: %0.2f inhg.",
+	return core.Outbound{
+		OutboundBody: core.OutboundBody{
+			Body: fmt.Sprintf("Weather station report:\nTemperature: %0.2f° F\nAverage wind speed: %0.2f m/s\nRelative humidity: %0.2f\nPressure: %0.2f inhg.",
 				cToF(info.Temperature),
 				mpsToMph(info.AvgWindSpeed),
 				info.RelativeHumidity,

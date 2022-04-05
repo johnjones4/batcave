@@ -1,6 +1,0 @@
-x calendar
-lights
-x weather
-x metro
-x forecast
-abode

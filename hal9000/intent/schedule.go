@@ -7,6 +7,7 @@ import (
 
 	"github.com/johnjones4/hal-9000/hal9000/core"
 	"github.com/johnjones4/hal-9000/hal9000/service"
+	"github.com/johnjones4/hal-9000/hal9000/util"
 
 	"github.com/olebedev/when"
 	"github.com/olebedev/when/rules/common"
@@ -26,14 +27,14 @@ func (c *Schedule) SupportedComandsForState(s core.State) []string {
 	}
 }
 
-func (c *Schedule) Execute(req core.Request) (core.Response, error) {
+func (c *Schedule) Execute(req core.Inbound) (core.Outbound, error) {
 	w := when.New(nil)
 	w.Add(en.All...)
 	w.Add(common.All...)
 
 	dateInfo, err := w.Parse(req.Body, time.Now()) //TODO better parsing
 	if err != nil {
-		return core.Response{}, err
+		return core.Outbound{}, err
 	}
 
 	event := service.Event{
@@ -44,13 +45,13 @@ func (c *Schedule) Execute(req core.Request) (core.Response, error) {
 
 	createdEvent, err := c.Service.CreateNewEvent(event)
 	if err != nil {
-		return core.Response{}, err
+		return core.Outbound{}, err
 	}
 
-	return core.Response{
-		ResponseBody: core.ResponseBody{
-			//TODO better formatting
-			Message: fmt.Sprintf("Scheduled %s for %s (%s)", createdEvent.Summary, dateInfo.Time.Local().String(), createdEvent.HtmlLink),
+	return core.Outbound{
+		OutboundBody: core.OutboundBody{
+			Body: fmt.Sprintf("Scheduled \"%s\" for %s", createdEvent.Summary, util.FormatTime(dateInfo.Time)),
+			URL:  createdEvent.HtmlLink,
 		},
 		State: req.State,
 	}, nil

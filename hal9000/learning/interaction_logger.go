@@ -20,8 +20,8 @@ func NewInteractionLogger(path string) (*InteractionLogger, error) {
 }
 
 type InteractionEvent struct {
-	Request  core.Request  `json:"request"`
-	Response core.Response `json:"response"`
+	Request  core.Inbound  `json:"request"`
+	Response core.Outbound `json:"response"`
 }
 
 func (il *InteractionLogger) Log(e InteractionEvent) error {

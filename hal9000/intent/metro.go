@@ -21,10 +21,10 @@ func (c *Metro) SupportedComandsForState(s core.State) []string {
 	}
 }
 
-func (c *Metro) Execute(req core.Request) (core.Response, error) {
+func (c *Metro) Execute(req core.Inbound) (core.Outbound, error) {
 	station, info, err := c.Service.GetArrivals(req.Location)
 	if err != nil {
-		return core.Response{}, err
+		return core.Outbound{}, err
 	}
 
 	arrivals := make([]string, len(info))
@@ -32,9 +32,9 @@ func (c *Metro) Execute(req core.Request) (core.Response, error) {
 		arrivals[i] = fmt.Sprintf("%s %s (%s)", arrival.Line, arrival.Destination, arrival.Min)
 	}
 
-	return core.Response{
-		ResponseBody: core.ResponseBody{
-			Message: fmt.Sprintf("Upcoming arrivals for %s:\n%s", station.Name, strings.Join(arrivals, "\n")),
+	return core.Outbound{
+		OutboundBody: core.OutboundBody{
+			Body: fmt.Sprintf("Upcoming arrivals for %s:\n%s", station.Name, strings.Join(arrivals, "\n")),
 		},
 		State: req.State,
 	}, nil

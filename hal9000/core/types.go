@@ -12,30 +12,31 @@ type State struct {
 	State string `json:"state"`
 }
 
-type RequestBody struct {
-	Command  string     `json:"command"`
+type InboundBody struct {
 	Body     string     `json:"body"`
 	Location Coordinate `json:"location"`
 }
 
-type Request struct {
-	RequestBody
-	State State `json:"state"`
+type Inbound struct {
+	InboundBody
+	Command string `json:"command"`
+	State   State  `json:"state"`
 }
 
-type ResponseBody struct {
-	Message string `json:"message"`
-	Media   string `json:"media"`
+type OutboundBody struct {
+	Body  string `json:"body"`
+	Media string `json:"media"`
+	URL   string `json:"url"`
 }
 
-type Response struct {
-	ResponseBody
+type Outbound struct {
+	OutboundBody
 	State State `json:"state"`
 }
 
 type Intent interface {
 	SupportedComandsForState(s State) []string
-	Execute(req Request) (Response, error)
+	Execute(req Inbound) (Outbound, error)
 }
 
 type FeedbackError struct {

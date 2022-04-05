@@ -33,6 +33,9 @@ func New(userStoreFile, stateStoreFile, logFile, tokenKey string) (http.Handler,
 			&intent.Lights{
 				Service: kasa,
 			},
+			&intent.Abode{
+				Service: service.NewAbode(),
+			},
 		},
 	}
 

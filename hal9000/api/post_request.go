@@ -15,10 +15,10 @@ import (
 
 func makeRequestHandler(intentSet *intent.IntentSet, userStore *storage.UserStore, stateStore *storage.StateStore, logger *learning.InteractionLogger, tm *security.TokenManager) usecase.Interactor {
 	type request struct {
-		core.RequestBody
+		core.InboundBody
 		Authorization string `header:"Authorization"`
 	}
-	return usecase.NewIOI(new(request), new(core.ResponseBody), func(ctx context.Context, input, output interface{}) error {
+	return usecase.NewIOI(new(request), new(core.OutboundBody), func(ctx context.Context, input, output interface{}) error {
 		in := input.(*request)
 		username, err := tm.UsernameForToken(in.Authorization)
 		if err != nil {
@@ -42,9 +42,9 @@ func makeRequestHandler(intentSet *intent.IntentSet, userStore *storage.UserStor
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		request := core.Request{
-			RequestBody: in.RequestBody,
-			State:       state,
+		request, err := intent.Parse(in.InboundBody, state)
+		if err != nil {
+			return err //TODO
 		}
 
 		response, err := intentSet.ProcessRequest(request)
@@ -65,8 +65,8 @@ func makeRequestHandler(intentSet *intent.IntentSet, userStore *storage.UserStor
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		out := output.(*core.ResponseBody)
-		*out = response.ResponseBody
+		out := output.(*core.OutboundBody)
+		*out = response.OutboundBody
 
 		return nil
 	})

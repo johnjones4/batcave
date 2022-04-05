@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,9 +17,10 @@ import (
 )
 
 type CLI struct {
-	host   string
-	reader *bufio.Reader
-	token  core.Token
+	host     string
+	reader   *bufio.Reader
+	token    core.Token
+	location core.Coordinate
 }
 
 func New(host string) *CLI {
@@ -31,6 +31,10 @@ func New(host string) *CLI {
 }
 
 func (c *CLI) Run() {
+	err := c.discoverLocation()
+	if err != nil {
+		panic(err)
+	}
 	for {
 		if c.token.IsExpired() {
 			err := c.login()
@@ -86,36 +90,23 @@ func (c *CLI) next() error {
 		os.Exit(0)
 	}
 
-	if len(input) == 0 || input[0] != '/' {
-		return errors.New("input not recognized")
+	req := core.InboundBody{
+		Body:     input,
+		Location: c.location,
 	}
-
-	firstSpace := strings.Index(input, " ")
-	var command string
-	var body string
-	if firstSpace < 0 {
-		command = input[1:]
-		body = ""
-	} else {
-		command = input[1:firstSpace]
-		body = input[firstSpace:]
-	}
-
-	req := core.RequestBody{
-		Command: command,
-		Body:    body,
-		Location: core.Coordinate{
-			Latitude:  38.804661,
-			Longitude: -77.043610,
-		},
-	}
-	var res core.ResponseBody
+	var res core.OutboundBody
 	err = c.post("/api/request", req, &res)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("HAL> %s\n", res.Message)
+	fmt.Printf("HAL> %s\n", res.Body)
+	if res.URL != "" {
+		fmt.Println(res.URL)
+	}
+	if res.Media != "" {
+		fmt.Println(res.Media)
+	}
 
 	return nil
 }
@@ -175,4 +166,54 @@ func (c *CLI) post(path string, body interface{}, response interface{}) error {
 
 		return nil
 	}
+}
+
+type ipResponse struct {
+	IP string `json:"ip"`
+}
+
+type locResponse struct {
+	Latitude  float64 `json:"lat"`
+	Longitude float64 `json:"lon"`
+}
+
+func (c *CLI) discoverLocation() error {
+	res, err := http.Get("https://api.ipify.org?format=json")
+	if err != nil {
+		return err
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	var resp ipResponse
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return err
+	}
+
+	res, err = http.Get("http://ip-api.com/json/" + resp.IP)
+	if err != nil {
+		return err
+	}
+
+	body, err = io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	var resp1 locResponse
+	err = json.Unmarshal(body, &resp1)
+	if err != nil {
+		return err
+	}
+
+	c.location = core.Coordinate{
+		Latitude:  resp1.Latitude,
+		Longitude: resp1.Longitude,
+	}
+
+	return nil
 }
