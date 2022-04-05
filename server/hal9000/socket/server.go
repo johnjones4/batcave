@@ -58,7 +58,7 @@ func (s *Server) newConnection(conn net.Conn) {
 			return err
 		}
 
-		conn.Write([]byte("ok\n"))
+		conn.Write([]byte("ok\r"))
 
 		for {
 			input, err := buffer.ReadString('\n')
