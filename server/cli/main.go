@@ -7,6 +7,12 @@ import (
 )
 
 func main() {
-	c := cli.New(os.Args[1])
+	host := ""
+	if len(os.Args) > 1 {
+		host = os.Args[1]
+	} else {
+		host = os.Getenv("HAL9000_HOST")
+	}
+	c := cli.New(host, os.Getenv("HAL9000_TOKEN_PATH"))
 	c.Run()
 }

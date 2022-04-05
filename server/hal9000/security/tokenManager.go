@@ -35,7 +35,7 @@ type tokenInternal struct {
 }
 
 func (t *TokenManager) NewToken(user core.User) (core.Token, error) {
-	tokenStruct := tokenInternal{user.Name, time.Now().Add(time.Hour)}
+	tokenStruct := tokenInternal{user.Name, time.Now().Add(time.Hour * 24 * 30)}
 
 	tokenPlain, err := json.Marshal(tokenStruct)
 	if err != nil {

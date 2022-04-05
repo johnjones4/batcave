@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,21 +18,28 @@ import (
 )
 
 type CLI struct {
-	host     string
-	reader   *bufio.Reader
-	token    core.Token
-	location core.Coordinate
+	host      string
+	tokenPath string
+	reader    *bufio.Reader
+	token     core.Token
+	location  core.Coordinate
 }
 
-func New(host string) *CLI {
+func New(host string, tokenPath string) *CLI {
 	return &CLI{
-		host:   host,
-		reader: bufio.NewReader(os.Stdin),
+		host:      host,
+		tokenPath: tokenPath,
+		reader:    bufio.NewReader(os.Stdin),
 	}
 }
 
 func (c *CLI) Run() {
-	err := c.discoverLocation()
+	err := c.loadToken()
+	if err != nil {
+		panic(err)
+	}
+
+	err = c.discoverLocation()
 	if err != nil {
 		panic(err)
 	}
@@ -48,6 +56,26 @@ func (c *CLI) Run() {
 			}
 		}
 	}
+}
+
+func (c *CLI) loadToken() error {
+	bytes, err := os.ReadFile(c.tokenPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	return json.Unmarshal(bytes, &c.token)
+}
+
+func (c *CLI) storeToken() error {
+	bytes, err := json.Marshal(c.token)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(c.tokenPath, bytes, 0600)
 }
 
 func (c *CLI) printError(e error) {
@@ -77,7 +105,8 @@ func (c *CLI) login() error {
 	}
 
 	c.token = res
-	return nil
+
+	return c.storeToken()
 }
 
 func (c *CLI) next() error {
