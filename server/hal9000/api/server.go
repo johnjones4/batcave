@@ -10,7 +10,6 @@ import (
 	"github.com/johnjones4/hal-9000/server/hal9000/security"
 	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 
-	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/rest/web"
 )
 
@@ -25,11 +24,11 @@ func makeServer(intentSet *intent.IntentSet, userStore *storage.UserStore, state
 	// Setup middlewares.
 	s.Use(
 		logRequest,
-		gzip.Middleware,
 	)
 
 	s.Post("/api/login", makeLoginHandler(userStore, tm))
 	s.Post("/api/request", makeRequestHandler(intentSet, userStore, stateStore, logger, tm))
+	s.Get("/api/commands", makeCommandsHandler(intentSet, userStore, stateStore, tm))
 
 	return s
 }

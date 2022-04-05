@@ -14,12 +14,12 @@ type Lights struct {
 	Service *service.Kasa
 }
 
-func (c *Lights) SupportedComandsForState(s core.State) []string {
+func (c *Lights) SupportedComandsForState(s core.State) map[string]string {
 	if s.State != core.StateDefault {
-		return []string{}
+		return map[string]string{}
 	}
-	return []string{
-		"lights",
+	return map[string]string{
+		"lights": "Turn the given lights on and off.",
 	}
 }
 

@@ -12,7 +12,7 @@ type IntentSet struct {
 
 func (h *IntentSet) ProcessRequest(req core.Inbound) (core.Outbound, error) {
 	for _, commandHandler := range h.Intents {
-		for _, command := range commandHandler.SupportedComandsForState(req.State) {
+		for command := range commandHandler.SupportedComandsForState(req.State) {
 			if req.Command == command {
 				res, err := commandHandler.Execute(req)
 				if err != nil {

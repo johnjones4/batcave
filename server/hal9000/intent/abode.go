@@ -18,13 +18,13 @@ const (
 	AbodeCommandInfo = "abode-info"
 )
 
-func (c *Abode) SupportedComandsForState(s core.State) []string {
+func (c *Abode) SupportedComandsForState(s core.State) map[string]string {
 	if s.State != core.StateDefault {
-		return []string{}
+		return map[string]string{}
 	}
-	return []string{
-		AbodeCommandMode,
-		AbodeCommandInfo,
+	return map[string]string{
+		AbodeCommandMode: "Set Abode system mode.",
+		AbodeCommandInfo: "Get Abode devices status.",
 	}
 }
 

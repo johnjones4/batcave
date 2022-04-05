@@ -35,7 +35,7 @@ type Outbound struct {
 }
 
 type Intent interface {
-	SupportedComandsForState(s State) []string
+	SupportedComandsForState(s State) map[string]string
 	Execute(req Inbound) (Outbound, error)
 }
 

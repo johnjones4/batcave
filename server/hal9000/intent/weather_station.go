@@ -11,12 +11,12 @@ type WeatherStation struct {
 	Service *service.WeatherStation
 }
 
-func (w *WeatherStation) SupportedComandsForState(s core.State) []string {
+func (w *WeatherStation) SupportedComandsForState(s core.State) map[string]string {
 	if s.State != core.StateDefault {
-		return []string{}
+		return map[string]string{}
 	}
-	return []string{
-		"weather",
+	return map[string]string{
+		"weather": "Get the weather station's latest reading",
 	}
 }
 

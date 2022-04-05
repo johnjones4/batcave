@@ -18,12 +18,12 @@ type Schedule struct {
 	Service *service.Google
 }
 
-func (c *Schedule) SupportedComandsForState(s core.State) []string {
+func (c *Schedule) SupportedComandsForState(s core.State) map[string]string {
 	if s.State != core.StateDefault {
-		return []string{}
+		return map[string]string{}
 	}
-	return []string{
-		"schedule",
+	return map[string]string{
+		"schedule": "Add a new event to the calendar.",
 	}
 }
 

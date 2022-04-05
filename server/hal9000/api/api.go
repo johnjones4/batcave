@@ -16,8 +16,28 @@ func New(userStoreFile, stateStoreFile, logFile, tokenKey string) (http.Handler,
 	if err != nil {
 		return nil, err
 	}
+	intents := []core.Intent{
+		&intent.Forecast{
+			Service: service.NewNOAA(),
+		},
+		&intent.Metro{
+			Service: service.NewMetro(),
+		},
+		&intent.Schedule{
+			Service: service.NewGoogle(),
+		},
+		&intent.WeatherStation{
+			Service: service.NewWeatherStation(),
+		},
+		&intent.Lights{
+			Service: kasa,
+		},
+		&intent.Abode{
+			Service: service.NewAbode(),
+		},
+	}
 	h := intent.IntentSet{
-		Intents: []core.Intent{
+		Intents: append([]core.Intent{
 			&intent.Forecast{
 				Service: service.NewNOAA(),
 			},
@@ -36,7 +56,9 @@ func New(userStoreFile, stateStoreFile, logFile, tokenKey string) (http.Handler,
 			&intent.Abode{
 				Service: service.NewAbode(),
 			},
-		},
+		}, &intent.Info{
+			Intents: intents,
+		}),
 	}
 
 	us := storage.NewUserStore(userStoreFile)
