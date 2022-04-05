@@ -9,10 +9,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	godotenv.Load()
 
 	userStoreFile := os.Getenv("USER_STORE_FILE")
 	stateStoreFile := os.Getenv("STATE_STORE_FILE")
