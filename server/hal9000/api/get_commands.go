@@ -45,6 +45,7 @@ func makeCommandsHandler(intentSet *intent.IntentSet, userStore *storage.UserSto
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
+		out.Commands = make(map[string]string)
 		for _, intent := range intentSet.Intents {
 			for command, description := range intent.SupportedComandsForState(state) {
 				out.Commands[command] = description
