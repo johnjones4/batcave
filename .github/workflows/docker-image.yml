@@ -19,4 +19,4 @@ jobs:
     - name: Build
       run: cd server && docker build . --file Dockerfile --tag johnjones4/hal9000
     - name: Push
-      run: docker push ghcr.io/johnjones4/hal9000:latest
+      run: docker push johnjones4/hal9000:latest
