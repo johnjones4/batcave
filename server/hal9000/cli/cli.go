@@ -71,6 +71,9 @@ func (c *CLI) loadToken() error {
 }
 
 func (c *CLI) storeToken() error {
+	if c.tokenPath == "" {
+		return nil
+	}
 	bytes, err := json.Marshal(c.token)
 	if err != nil {
 		return err

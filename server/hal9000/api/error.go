@@ -1,6 +1,9 @@
 package api
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 type apiError struct {
 	status int
@@ -9,6 +12,7 @@ type apiError struct {
 }
 
 func wrappedError(e error, code int) apiError {
+	log.Println(e)
 	return apiError{
 		status: http.StatusInternalServerError,
 		code:   code,
@@ -17,7 +21,7 @@ func wrappedError(e error, code int) apiError {
 }
 
 func (e apiError) Error() string {
-	return e.parent.Error()
+	return "Sorry. Something went wrong."
 }
 
 func (e apiError) AppErrCode() int {

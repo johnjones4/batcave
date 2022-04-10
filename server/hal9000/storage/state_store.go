@@ -46,7 +46,7 @@ func (ss *StateStore) GetStateForUser(user core.User) (core.State, error) {
 	}, nil
 }
 
-func (ss *StateStore) SetStateForUSer(state core.State) error {
+func (ss *StateStore) SetStateForUser(state core.State) error {
 	ss.lock.Lock()
 	ss.states[state.User.Name] = state.State
 	ss.lock.Unlock()
