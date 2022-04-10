@@ -1,4 +1,0 @@
-build-job:
-  stage: build
-  script:
-    - docker build -t hal-9000 ./server
