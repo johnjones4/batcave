@@ -17,6 +17,6 @@ jobs:
     - name: Login
       run: docker login -u publisher -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
     - name: Build
-      run: cd server && docker build . --file Dockerfile --tag hal9000:$(date +%s)
+      run: cd server && docker build . --file Dockerfile --tag hal9000
     - name: Push
       run: docker push hal9000
