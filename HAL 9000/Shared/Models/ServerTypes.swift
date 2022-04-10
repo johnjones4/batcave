@@ -57,7 +57,7 @@ struct Commands: Decodable {
     let commands: [String: String]
     
     func suggest(partial: String) -> [String] {
-        if partial.count == 0 || partial.first == "/" {
+        if partial.count == 0 || partial[partial.startIndex] != "/" {
             return [String]()
         }
         let partialLc = partial.lowercased()

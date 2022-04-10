@@ -54,14 +54,17 @@ struct Chat: View {
                             }
                         }
                     }.padding(.top)
+                    self.recommendations.isEmpty ? nil : Button.hal(LocalizedStringKey(self.recommendations.first!), action: {
+                        send()
+                    })
                     HStack {
                         ZStack {
                             TextField.halSmall("Message", text: $text)
                             .onSubmit {
                                 send()
                             }
-                            .onChange(of: text, perform: { _ in
-                                print(self.hal.commands.suggest(partial: text))
+                            .onChange(of: text, perform: { newValue in
+                                self.recommendations = self.hal.commands.suggest(partial: newValue)
                             })
                                 .font(Font.halSmall())
                         }
@@ -86,8 +89,14 @@ struct Chat: View {
     }
     
     func send() {
+        var sendText = text
+        if !self.recommendations.isEmpty {
+            let firstSpace = sendText.firstIndex(of: " ")
+            let body = firstSpace == nil ? "" : " " + sendText[firstSpace!...]
+            sendText = self.recommendations.first! + body
+        }
         hal.send(req: Inbound(
-            body: text,
+            body: sendText,
             location: hal.coordinate ?? Coordinate(latitude: 0, longitude: 0)
         ))
         text = ""
