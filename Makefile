@@ -1,2 +1,2 @@
 ci:
-	docker build -t hal9000 ./server 
+	docker build -t hal9000 ./server
