@@ -15,8 +15,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Login
-      run: docker login -u publisher -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+      run: docker login -u johnjones4 -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
     - name: Build
       run: cd server && docker build . --file Dockerfile --tag hal9000
     - name: Push
-      run: docker push hal9000
+      run: docker push ghcr.io/johnjones4/hal9000:latest
