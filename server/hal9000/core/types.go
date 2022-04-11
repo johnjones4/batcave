@@ -34,8 +34,13 @@ type Outbound struct {
 	State State `json:"state"`
 }
 
+type CommandInfo struct {
+	Description  string `json:"description"`
+	RequiresBody bool   `json:"requiresBody"`
+}
+
 type Intent interface {
-	SupportedComandsForState(s State) map[string]string
+	SupportedComandsForState(s State) map[string]CommandInfo
 	Execute(req Inbound) (Outbound, error)
 }
 

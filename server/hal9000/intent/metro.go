@@ -12,12 +12,15 @@ type Metro struct {
 	Service *service.Metro
 }
 
-func (c *Metro) SupportedComandsForState(s core.State) map[string]string {
+func (c *Metro) SupportedComandsForState(s core.State) map[string]core.CommandInfo {
 	if s.State != core.StateDefault {
-		return map[string]string{}
+		return map[string]core.CommandInfo{}
 	}
-	return map[string]string{
-		"metro": "Get the metro arrivals for the closest station.",
+	return map[string]core.CommandInfo{
+		"metro": {
+			Description:  "Get the metro arrivals for the closest station.",
+			RequiresBody: false,
+		},
 	}
 }
 

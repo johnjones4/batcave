@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -24,9 +23,9 @@ type WeatherStatonResponse struct {
 	Pressure         float64   `json:"pressure"`
 }
 
-func NewWeatherStation() *WeatherStation {
+func NewWeatherStation(upstream string) *WeatherStation {
 	return &WeatherStation{
-		upstream: os.Getenv("WEATHER_STATION_UPSTREAM"),
+		upstream: upstream,
 	}
 }
 

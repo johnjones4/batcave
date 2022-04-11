@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -28,11 +27,11 @@ type Google struct {
 	clientSecret    string
 }
 
-func NewGoogle() *Google {
+func NewGoogle(clientID, clientSecret, refreshToken string) *Google {
 	return &Google{
-		clientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		clientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		refreshToken: os.Getenv("GOOGLE_REFRESH_TOKEN"),
+		clientID:     clientID,
+		clientSecret: clientSecret,
+		refreshToken: refreshToken,
 	}
 }
 

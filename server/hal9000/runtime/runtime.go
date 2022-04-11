@@ -20,7 +20,7 @@ type Runtime struct {
 }
 
 func New() (*Runtime, error) {
-	kasa, err := service.NewKasa()
+	kasa, err := service.NewKasa(os.Getenv("KASA_DEVICES_FILE"), os.Getenv("KASA_MQTT_URL"))
 	if err != nil {
 		return nil, err
 	}
@@ -29,42 +29,27 @@ func New() (*Runtime, error) {
 			Service: service.NewNOAA(),
 		},
 		&intent.Metro{
-			Service: service.NewMetro(),
+			Service: service.NewMetro(os.Getenv("METRO_API_KEY")),
 		},
 		&intent.Schedule{
-			Service: service.NewGoogle(),
+			Service: service.NewGoogle(os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"), os.Getenv("GOOGLE_REFRESH_TOKEN")),
 		},
 		&intent.WeatherStation{
-			Service: service.NewWeatherStation(),
+			Service: service.NewWeatherStation(os.Getenv("WEATHER_STATION_UPSTREAM")),
 		},
 		&intent.Lights{
 			Service: kasa,
 		},
 		&intent.Abode{
-			Service: service.NewAbode(),
+			Service: service.NewAbode(os.Getenv("ABODE_USERNAME"), os.Getenv("ABODE_PASSWORD")),
+		},
+		&intent.HouseProject{
+			Service: service.NewTrello(os.Getenv("TRELLO_API_KEY"), os.Getenv("TRELLO_TOKEN")),
+			ListId:  os.Getenv("TRELLO_LID_HOUSE_TODO"),
 		},
 	}
 	h := &IntentSet{
-		Intents: append([]core.Intent{
-			&intent.Forecast{
-				Service: service.NewNOAA(),
-			},
-			&intent.Metro{
-				Service: service.NewMetro(),
-			},
-			&intent.Schedule{
-				Service: service.NewGoogle(),
-			},
-			&intent.WeatherStation{
-				Service: service.NewWeatherStation(),
-			},
-			&intent.Lights{
-				Service: kasa,
-			},
-			&intent.Abode{
-				Service: service.NewAbode(),
-			},
-		}, &intent.Info{
+		Intents: append(intents, &intent.Info{
 			Intents: intents,
 		}),
 	}

@@ -16,7 +16,7 @@ func makeCommandsHandler(r *runtime.Runtime) usecase.Interactor {
 		Authorization string `header:"Authorization"`
 	}
 	type response struct {
-		Commands map[string]string `json:"commands"`
+		Commands map[string]core.CommandInfo `json:"commands"`
 	}
 	return usecase.NewIOI(new(request), new(response), func(ctx context.Context, input, output interface{}) error {
 		in := input.(*request)
@@ -44,7 +44,7 @@ func makeCommandsHandler(r *runtime.Runtime) usecase.Interactor {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		out.Commands = make(map[string]string)
+		out.Commands = make(map[string]core.CommandInfo)
 		for _, intent := range r.Intents.Intents {
 			for command, description := range intent.SupportedComandsForState(state) {
 				out.Commands[command] = description

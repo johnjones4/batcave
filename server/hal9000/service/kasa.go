@@ -19,8 +19,8 @@ type Kasa struct {
 	deviceGroups []KasaDeviceGroup
 }
 
-func NewKasa() (*Kasa, error) {
-	devicesString, err := os.ReadFile(os.Getenv("KASA_DEVICES_FILE"))
+func NewKasa(devicesPath, mqttUrl string) (*Kasa, error) {
+	devicesString, err := os.ReadFile(devicesPath)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func NewKasa() (*Kasa, error) {
 	}
 
 	return &Kasa{
-		client:       mqtt.NewClient(mqtt.NewClientOptions().AddBroker(os.Getenv("KASA_MQTT_URL"))),
+		client:       mqtt.NewClient(mqtt.NewClientOptions().AddBroker(mqttUrl)),
 		deviceGroups: deviceGroups,
 	}, nil
 }

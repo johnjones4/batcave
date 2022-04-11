@@ -8,11 +8,15 @@ import (
 
 func main() {
 	host := ""
+	scheme := "https"
 	if len(os.Args) > 1 {
 		host = os.Args[1]
 	} else {
 		host = os.Getenv("HAL9000_HOST")
 	}
-	c := cli.New(host, os.Getenv("HAL9000_TOKEN_PATH"))
+	if len(os.Args) > 2 {
+		scheme = os.Args[2]
+	}
+	c := cli.New(scheme, host, os.Getenv("HAL9000_TOKEN_PATH"))
 	c.Run()
 }

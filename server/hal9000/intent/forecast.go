@@ -16,12 +16,15 @@ type Forecast struct {
 	Service *service.NOAA
 }
 
-func (c *Forecast) SupportedComandsForState(s core.State) map[string]string {
+func (c *Forecast) SupportedComandsForState(s core.State) map[string]core.CommandInfo {
 	if s.State != core.StateDefault {
-		return map[string]string{}
+		return map[string]core.CommandInfo{}
 	}
-	return map[string]string{
-		"forecast": "Get the forecast for the given date/time.",
+	return map[string]core.CommandInfo{
+		"forecast": {
+			Description:  "Get the forecast for the given date/time.",
+			RequiresBody: true,
+		},
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,10 +25,10 @@ type Abode struct {
 	expiration  time.Time
 }
 
-func NewAbode() *Abode {
+func NewAbode(username, password string) *Abode {
 	return &Abode{
-		username: os.Getenv("ABODE_USERNAME"),
-		password: os.Getenv("ABODE_PASSWORD"),
+		username: username,
+		password: password,
 	}
 }
 

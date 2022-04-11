@@ -18,6 +18,7 @@ import (
 )
 
 type CLI struct {
+	scheme    string
 	host      string
 	tokenPath string
 	reader    *bufio.Reader
@@ -25,8 +26,9 @@ type CLI struct {
 	location  core.Coordinate
 }
 
-func New(host string, tokenPath string) *CLI {
+func New(scheme, host, tokenPath string) *CLI {
 	return &CLI{
+		scheme:    scheme,
 		host:      host,
 		tokenPath: tokenPath,
 		reader:    bufio.NewReader(os.Stdin),
@@ -159,7 +161,7 @@ func (c *CLI) post(path string, body interface{}, response interface{}) error {
 	}
 
 	u := url.URL{
-		Scheme: "http",
+		Scheme: c.scheme,
 		Host:   c.host,
 		Path:   path,
 	}
