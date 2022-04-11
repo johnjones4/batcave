@@ -1,5 +1,8 @@
-PROJECT=$(shell basename $(shell pwd))
-TAG=ghcr.io/johnjones4/${PROJECT}}
+PROJECT=$(shell basename $(shell pwd) | awk '{print tolower($0)}')
+TAG=ghcr.io/johnjones4/${PROJECT}
+
+info:
+	echo ${PROJECT}
 
 ci:
 	docker build -t ${TAG} ./server
