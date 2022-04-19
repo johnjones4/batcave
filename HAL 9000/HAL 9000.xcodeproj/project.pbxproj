@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF9D0A64280F401600F22E57 /* Credentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9D0A63280F401600F22E57 /* Credentials.swift */; };
+		AF9D0A65280F401600F22E57 /* Credentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9D0A63280F401600F22E57 /* Credentials.swift */; };
 		AFABB37927FD0A3000F77BD1 /* HAL_9000App.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB36927FD0A2B00F77BD1 /* HAL_9000App.swift */; };
 		AFABB37A27FD0A3000F77BD1 /* HAL_9000App.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB36927FD0A2B00F77BD1 /* HAL_9000App.swift */; };
 		AFABB37B27FD0A3000F77BD1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB36A27FD0A2B00F77BD1 /* ContentView.swift */; };
@@ -20,9 +22,7 @@
 		AFABB38F27FD1E2900F77BD1 /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB38E27FD1E2900F77BD1 /* ChatBubble.swift */; };
 		AFABB39127FD239500F77BD1 /* CustomScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB39027FD239500F77BD1 /* CustomScrollView.swift */; };
 		AFABB39327FD243200F77BD1 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB39227FD243200F77BD1 /* Chat.swift */; };
-		AFABB39727FDC45200F77BD1 /* Login.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB39627FDC45200F77BD1 /* Login.swift */; };
 		AFABB39827FDD41C00F77BD1 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB39227FD243200F77BD1 /* Chat.swift */; };
-		AFABB39927FDD41F00F77BD1 /* Login.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB39627FDC45200F77BD1 /* Login.swift */; };
 		AFABB39A27FDD42900F77BD1 /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB38E27FD1E2900F77BD1 /* ChatBubble.swift */; };
 		AFABB39B27FDD42C00F77BD1 /* CustomScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFABB39027FD239500F77BD1 /* CustomScrollView.swift */; };
 		AFABB39D27FDD6D100F77BD1 /* Jura-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AFABB39C27FDD6D100F77BD1 /* Jura-VariableFont_wght.ttf */; };
@@ -35,6 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AF9D0A63280F401600F22E57 /* Credentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Credentials.swift; sourceTree = "<group>"; };
 		AFABB36927FD0A2B00F77BD1 /* HAL_9000App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HAL_9000App.swift; sourceTree = "<group>"; };
 		AFABB36A27FD0A2B00F77BD1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AFABB36B27FD0A3000F77BD1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -46,7 +47,6 @@
 		AFABB38E27FD1E2900F77BD1 /* ChatBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubble.swift; sourceTree = "<group>"; };
 		AFABB39027FD239500F77BD1 /* CustomScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomScrollView.swift; sourceTree = "<group>"; };
 		AFABB39227FD243200F77BD1 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
-		AFABB39627FDC45200F77BD1 /* Login.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Login.swift; sourceTree = "<group>"; };
 		AFABB39C27FDD6D100F77BD1 /* Jura-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Jura-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		AFABB39F27FDD73100F77BD1 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		AFABB3A227FDE1FC00F77BD1 /* ErrorPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorPopup.swift; sourceTree = "<group>"; };
@@ -91,9 +91,9 @@
 				AFABB38E27FD1E2900F77BD1 /* ChatBubble.swift */,
 				AFABB39027FD239500F77BD1 /* CustomScrollView.swift */,
 				AFABB39227FD243200F77BD1 /* Chat.swift */,
-				AFABB39627FDC45200F77BD1 /* Login.swift */,
 				AFABB39F27FDD73100F77BD1 /* Styles.swift */,
 				AFABB3A227FDE1FC00F77BD1 /* ErrorPopup.swift */,
+				AF9D0A63280F401600F22E57 /* Credentials.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -228,7 +228,7 @@
 			files = (
 				AFABB3A027FDD73100F77BD1 /* Styles.swift in Sources */,
 				AFABB37B27FD0A3000F77BD1 /* ContentView.swift in Sources */,
-				AFABB39727FDC45200F77BD1 /* Login.swift in Sources */,
+				AF9D0A64280F401600F22E57 /* Credentials.swift in Sources */,
 				AFABB38F27FD1E2900F77BD1 /* ChatBubble.swift in Sources */,
 				AFABB39327FD243200F77BD1 /* Chat.swift in Sources */,
 				AFABB3A327FDE1FC00F77BD1 /* ErrorPopup.swift in Sources */,
@@ -245,9 +245,9 @@
 			files = (
 				AFABB3A127FDD73100F77BD1 /* Styles.swift in Sources */,
 				AFABB37C27FD0A3000F77BD1 /* ContentView.swift in Sources */,
+				AF9D0A65280F401600F22E57 /* Credentials.swift in Sources */,
 				AFABB38C27FD141D00F77BD1 /* HAL9000.swift in Sources */,
 				AFABB37A27FD0A3000F77BD1 /* HAL_9000App.swift in Sources */,
-				AFABB39927FDD41F00F77BD1 /* Login.swift in Sources */,
 				AFABB3A427FDE1FC00F77BD1 /* ErrorPopup.swift in Sources */,
 				AFABB39827FDD41C00F77BD1 /* Chat.swift in Sources */,
 				AFABB38D27FD142000F77BD1 /* ServerTypes.swift in Sources */,

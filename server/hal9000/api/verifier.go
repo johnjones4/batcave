@@ -21,7 +21,6 @@ func fail(w http.ResponseWriter, err error) {
 var requiredHeaders = []string{
 	"User-Agent",
 	"X-Request-Time",
-	"Content-Type",
 }
 
 func makeRequestVerifier(clientStore *storage.ClientStore) func(http.Handler) http.Handler {

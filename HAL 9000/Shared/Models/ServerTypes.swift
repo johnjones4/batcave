@@ -32,27 +32,6 @@ struct Outbound: Message {
     let url: String
 }
 
-struct LoginRequest: Encodable {
-    let username: String
-    let password: String
-}
-
-struct Token: Encodable, Decodable {
-    let token: String
-    let user: String
-    let expiration: String
-    
-    var expirationDate: Date {
-        let RFC3339DateFormatter = DateFormatter()
-        RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-        return RFC3339DateFormatter.date(from: expiration)!
-    }
-    
-    var isExpired: Bool {
-        return expirationDate <= Date()
-    }
-}
-
 struct CommandInfo: Decodable {
     let description: String
     let requiresBody: Bool
@@ -80,4 +59,8 @@ struct ErrorResponse: Decodable {
     var description : String {
         return error
     }
+}
+
+struct Pong: Decodable {
+    let pong: Bool
 }

@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var hal = try! HAL9000(apiRoot: "https://hal9000.frontdoor.johnjonesfour.com")
+    @ObservedObject var hal = HAL9000(apiRoot: ApiRoot, clientId: ClientId, key: Key)
     var body: some View {
         ZStack {
-            (hal.token != nil && !(hal.token?.isExpired ?? true)) ? AnyView(Chat(hal: hal)) : AnyView(Login(hal: hal))
+            Chat(hal: hal)
             hal.error != nil ? ErrorPopup(error: hal.error!) {
                 hal.error = nil
             }.frame(maxHeight: .infinity, alignment: .bottom) : nil
+        }.onAppear() {
+            hal.ping()
         }
     }
 }

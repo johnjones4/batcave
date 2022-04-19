@@ -154,14 +154,15 @@ func (c *CLI) request(method string, path string, body interface{}, response int
 		return err
 	}
 
-	contentType := "application/json"
 	reqTime := time.Now().Format(time.RFC3339)
 
-	req.Header.Set("Content-Type", contentType)
+	if method != "GET" {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("X-Request-Time", reqTime)
 	req.Header.Set("User-Agent", c.settings.ClientId)
 
-	sigString := strings.Join([]string{c.settings.ClientId, reqTime, contentType}, ":")
+	sigString := strings.Join([]string{c.settings.ClientId, reqTime}, ":")
 	h := hmac.New(sha256.New, []byte(c.settings.Key))
 	h.Write([]byte(sigString))
 	sha := hex.EncodeToString(h.Sum(nil))

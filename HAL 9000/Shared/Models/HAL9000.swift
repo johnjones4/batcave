@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import CoreLocation
+import CryptoKit
 
 enum ServerError: Error {
     case noToken
@@ -33,22 +34,24 @@ extension ServerError: LocalizedError {
 
 class HAL9000: NSObject, ObservableObject {
     private let apiRoot: String
+    private let clientId: String
+    private let key: SymmetricKey
     private var subscribers = Set<AnyCancellable>()
     private let locationManager: CLLocationManager
     @Published var coordinate: Coordinate?
-    @Published var token: Token?
     @Published var messages: [MessageHolder] = []
     @Published var error: Error?
     @Published var communicating: Bool = false
     @Published var authorizationStatus: CLAuthorizationStatus
     @Published var commands: Commands = Commands(commands: [String:CommandInfo]())
     
-    init(apiRoot _apiRoot: String) throws {
+    init(apiRoot _apiRoot: String, clientId _clientId: String, key _key: String) {
         apiRoot = _apiRoot
+        clientId = _clientId
+        key = SymmetricKey(data: Data(_key.utf8))
         locationManager = CLLocationManager()
         authorizationStatus = locationManager.authorizationStatus
         super.init()
-        try loadToken()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.startUpdatingLocation()
@@ -56,24 +59,23 @@ class HAL9000: NSObject, ObservableObject {
     
     override init() {
         self.apiRoot = ""
+        self.clientId = ""
+        self.key = SymmetricKey(size:.bits128)
         self.locationManager = CLLocationManager()
         self.authorizationStatus = locationManager.authorizationStatus
     }
     
-    func login(req: LoginRequest) {
-        self.request(method: "POST", path: "/api/login", authenticate: false, body: req) { (token: Token) in
-            self.token = token
-            do {
-                try self.saveToken()
-            } catch {
-                self.error = error
-            }
+    func ping() {
+        print("ping")
+        self.request(method: "GET", path: "/api/ping", body: nil as String?) { (p: Pong) in
+            print("pong")
         }
     }
     
+    
     func send(req: Inbound) {
         self.messages.append(MessageHolder(message: req, timestamp: Date()))
-        self.request(method: "POST", path: "/api/request", authenticate: true, body: req) { (m: Outbound) in
+        self.request(method: "POST", path: "/api/request", body: req) { (m: Outbound) in
             self.messages.append(MessageHolder(message: m, timestamp: Date()))
             if self.messages.count > 50 {
                 self.messages.removeFirst()
@@ -82,7 +84,7 @@ class HAL9000: NSObject, ObservableObject {
     }
     
     func getCommands() {
-        self.request(method: "GET", path: "/api/commands", authenticate: true, body: nil as String?) { (commands: Commands) in
+        self.request(method: "GET", path: "/api/commands", body: nil as String?) { (commands: Commands) in
             self.commands = commands
         }
     }
@@ -91,44 +93,27 @@ class HAL9000: NSObject, ObservableObject {
         self.error = nil
     }
     
-    private var tokenStorageURL: URL {
-        let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return documentDirectory.appendingPathComponent("token.json")
-    }
-    
-    private func loadToken() throws {
-        let url = self.tokenStorageURL
-        if !FileManager.default.fileExists(atPath: url.path) {
-            return
-        }
-        guard let data = try? Data(contentsOf: url) else { return }
-        let decoder = JSONDecoder()
-        self.token = try decoder.decode(Token.self, from: data)
-    }
-    
-    private func saveToken() throws {
-        let encoder = JSONEncoder()
-        guard let data = try? encoder.encode(self.token) else { return }
-        try data.write(to: self.tokenStorageURL)
-    }
-    
-    private func request<T, V>(method: String, path: String, authenticate: Bool, body: T?, action: @escaping (V) -> Void) where T : Encodable, V : Decodable {
+    private func request<T, V>(method: String, path: String, body: T?, action: @escaping (V) -> Void) where T : Encodable, V : Decodable {
         do {
             var request = URLRequest(url: URL(string: self.apiRoot+path)!)
+            request.httpMethod = method
+            
             if let b = body {
                 request.httpBody = try JSONEncoder().encode(b)
                 request.setValue("application/json", forHTTPHeaderField: "Content-type")
             }
-            if authenticate {
-                guard let token = self.token else {
-                    throw ServerError.noToken
-                }
-                if token.isExpired {
-                    throw ServerError.tokenExpired
-                }
-                request.setValue(token.token, forHTTPHeaderField: "Authorization")
-            }
-            request.httpMethod = method
+            
+            let RFC3339DateFormatter = DateFormatter()
+            RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+            let reqTime = RFC3339DateFormatter.string(from: Date())
+            
+            let signature = HMAC<SHA256>.authenticationCode(for: Data("\(self.clientId):\(reqTime)".utf8), using: self.key)
+            let signatureStr = Data(signature).map { String(format: "%02hhx", $0) }.joined()
+            
+            request.setValue(self.clientId, forHTTPHeaderField: "User-Agent")
+            request.setValue(reqTime, forHTTPHeaderField: "X-Request-Time")
+            request.setValue(signatureStr, forHTTPHeaderField: "X-Signature")
+            
             self.communicating = true
             URLSession.shared.dataTaskPublisher(for: request)
                 .tryMap{ (data, response) -> Data in
