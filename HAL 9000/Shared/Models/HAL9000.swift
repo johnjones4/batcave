@@ -41,7 +41,7 @@ class HAL9000: NSObject, ObservableObject {
     @Published var error: Error?
     @Published var communicating: Bool = false
     @Published var authorizationStatus: CLAuthorizationStatus
-    @Published var commands: Commands = Commands(commands: [String:String]())
+    @Published var commands: Commands = Commands(commands: [String:CommandInfo]())
     
     init(apiRoot _apiRoot: String) throws {
         apiRoot = _apiRoot

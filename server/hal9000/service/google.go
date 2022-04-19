@@ -19,19 +19,20 @@ const (
 	KVKeyGoogleAuthAccessToken = "google_auth_access_token"
 )
 
+type GoogleConfiguration struct {
+	RefreshToken string
+	ClientID     string
+	ClientSecret string
+}
 type Google struct {
 	authExpiration  time.Time
 	authAccessToken string
-	refreshToken    string
-	clientID        string
-	clientSecret    string
+	configuration   GoogleConfiguration
 }
 
-func NewGoogle(clientID, clientSecret, refreshToken string) *Google {
+func NewGoogle(configuration GoogleConfiguration) *Google {
 	return &Google{
-		clientID:     clientID,
-		clientSecret: clientSecret,
-		refreshToken: refreshToken,
+		configuration: configuration,
 	}
 }
 
@@ -43,9 +44,9 @@ type GoogleRefreshTokenResponse struct {
 func (gp *Google) RefreshAuthToken() error {
 	if gp.authAccessToken == "" || gp.authExpiration.Before(time.Now()) {
 		params := url.Values{
-			"client_id":     {gp.clientID},
-			"client_secret": {gp.clientSecret},
-			"refresh_token": {gp.refreshToken},
+			"client_id":     {gp.configuration.ClientID},
+			"client_secret": {gp.configuration.ClientSecret},
+			"refresh_token": {gp.configuration.RefreshToken},
 			"grant_type":    {"refresh_token"},
 		}
 		url := "https://accounts.google.com/o/oauth2/token?" + params.Encode()

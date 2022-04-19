@@ -9,8 +9,13 @@ const (
 	ErrorCodeStore            = 1001
 	ErrorCodeReqestProcess    = 1002
 	ErrorCodeLog              = 1003
-	ErrorCodeToken            = 1004
+	ErrorCodeClient           = 1004
 	ErrorCodeParsing          = 1005
-	ErrorCodeExpiredToken     = 2000
-	ErrorCodeUsernamePassword = 2001
+	ErrorCodeUsernamePassword = 2000
+)
+
+const (
+	CapabilitiesVoice   = "voice"
+	CapabilitiesText    = "text"
+	CapabilitiesDisplay = "display"
 )

@@ -11,7 +11,7 @@ type Info struct {
 	Intents []core.Intent
 }
 
-func (c *Info) SupportedComandsForState(s core.State) map[string]core.CommandInfo {
+func (c *Info) SupportedComandsForState(s string) map[string]core.CommandInfo {
 	return map[string]core.CommandInfo{
 		"commands": {
 			Description: "Get a list of currently available commands.",

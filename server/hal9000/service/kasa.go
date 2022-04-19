@@ -8,6 +8,11 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+type KasaConfiguration struct {
+	DevicesPath string
+	MQTTURL     string
+}
+
 type KasaDeviceGroup struct {
 	PreferredName string   `json:"preferredName"`
 	Names         []string `json:"names"`
@@ -19,8 +24,8 @@ type Kasa struct {
 	deviceGroups []KasaDeviceGroup
 }
 
-func NewKasa(devicesPath, mqttUrl string) (*Kasa, error) {
-	devicesString, err := os.ReadFile(devicesPath)
+func NewKasa(configuration KasaConfiguration) (*Kasa, error) {
+	devicesString, err := os.ReadFile(configuration.DevicesPath)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +37,7 @@ func NewKasa(devicesPath, mqttUrl string) (*Kasa, error) {
 	}
 
 	return &Kasa{
-		client:       mqtt.NewClient(mqtt.NewClientOptions().AddBroker(mqttUrl)),
+		client:       mqtt.NewClient(mqtt.NewClientOptions().AddBroker(configuration.MQTTURL)),
 		deviceGroups: deviceGroups,
 	}, nil
 }

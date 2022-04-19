@@ -3,6 +3,9 @@ package cli
 import (
 	"bufio"
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 
@@ -18,50 +22,49 @@ import (
 )
 
 type CLI struct {
-	scheme    string
-	host      string
-	tokenPath string
-	reader    *bufio.Reader
-	token     core.Token
-	location  core.Coordinate
+	scheme       string
+	host         string
+	reader       *bufio.Reader
+	settingsPath string
+	location     core.Coordinate
+	settings     struct {
+		Key      string `json:"key"`
+		ClientId string `json:"clientId"`
+	}
 }
 
-func New(scheme, host, tokenPath string) *CLI {
+func New(scheme, host, settingsPath string) *CLI {
 	return &CLI{
-		scheme:    scheme,
-		host:      host,
-		tokenPath: tokenPath,
-		reader:    bufio.NewReader(os.Stdin),
+		scheme:       scheme,
+		host:         host,
+		settingsPath: settingsPath,
+		reader:       bufio.NewReader(os.Stdin),
 	}
 }
 
 func (c *CLI) Run() {
-	err := c.loadToken()
+	err := c.load()
 	if err != nil {
 		panic(err)
 	}
-
+	err = c.ping()
+	if err != nil {
+		panic(err)
+	}
 	err = c.discoverLocation()
 	if err != nil {
 		panic(err)
 	}
 	for {
-		if c.token.IsExpired() {
-			err := c.login()
-			if err != nil {
-				c.printError(err)
-			}
-		} else {
-			err := c.next()
-			if err != nil {
-				c.printError(err)
-			}
+		err := c.next()
+		if err != nil {
+			c.printError(err)
 		}
 	}
 }
 
-func (c *CLI) loadToken() error {
-	bytes, err := os.ReadFile(c.tokenPath)
+func (c *CLI) load() error {
+	bytes, err := os.ReadFile(c.settingsPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
@@ -69,18 +72,7 @@ func (c *CLI) loadToken() error {
 		return err
 	}
 
-	return json.Unmarshal(bytes, &c.token)
-}
-
-func (c *CLI) storeToken() error {
-	if c.tokenPath == "" {
-		return nil
-	}
-	bytes, err := json.Marshal(c.token)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(c.tokenPath, bytes, 0600)
+	return json.Unmarshal(bytes, &c.settings)
 }
 
 func (c *CLI) printError(e error) {
@@ -91,31 +83,17 @@ func (c *CLI) printError(e error) {
 	}
 }
 
-func (c *CLI) login() error {
-	username, err := c.prompt("Username")
+func (c *CLI) ping() error {
+	var res map[string]interface{}
+	err := c.request("GET", "/api/ping", nil, &res)
 	if err != nil {
 		return err
 	}
-
-	password, err := c.prompt("Password")
-	if err != nil {
-		return err
-	}
-
-	req := core.LoginRequest{Username: username, Password: password}
-	var res core.Token
-	err = c.post("/api/login", req, &res)
-	if err != nil {
-		return err
-	}
-
-	c.token = res
-
-	return c.storeToken()
+	return nil
 }
 
 func (c *CLI) next() error {
-	input, err := c.prompt(c.token.User)
+	input, err := c.prompt("")
 	if err != nil {
 		return err
 	}
@@ -129,7 +107,7 @@ func (c *CLI) next() error {
 		Location: c.location,
 	}
 	var res core.OutboundBody
-	err = c.post("/api/request", req, &res)
+	err = c.request("POST", "/api/request", req, &res)
 	if err != nil {
 		return err
 	}
@@ -154,10 +132,15 @@ func (c *CLI) prompt(prompt string) (string, error) {
 	return strings.TrimSpace(str), nil
 }
 
-func (c *CLI) post(path string, body interface{}, response interface{}) error {
-	reqBytes, err := json.Marshal(body)
-	if err != nil {
-		return err
+func (c *CLI) request(method string, path string, body interface{}, response interface{}) error {
+	var err error
+	reqBytes := []byte{}
+
+	if body != nil {
+		reqBytes, err = json.Marshal(body)
+		if err != nil {
+			return err
+		}
 	}
 
 	u := url.URL{
@@ -166,13 +149,23 @@ func (c *CLI) post(path string, body interface{}, response interface{}) error {
 		Path:   path,
 	}
 
-	req, err := http.NewRequest("POST", u.String(), io.NopCloser(bytes.NewBuffer(reqBytes)))
+	req, err := http.NewRequest(method, u.String(), io.NopCloser(bytes.NewBuffer(reqBytes)))
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Authorization", c.token.Token)
+	contentType := "application/json"
+	reqTime := time.Now().Format(time.RFC3339)
+
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("X-Request-Time", reqTime)
+	req.Header.Set("User-Agent", c.settings.ClientId)
+
+	sigString := strings.Join([]string{c.settings.ClientId, reqTime, contentType}, ":")
+	h := hmac.New(sha256.New, []byte(c.settings.Key))
+	h.Write([]byte(sigString))
+	sha := hex.EncodeToString(h.Sum(nil))
+	req.Header.Set("X-Signature", sha)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

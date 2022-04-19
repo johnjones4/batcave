@@ -7,8 +7,12 @@ import (
 	"time"
 )
 
+type WeatherStationConfiguration struct {
+	Upstream string
+}
+
 type WeatherStation struct {
-	upstream string
+	configuration WeatherStationConfiguration
 }
 
 type WeatherStatonResponse struct {
@@ -23,14 +27,14 @@ type WeatherStatonResponse struct {
 	Pressure         float64   `json:"pressure"`
 }
 
-func NewWeatherStation(upstream string) *WeatherStation {
+func NewWeatherStation(configuration WeatherStationConfiguration) *WeatherStation {
 	return &WeatherStation{
-		upstream: upstream,
+		configuration: configuration,
 	}
 }
 
 func (w *WeatherStation) GetWeather() (WeatherStatonResponse, error) {
-	res, err := http.Get(w.upstream)
+	res, err := http.Get(w.configuration.Upstream)
 	if err != nil {
 		return WeatherStatonResponse{}, nil
 	}

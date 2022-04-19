@@ -13,13 +13,17 @@ const (
 	urlRoot = "https://api.wmata.com"
 )
 
-type Metro struct {
-	apiKey string
+type MetroConfiguration struct {
+	APIKey string
 }
 
-func NewMetro(apiKey string) *Metro {
+type Metro struct {
+	configuration MetroConfiguration
+}
+
+func NewMetro(configuration MetroConfiguration) *Metro {
 	return &Metro{
-		apiKey: apiKey,
+		configuration: configuration,
 	}
 }
 
@@ -54,7 +58,7 @@ func (m Metro) findClosestStation(c core.Coordinate) (Station, error) {
 		return Station{}, err
 	}
 
-	req.Header.Set("api_key", m.apiKey)
+	req.Header.Set("api_key", m.configuration.APIKey)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -103,7 +107,7 @@ func (m Metro) getArrivalsForStation(station Station) ([]Arrival, error) {
 		return nil, err
 	}
 
-	req.Header.Set("api_key", m.apiKey)
+	req.Header.Set("api_key", m.configuration.APIKey)
 
 	res, err := http.DefaultClient.Do(req)
 

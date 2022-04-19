@@ -11,15 +11,17 @@ import (
 	"net/url"
 )
 
+type TrelloConfiguration struct {
+	APIKey string
+	Token  string
+}
 type Trello struct {
-	apiKey string
-	token  string
+	configuration TrelloConfiguration
 }
 
-func NewTrello(apiKey, token string) *Trello {
+func NewTrello(configuration TrelloConfiguration) *Trello {
 	return &Trello{
-		apiKey: apiKey,
-		token:  token,
+		configuration: configuration,
 	}
 }
 
@@ -44,8 +46,8 @@ func (t *Trello) NewCard(listId, name string) (string, error) {
 		Host:   "api.trello.com",
 		Path:   "/1/cards",
 		RawQuery: url.Values{
-			"key":   {t.apiKey},
-			"token": {t.token},
+			"key":   {t.configuration.APIKey},
+			"token": {t.configuration.Token},
 		}.Encode(),
 	}
 

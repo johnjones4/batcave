@@ -23,11 +23,12 @@ func (a *API) Run() error {
 	// Setup middlewares.
 	s.Use(
 		logRequest,
+		makeRequestVerifier(a.Runtime.ClientStore),
 	)
 
-	s.Post("/api/login", makeLoginHandler(a.Runtime))
 	s.Post("/api/request", makeRequestHandler(a.Runtime))
 	s.Get("/api/commands", makeCommandsHandler(a.Runtime))
+	s.Get("/api/ping", makePingHandler(a.Runtime))
 
 	return http.ListenAndServe(a.Host, s)
 }

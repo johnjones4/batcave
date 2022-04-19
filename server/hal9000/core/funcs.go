@@ -2,7 +2,6 @@ package core
 
 import (
 	"math"
-	"time"
 )
 
 func (c Coordinate) DistanceTo(b Coordinate) float64 {
@@ -21,8 +20,4 @@ func (e FeedbackError) Error() string {
 
 func NewFeedbackError(m string) FeedbackError {
 	return FeedbackError{m}
-}
-
-func (t Token) IsExpired() bool {
-	return t.Expiration.Before(time.Now())
 }

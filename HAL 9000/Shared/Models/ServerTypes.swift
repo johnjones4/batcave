@@ -53,20 +53,22 @@ struct Token: Encodable, Decodable {
     }
 }
 
+struct CommandInfo: Decodable {
+    let description: String
+    let requiresBody: Bool
+}
+
 struct Commands: Decodable {
-    let commands: [String: String]
+    let commands: [String: CommandInfo]
     
-    func suggest(partial: String) -> [String] {
+    func suggest(partial: String) -> [String: CommandInfo] {
         if partial.count == 0 || partial[partial.startIndex] != "/" {
-            return [String]()
+            return [String: CommandInfo]()
         }
         let partialLc = partial.lowercased()
         return commands
-            .map({ k, _ in
-                return "/" + k
-            })
-            .filter { command in
-                return command.lowercased().starts(with: partialLc)
+            .filter { command, _ in
+                return ("/" + command).lowercased().starts(with: partialLc)
             }
     }
 }

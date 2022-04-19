@@ -9,12 +9,12 @@ import (
 	"github.com/swaggest/usecase"
 )
 
-func makeCommandsHandler(r *runtime.Runtime) usecase.Interactor {
+func makePingHandler(r *runtime.Runtime) usecase.Interactor {
 	type request struct {
 		Client string `header:"User-Agent"`
 	}
 	type response struct {
-		Commands map[string]core.CommandInfo `json:"commands"`
+		Pong bool `json:"pong"`
 	}
 	return usecase.NewIOI(new(request), new(response), func(ctx context.Context, input, output interface{}) error {
 		in := input.(*request)
@@ -25,17 +25,12 @@ func makeCommandsHandler(r *runtime.Runtime) usecase.Interactor {
 			return wrappedError(err, core.ErrorCodeClient)
 		}
 
-		state, err := r.StateStore.GetState(client.Client)
+		_, err = r.StateStore.GetState(client.Client)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		out.Commands = make(map[string]core.CommandInfo)
-		for _, intent := range r.Intents.Intents {
-			for command, description := range intent.SupportedComandsForState(state) {
-				out.Commands[command] = description
-			}
-		}
+		out.Pong = true
 
 		return nil
 	})

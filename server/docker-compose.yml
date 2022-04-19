@@ -1,21 +1,33 @@
 version: "3.9"
 
 services:
-  mqtt2kasa:
-    build: ./vendor/mqtt2kasa
+  # mqtt2kasa:
+  #   build: ./vendor/mqtt2kasa
+  #   restart: always
+  #   volumes:
+  #     - ./vendor/mqtt2kasa/data:/usr/src/app/data
+  #   depends_on:
+  #     - mosquitto
+  # mosquitto:
+  #   image: eclipse-mosquitto:latest
+  #   restart: always
+  #   ports:
+  #     - 1883:1883
+  #     - 9001:9001
+  #   volumes: 
+  #     - ./config:/mosquitto/config
+  postgres:
     restart: always
-    volumes:
-      - ./vendor/mqtt2kasa/data:/usr/src/app/data
-    depends_on:
-      - mosquitto
-  mosquitto:
-    image: eclipse-mosquitto:latest
-    restart: always
+    image: postgres:11
+    environment:
+      - POSTGRES_USER=hal9000
+      - POSTGRES_PASSWORD=hal9000
+      - POSTGRES_DB=hal9000
     ports:
-      - 1883:1883
-      - 9001:9001
-    volumes: 
-      - ./config:/mosquitto/config
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
 
 volumes:
   mqtt2kasa:
+  postgres:

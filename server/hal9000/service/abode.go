@@ -17,18 +17,21 @@ const (
 	AbodeModeStandby = "standby"
 )
 
-type Abode struct {
-	username    string
-	password    string
-	accessToken string
-	tokenType   string
-	expiration  time.Time
+type AbodeConfiguration struct {
+	Username string
+	Password string
 }
 
-func NewAbode(username, password string) *Abode {
+type Abode struct {
+	configuration AbodeConfiguration
+	accessToken   string
+	tokenType     string
+	expiration    time.Time
+}
+
+func NewAbode(configuration AbodeConfiguration) *Abode {
 	return &Abode{
-		username: username,
-		password: password,
+		configuration: configuration,
 	}
 }
 
@@ -45,8 +48,8 @@ type abodeClaimResponse struct {
 func (a *Abode) authorize() error {
 	if a.accessToken == "" || a.expiration.Before(time.Now()) {
 		form := make(url.Values)
-		form.Add("id", a.username)
-		form.Add("password", a.password)
+		form.Add("id", a.configuration.Username)
+		form.Add("password", a.configuration.Password)
 		form.Add("uuid", uuid.New().String())
 		form.Add("locale_code", "en-US")
 

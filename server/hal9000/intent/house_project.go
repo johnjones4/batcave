@@ -7,13 +7,16 @@ import (
 	"github.com/johnjones4/hal-9000/server/hal9000/service"
 )
 
+type HouseProjectConfiguration struct {
+	ListId string
+}
 type HouseProject struct {
-	Service *service.Trello
-	ListId  string
+	Service       *service.Trello
+	Configuration HouseProjectConfiguration
 }
 
-func (c *HouseProject) SupportedComandsForState(s core.State) map[string]core.CommandInfo {
-	if s.State != core.StateDefault {
+func (c *HouseProject) SupportedComandsForState(s string) map[string]core.CommandInfo {
+	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}
 	return map[string]core.CommandInfo{
@@ -31,7 +34,7 @@ func (c *HouseProject) Execute(req core.Inbound) (core.Outbound, error) {
 		return core.Outbound{}, core.NewFeedbackError("Please provide a project name")
 	}
 
-	url, err := c.Service.NewCard(c.ListId, name)
+	url, err := c.Service.NewCard(c.Configuration.ListId, name)
 	if err != nil {
 		return core.Outbound{}, err
 	}

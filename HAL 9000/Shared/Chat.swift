@@ -10,7 +10,7 @@ import SwiftUI
 struct Chat: View {
     @ObservedObject var hal: HAL9000
     @State var text: String = ""
-    @State var recommendations: [String] = [String]()
+    @State var recommendations: [String:CommandInfo] = [String:CommandInfo]()
     
     var body: some View {
         switch hal.authorizationStatus {
@@ -54,7 +54,7 @@ struct Chat: View {
                             }
                         }
                     }.padding(.top)
-                    self.recommendations.isEmpty ? nil : Button.hal(LocalizedStringKey(self.recommendations.first!), action: {
+                    self.recommendations.isEmpty ? nil : Button.hal(LocalizedStringKey(self.recommendations.keys.first!), action: {
                         send()
                     })
                     HStack {
@@ -90,10 +90,14 @@ struct Chat: View {
     
     func send() {
         var sendText = text
-        if !self.recommendations.isEmpty {
+        if let command = self.recommendations.keys.first {
             let firstSpace = sendText.firstIndex(of: " ")
-            let body = firstSpace == nil ? "" : " " + sendText[firstSpace!...]
-            sendText = self.recommendations.first! + body
+            let body = firstSpace == nil ? "" : sendText[firstSpace!...]
+            sendText = "/" + command + " " + body
+            if body.trimmingCharacters(in: CharacterSet.whitespaces).isEmpty && self.recommendations[command]?.requiresBody ?? true {
+                self.text = sendText
+                return
+            }
         }
         hal.send(req: Inbound(
             body: sendText,

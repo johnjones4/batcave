@@ -1,26 +1,26 @@
 package runtime
 
 import (
-	"os"
-
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 	"github.com/johnjones4/hal-9000/server/hal9000/intent"
 	"github.com/johnjones4/hal-9000/server/hal9000/learning"
-	"github.com/johnjones4/hal-9000/server/hal9000/security"
 	"github.com/johnjones4/hal-9000/server/hal9000/service"
 	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 )
 
 type Runtime struct {
-	Intents      *IntentSet
-	UserStore    *storage.UserStore
-	StateStore   *storage.StateStore
-	Logger       *learning.InteractionLogger
-	TokenManager *security.TokenManager
+	Intents     *IntentSet
+	StateStore  *storage.StateStore
+	Logger      *storage.InteractionLogger
+	ClientStore *storage.ClientStore
+	UserStore   *storage.UserStore
+	Predictor   *learning.Predictor
 }
 
 func New() (*Runtime, error) {
-	kasa, err := service.NewKasa(os.Getenv("KASA_DEVICES_FILE"), os.Getenv("KASA_MQTT_URL"))
+	configuration := LoadConfigurationFromEnv()
+
+	kasa, err := service.NewKasa(configuration.Kasa)
 	if err != nil {
 		return nil, err
 	}
@@ -29,23 +29,23 @@ func New() (*Runtime, error) {
 			Service: service.NewNOAA(),
 		},
 		&intent.Metro{
-			Service: service.NewMetro(os.Getenv("METRO_API_KEY")),
+			Service: service.NewMetro(configuration.Metro),
 		},
 		&intent.Schedule{
-			Service: service.NewGoogle(os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"), os.Getenv("GOOGLE_REFRESH_TOKEN")),
+			Service: service.NewGoogle(configuration.Google),
 		},
 		&intent.WeatherStation{
-			Service: service.NewWeatherStation(os.Getenv("WEATHER_STATION_UPSTREAM")),
+			Service: service.NewWeatherStation(configuration.WeatherStation),
 		},
 		&intent.Lights{
 			Service: kasa,
 		},
 		&intent.Abode{
-			Service: service.NewAbode(os.Getenv("ABODE_USERNAME"), os.Getenv("ABODE_PASSWORD")),
+			Service: service.NewAbode(configuration.Abode),
 		},
 		&intent.HouseProject{
-			Service: service.NewTrello(os.Getenv("TRELLO_API_KEY"), os.Getenv("TRELLO_TOKEN")),
-			ListId:  os.Getenv("TRELLO_LID_HOUSE_TODO"),
+			Service:       service.NewTrello(configuration.Trello),
+			Configuration: configuration.HouseProject,
 		},
 	}
 	h := &IntentSet{
@@ -54,33 +54,34 @@ func New() (*Runtime, error) {
 		}),
 	}
 
-	us := storage.NewUserStore(os.Getenv("USER_STORE_FILE"))
+	pool, err := storage.Connect(configuration.Storage)
+	if err != nil {
+		return nil, err
+	}
+
+	cs := storage.NewClientStore(configuration.Storage)
+	err = cs.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	us := storage.NewUserStore(configuration.Storage)
 	err = us.Load()
 	if err != nil {
 		return nil, err
 	}
 
-	ss := storage.NewStateStore(os.Getenv("STATE_STORE_FILE"))
-	err = ss.Load()
-	if err != nil {
-		return nil, err
-	}
-
-	logger, err := learning.NewInteractionLogger(os.Getenv("LOG_FILE"))
-	if err != nil {
-		return nil, err
-	}
-
-	tm, err := security.NewTokenManager([]byte(os.Getenv("TOKEN_KEY")))
+	predictor, err := learning.NewPredictor(configuration.Predictor)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Runtime{
-		Intents:      h,
-		UserStore:    us,
-		StateStore:   ss,
-		Logger:       logger,
-		TokenManager: tm,
+		Intents:     h,
+		StateStore:  storage.NewStateStore(pool),
+		Logger:      storage.NewInteractionLogger(pool),
+		ClientStore: cs,
+		UserStore:   us,
+		Predictor:   predictor,
 	}, nil
 }

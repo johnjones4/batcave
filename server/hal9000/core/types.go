@@ -1,17 +1,9 @@
 package core
 
-import "time"
-
 type Coordinate struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
-
-type State struct {
-	User  User   `json:"user"`
-	State string `json:"state"`
-}
-
 type InboundBody struct {
 	Body     string     `json:"body"`
 	Location Coordinate `json:"location"`
@@ -19,8 +11,11 @@ type InboundBody struct {
 
 type Inbound struct {
 	InboundBody
-	Command string `json:"command"`
-	State   State  `json:"state"`
+	Command   string `json:"command"`
+	State     string `json:"state"`
+	User      User   `json:"user"`
+	Client    Client `json:"client"`
+	ParseType string `json:"parseType"`
 }
 
 type OutboundBody struct {
@@ -31,7 +26,7 @@ type OutboundBody struct {
 
 type Outbound struct {
 	OutboundBody
-	State State `json:"state"`
+	State string `json:"state"`
 }
 
 type CommandInfo struct {
@@ -40,7 +35,7 @@ type CommandInfo struct {
 }
 
 type Intent interface {
-	SupportedComandsForState(s State) map[string]CommandInfo
+	SupportedComandsForState(s string) map[string]CommandInfo
 	Execute(req Inbound) (Outbound, error)
 }
 
@@ -52,13 +47,8 @@ type User struct {
 	Name string `json:"name"`
 }
 
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type Token struct {
-	Token      string    `json:"token"`
-	User       string    `json:"user"`
-	Expiration time.Time `json:"expiration"`
+type Client struct {
+	ID           string   `json:"id"`
+	Capabilities []string `json:"capabilities"`
+	Users        []string `json:"users"`
 }

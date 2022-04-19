@@ -2,12 +2,10 @@ package api
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
-	"github.com/johnjones4/hal-9000/server/hal9000/learning"
 	"github.com/johnjones4/hal-9000/server/hal9000/runtime"
-	"github.com/johnjones4/hal-9000/server/hal9000/security"
+	"github.com/johnjones4/hal-9000/server/hal9000/storage"
 
 	"github.com/swaggest/usecase"
 )
@@ -15,33 +13,22 @@ import (
 func makeRequestHandler(r *runtime.Runtime) usecase.Interactor {
 	type request struct {
 		core.InboundBody
-		Authorization string `header:"Authorization"`
+		Client string `header:"User-Agent"`
 	}
 	return usecase.NewIOI(new(request), new(core.OutboundBody), func(ctx context.Context, input, output interface{}) error {
 		in := input.(*request)
-		username, err := r.TokenManager.UsernameForToken(in.Authorization)
+
+		client, err := r.ClientStore.GetClient(in.Client)
 		if err != nil {
-			if err == security.ErrorTokenExpired {
-				return apiError{
-					status: http.StatusForbidden,
-					code:   core.ErrorCodeExpiredToken,
-					parent: err,
-				}
-			}
-			return wrappedError(err, core.ErrorCodeStore)
+			return wrappedError(err, core.ErrorCodeClient)
 		}
 
-		user, err := r.UserStore.GetUser(username)
+		state, err := r.StateStore.GetState(client.Client)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}
 
-		state, err := r.StateStore.GetStateForUser(user.User)
-		if err != nil {
-			return wrappedError(err, core.ErrorCodeStore)
-		}
-
-		request, err := r.Parse(in.InboundBody, state)
+		request, err := r.Parse(in.InboundBody, client.Client, state)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeParsing)
 		}
@@ -51,7 +38,7 @@ func makeRequestHandler(r *runtime.Runtime) usecase.Interactor {
 			return wrappedError(err, core.ErrorCodeReqestProcess)
 		}
 
-		err = r.Logger.Log(learning.InteractionEvent{
+		err = r.Logger.Log(storage.InteractionEvent{
 			Request:  request,
 			Response: response,
 		})
@@ -59,7 +46,7 @@ func makeRequestHandler(r *runtime.Runtime) usecase.Interactor {
 			return wrappedError(err, core.ErrorCodeLog)
 		}
 
-		err = r.StateStore.SetStateForUser(request.State)
+		err = r.StateStore.SetState(client.Client, response.State)
 		if err != nil {
 			return wrappedError(err, core.ErrorCodeStore)
 		}

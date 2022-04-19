@@ -12,8 +12,8 @@ type Metro struct {
 	Service *service.Metro
 }
 
-func (c *Metro) SupportedComandsForState(s core.State) map[string]core.CommandInfo {
-	if s.State != core.StateDefault {
+func (c *Metro) SupportedComandsForState(s string) map[string]core.CommandInfo {
+	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}
 	return map[string]core.CommandInfo{

@@ -17,6 +17,6 @@ func main() {
 	if len(os.Args) > 2 {
 		scheme = os.Args[2]
 	}
-	c := cli.New(scheme, host, os.Getenv("HAL9000_TOKEN_PATH"))
+	c := cli.New(scheme, host, os.Getenv("HAL9000_SETTINGS_PATH"))
 	c.Run()
 }

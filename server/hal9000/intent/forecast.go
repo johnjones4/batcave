@@ -16,8 +16,8 @@ type Forecast struct {
 	Service *service.NOAA
 }
 
-func (c *Forecast) SupportedComandsForState(s core.State) map[string]core.CommandInfo {
-	if s.State != core.StateDefault {
+func (c *Forecast) SupportedComandsForState(s string) map[string]core.CommandInfo {
+	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}
 	return map[string]core.CommandInfo{
@@ -40,8 +40,10 @@ func (c *Forecast) Execute(req core.Inbound) (core.Outbound, error) {
 		if err != nil {
 			return core.Outbound{}, err
 		}
-		if !dateInfo.Time.IsZero() {
+		if dateInfo != nil && !dateInfo.Time.IsZero() {
 			weatherDate = dateInfo.Time
+		} else {
+			weatherDate = time.Now()
 		}
 	}
 
