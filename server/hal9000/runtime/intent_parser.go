@@ -1,7 +1,11 @@
 package runtime
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"errors"
+	"io/ioutil"
 	"strings"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
@@ -12,52 +16,74 @@ var (
 	ErrorNoIntent   = errors.New("no intent found")
 )
 
+const (
+	ParseMetadataBodyText       = "text"
+	ParseMetadataBodyAudio      = "audio"
+	ParseMetadataIntentExplicit = "explicit"
+	ParseMetadataIntentInferred = "inferred"
+)
+
 func (r *Runtime) Parse(in core.InboundBody, client core.Client, state string) (core.Inbound, error) {
-	if len(in.Body) == 0 {
+	if len(in.Body) == 0 && len(in.Audio) == 0 {
 		return core.Inbound{}, ErrorInputEmpty
 	}
 
-	var command string
-	var parseType string
-	if in.Body[0] == '/' {
-		parseType = "explicit"
-		firstSpace := strings.Index(in.Body, " ")
+	request := core.Inbound{
+		InboundBody: in,
+		Client:      client,
+		State:       state,
+	}
+
+	if len(request.Body) == 0 && len(request.Audio) != 0 {
+		gzipedReader := base64.NewDecoder(base64.StdEncoding, bytes.NewBuffer([]byte(request.Audio)))
+		audioReader, err := gzip.NewReader(gzipedReader)
+		if err != nil {
+			return core.Inbound{}, nil
+		}
+		audio, err := ioutil.ReadAll(audioReader)
+		if err != nil {
+			return core.Inbound{}, nil
+		}
+		body, err := r.VoiceTranscriber.Transcribe(audio)
+		if err != nil {
+			return core.Inbound{}, nil
+		}
+		request.Body = body
+		request.Audio = "" //TODO save this somewhere?
+		request.ParseMetadata.Body = ParseMetadataBodyAudio
+	} else {
+		request.ParseMetadata.Body = ParseMetadataBodyText
+	}
+
+	if request.Body[0] == '/' {
+		request.ParseMetadata.Intent = ParseMetadataIntentExplicit
+		firstSpace := strings.Index(request.Body, " ")
 		if firstSpace < 0 {
-			command = in.Body[1:]
-			in.Body = ""
+			request.Command = request.Body[1:]
+			request.Body = ""
 		} else {
-			command = strings.TrimSpace(in.Body[1:firstSpace])
-			in.Body = strings.TrimSpace(in.Body[firstSpace:])
+			request.Command = strings.TrimSpace(request.Body[1:firstSpace])
+			request.Body = strings.TrimSpace(request.Body[firstSpace:])
 		}
 	} else {
-		parseType = "inferred"
+		request.ParseMetadata.Intent = ParseMetadataIntentInferred
 		var err error
-		command, err = r.Predictor.PredictIntent(in.Body)
+		request.Command, err = r.IntentPredictor.PredictIntent(request.Body)
 		if err != nil {
 			return core.Inbound{}, err
 		}
 	}
 
-	if command == "" {
+	if request.Command == "" {
 		return core.Inbound{}, ErrorNoIntent
 	}
 
-	var user core.User
 	if len(client.Users) == 1 {
 		userRec, err := r.UserStore.GetUser(client.Users[0])
 		if err != nil {
 			return core.Inbound{}, err
 		}
-		user = userRec.User
-	}
-
-	request := core.Inbound{
-		InboundBody: in,
-		Command:     command,
-		State:       state,
-		Client:      client,
-		User:        user,
-		ParseType:   parseType,
+		request.User = userRec.User
 	}
 
 	return request, nil

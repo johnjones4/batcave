@@ -12,7 +12,9 @@ require (
 require (
 	cloud.google.com/go/compute v1.5.0 // indirect
 	github.com/AlekSi/pointer v1.0.0 // indirect
+	github.com/asticode/go-asticoqui v0.1.0 // indirect
 	github.com/cdipaolo/goml v0.0.0-20210723214924-bf439dd662aa // indirect
+	github.com/cryptix/wav v0.0.0-20180415113528-8bdace674401 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.3.5 // indirect
 	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect

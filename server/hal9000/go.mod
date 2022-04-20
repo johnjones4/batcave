@@ -3,7 +3,9 @@ module github.com/johnjones4/hal-9000/server/hal9000
 go 1.16
 
 require (
+	github.com/asticode/go-asticoqui v0.1.0
 	github.com/cdipaolo/goml v0.0.0-20210723214924-bf439dd662aa
+	github.com/cryptix/wav v0.0.0-20180415113528-8bdace674401
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/google/uuid v1.1.2
 	github.com/jackc/pgx/v4 v4.15.0

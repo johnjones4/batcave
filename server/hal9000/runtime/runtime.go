@@ -9,12 +9,13 @@ import (
 )
 
 type Runtime struct {
-	Intents     *IntentSet
-	StateStore  *storage.StateStore
-	Logger      *storage.InteractionLogger
-	ClientStore *storage.ClientStore
-	UserStore   *storage.UserStore
-	Predictor   *learning.Predictor
+	Intents          *IntentSet
+	StateStore       storage.StateStore
+	Logger           storage.InteractionLogger
+	ClientStore      *storage.ClientStore
+	UserStore        *storage.UserStore
+	IntentPredictor  *learning.IntentPredictor
+	VoiceTranscriber *learning.VoiceTranscriber
 }
 
 func New() (*Runtime, error) {
@@ -54,9 +55,18 @@ func New() (*Runtime, error) {
 		}),
 	}
 
-	pool, err := storage.Connect(configuration.Storage)
-	if err != nil {
-		return nil, err
+	var logger storage.InteractionLogger
+	var stateStore storage.StateStore
+	if configuration.Storage.DatabaseURL != "" {
+		pool, err := storage.Connect(configuration.Storage)
+		if err != nil {
+			return nil, err
+		}
+		logger = storage.NewDatabaseInteractionLogger(pool)
+		stateStore = storage.NewDatabaseStateStore(pool)
+	} else {
+		logger = &storage.TerminalInteractionLogger{}
+		stateStore = storage.NewMemoryStateStore()
 	}
 
 	cs := storage.NewClientStore(configuration.Storage)
@@ -71,17 +81,23 @@ func New() (*Runtime, error) {
 		return nil, err
 	}
 
-	predictor, err := learning.NewPredictor(configuration.Predictor)
+	predictor, err := learning.NewIntentPredictor(configuration.IntentPredictor)
+	if err != nil {
+		return nil, err
+	}
+
+	transcriber, err := learning.NewVoiceTranscriber(configuration.VoiceTranscriber)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Runtime{
-		Intents:     h,
-		StateStore:  storage.NewStateStore(pool),
-		Logger:      storage.NewInteractionLogger(pool),
-		ClientStore: cs,
-		UserStore:   us,
-		Predictor:   predictor,
+		Intents:          h,
+		StateStore:       stateStore,
+		Logger:           logger,
+		ClientStore:      cs,
+		UserStore:        us,
+		IntentPredictor:  predictor,
+		VoiceTranscriber: transcriber,
 	}, nil
 }

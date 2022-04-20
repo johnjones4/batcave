@@ -6,16 +6,20 @@ type Coordinate struct {
 }
 type InboundBody struct {
 	Body     string     `json:"body"`
+	Audio    string     `json:"audio"`
 	Location Coordinate `json:"location"`
 }
 
 type Inbound struct {
 	InboundBody
-	Command   string `json:"command"`
-	State     string `json:"state"`
-	User      User   `json:"user"`
-	Client    Client `json:"client"`
-	ParseType string `json:"parseType"`
+	Command       string `json:"command"`
+	State         string `json:"state"`
+	User          User   `json:"user"`
+	Client        Client `json:"client"`
+	ParseMetadata struct {
+		Intent string `json:"intent"`
+		Body   string `json:"body"`
+	} `json:"parseMetadata"`
 }
 
 type OutboundBody struct {

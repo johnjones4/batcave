@@ -10,15 +10,16 @@ import (
 )
 
 type Configuration struct {
-	Abode          service.AbodeConfiguration
-	Google         service.GoogleConfiguration
-	Kasa           service.KasaConfiguration
-	Metro          service.MetroConfiguration
-	Trello         service.TrelloConfiguration
-	WeatherStation service.WeatherStationConfiguration
-	HouseProject   intent.HouseProjectConfiguration
-	Storage        storage.Configuration
-	Predictor      learning.PredictorConfiguration
+	Abode            service.AbodeConfiguration
+	Google           service.GoogleConfiguration
+	Kasa             service.KasaConfiguration
+	Metro            service.MetroConfiguration
+	Trello           service.TrelloConfiguration
+	WeatherStation   service.WeatherStationConfiguration
+	HouseProject     intent.HouseProjectConfiguration
+	Storage          storage.Configuration
+	IntentPredictor  learning.IntentPredictorConfiguration
+	VoiceTranscriber learning.VoiceTranscriberConfiguration
 }
 
 func LoadConfigurationFromEnv() Configuration {
@@ -54,9 +55,12 @@ func LoadConfigurationFromEnv() Configuration {
 			UsersPath:   os.Getenv("USER_STORE_FILE"),
 			DatabaseURL: os.Getenv("DATABASE_URL"),
 		},
-		Predictor: learning.PredictorConfiguration{
+		IntentPredictor: learning.IntentPredictorConfiguration{
 			IntentMapFilePath: os.Getenv("INTENT_MAP_FILE"),
 			ModelFilePath:     os.Getenv("MODEL_FILE"),
+		},
+		VoiceTranscriber: learning.VoiceTranscriberConfiguration{
+			ModelPath: os.Getenv("TRANSCRIBER_MODEL_PATH"),
 		},
 	}
 }
