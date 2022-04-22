@@ -8,6 +8,7 @@ require (
 	github.com/cryptix/wav v0.0.0-20180415113528-8bdace674401
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/google/uuid v1.1.2
+	github.com/hraban/opus v0.0.0-20220302220929-eeacdbcb92d0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/olebedev/when v0.0.0-20211212231525-59bd4edcf9d6
 	github.com/swaggest/rest v0.2.24

@@ -1,11 +1,7 @@
 package runtime
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"errors"
-	"io/ioutil"
 	"strings"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
@@ -24,7 +20,7 @@ const (
 )
 
 func (r *Runtime) Parse(in core.InboundBody, client core.Client, state string) (core.Inbound, error) {
-	if len(in.Body) == 0 && len(in.Audio) == 0 {
+	if len(in.Body) == 0 && len(in.Audio.Data) == 0 {
 		return core.Inbound{}, ErrorInputEmpty
 	}
 
@@ -34,22 +30,13 @@ func (r *Runtime) Parse(in core.InboundBody, client core.Client, state string) (
 		State:       state,
 	}
 
-	if len(request.Body) == 0 && len(request.Audio) != 0 {
-		gzipedReader := base64.NewDecoder(base64.StdEncoding, bytes.NewBuffer([]byte(request.Audio)))
-		audioReader, err := gzip.NewReader(gzipedReader)
-		if err != nil {
-			return core.Inbound{}, nil
-		}
-		audio, err := ioutil.ReadAll(audioReader)
-		if err != nil {
-			return core.Inbound{}, nil
-		}
-		body, err := r.VoiceTranscriber.Transcribe(audio)
+	if len(request.Body) == 0 && len(request.Audio.Data) != 0 {
+		body, err := r.VoiceTranscriber.Transcribe(request.Audio)
 		if err != nil {
 			return core.Inbound{}, nil
 		}
 		request.Body = body
-		request.Audio = "" //TODO save this somewhere?
+		request.Audio.Data = "<REDACTED>" //TODO save this somewhere?
 		request.ParseMetadata.Body = ParseMetadataBodyAudio
 	} else {
 		request.ParseMetadata.Body = ParseMetadataBodyText

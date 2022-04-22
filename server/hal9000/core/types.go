@@ -6,8 +6,14 @@ type Coordinate struct {
 }
 type InboundBody struct {
 	Body     string     `json:"body"`
-	Audio    string     `json:"audio"`
+	Audio    Audio      `json:"audio"`
 	Location Coordinate `json:"location"`
+}
+
+type Audio struct {
+	Data     string `json:"data"`
+	MimeType string `json:"mimeType"`
+	GZipped  bool   `json:"gzipped"`
 }
 
 type Inbound struct {
