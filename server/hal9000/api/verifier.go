@@ -70,11 +70,11 @@ func makeRequestVerifier(clientStore *storage.ClientStore) func(http.Handler) ht
 			}
 
 			now := time.Now()
-			bounds := time.Second * 2
+			bounds := time.Second * 5
 			lower := now.Add(-bounds)
 			upper := now.Add(bounds)
 			if reqTime.Before(lower) || reqTime.After(upper) {
-				log.Println(lower, reqTime, upper)
+				log.Println(lower, now, reqTime, upper)
 				fail(w, errors.New("bad request time"))
 				return
 			}
