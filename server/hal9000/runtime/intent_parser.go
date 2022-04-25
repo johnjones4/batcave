@@ -33,7 +33,7 @@ func (r *Runtime) Parse(in core.InboundBody, client core.Client, state string) (
 	if len(request.Body) == 0 && len(request.Audio.Data) != 0 {
 		body, err := r.VoiceTranscriber.Transcribe(request.Audio)
 		if err != nil {
-			return core.Inbound{}, nil
+			return core.Inbound{}, err
 		}
 		request.Body = body
 		request.Audio.Data = "<REDACTED>" //TODO save this somewhere?

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import { halId, halKey } from './credentials';
-import HAL9000, { Inbound } from './HAL9000';
+import HAL9000, { Inbound, Outbound } from './HAL9000';
+import { TextResponse } from './TextResponse';
 import { blobToBase64 } from './util';
 
 function App() {
@@ -9,7 +10,11 @@ function App() {
   let mediaRecorder: MediaRecorder|null = null
   let buffer: Blob[] = []
   let mimeType: string
-  let [dataInfo, setDataInfo] = useState('')
+  let [response, setResponse] = useState(null as Outbound|null)
+  let location = {
+    latitude: 0.0,
+    longitude: 0.0
+  }
 
   const ping = async () => {
     try {
@@ -19,14 +24,18 @@ function App() {
     }
   }
 
+  const loadLocation = () => {
+    navigator.geolocation.getCurrentPosition(l => {
+      location.latitude = l.coords.latitude
+      location.longitude = l.coords.longitude
+    })
+  }
+
   const sendAudio = async () => {
     try {
       const data = await blobToBase64(new Blob(buffer))
       const inbound: Inbound = {
-        location: {
-          latitude: 0.0,
-          longitude: 0.0
-        },
+        location,
         body: '',
         audio: {
           mimeType,
@@ -35,7 +44,7 @@ function App() {
         }
       }
       const info = await hal.send(inbound)
-      setDataInfo(JSON.stringify(info))
+      setResponse(info)
     } catch (e) {
       alert(e)
     }
@@ -78,13 +87,25 @@ function App() {
 
   useEffect(() => {
     ping()
+    loadLocation()
     setupRecorder()
     registerRecordTracker()
   }, [])
+
+  const renderResponse = () => {
+    if (response !== null) {
+      if (response.body !== '') {
+        return (<TextResponse info={response} />)
+      }
+    }
+    return null
+  }
+
   return (
     <div className="App">
-      <div className="App-response"></div>
-      {dataInfo}
+      <div className="App-response">
+        {renderResponse()}
+      </div>
     </div>
   );
 }

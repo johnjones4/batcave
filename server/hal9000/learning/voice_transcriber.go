@@ -7,11 +7,12 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"sync"
 
 	"github.com/asticode/go-asticoqui"
 	"github.com/cryptix/wav"
-	"github.com/hraban/opus"
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
+	"github.com/xfrr/goffmpeg/transcoder"
 )
 
 //TODO steps https://github.com/asticode/go-asticoqui
@@ -60,8 +61,7 @@ func parseToRawAudio(audio core.Audio) ([]int16, error) {
 	case "audio/wav":
 		return wavToRawAudio(encodedBytes)
 	case "audio/ogg; codecs=opus":
-		//TODO sudo apt-get install pkg-config libopus-dev libopusfile-dev
-		return oggOpusToRawAudio(encodedBytes)
+		return oggToRawAudio(encodedBytes)
 	}
 
 	return nil, errors.New("unsupported codec")
@@ -85,19 +85,65 @@ func wavToRawAudio(wavBytes []byte) ([]int16, error) {
 	return d, nil
 }
 
-func oggOpusToRawAudio(opusBytes []byte) ([]int16, error) {
-	channels := 1
-	sampleRate := 16000
-	dec, err := opus.NewDecoder(sampleRate, channels)
+func oggToRawAudio(oggBytes []byte) ([]int16, error) {
+	var pcmData []int16
+	var rErr1 error
+	var rErr2 error
+	trans := new(transcoder.Transcoder)
+	err := trans.InitializeEmptyTranscoder()
 	if err != nil {
 		return nil, err
 	}
-	frameSizeMs := 60
-	frameSize := channels * frameSizeMs * sampleRate / 1000
-	pcm := make([]int16, int(frameSize))
-	n, err := dec.Decode(opusBytes, pcm)
+	trans.MediaFile().SetSkipVideo(true)
+	trans.MediaFile().SetAudioRate(16000)
+	trans.MediaFile().SetAudioCodec("pcm_s16le")
+	trans.MediaFile().SetAudioChannels(1)
+	w, err := trans.CreateInputPipe()
 	if err != nil {
 		return nil, err
 	}
-	return pcm[:n*channels], nil
+	r, err := trans.CreateOutputPipe("s16le")
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer r.Close()
+		defer wg.Done()
+		pcmData = make([]int16, 0)
+		for {
+			buf := make([]byte, 2)
+			_, err := r.Read(buf)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				rErr1 = err
+				break
+			}
+			var sample int16 = int16(buf[0]) + int16(buf[1])<<8
+			pcmData = append(pcmData, sample)
+		}
+	}()
+
+	go func() {
+		defer w.Close()
+		_, rErr2 = w.Write(oggBytes)
+	}()
+
+	done := trans.Run(false)
+	err = <-done
+	if err != nil {
+		return nil, err
+	}
+
+	wg.Wait()
+
+	if rErr1 != nil {
+		return nil, rErr1
+	}
+
+	if rErr2 != nil {
+		return nil, rErr2
+	}
+
+	return pcmData, nil
 }

@@ -22,6 +22,8 @@ require (
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/hajimehoshi/oggloop v0.0.0-20180730010327-c7cf68761483 // indirect
+	github.com/hraban/opus v0.0.0-20220302220929-eeacdbcb92d0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.11.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -31,6 +33,7 @@ require (
 	github.com/jackc/pgtype v1.10.0 // indirect
 	github.com/jackc/pgx/v4 v4.15.0 // indirect
 	github.com/jackc/puddle v1.2.1 // indirect
+	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757 // indirect
 	github.com/olebedev/when v0.0.0-20211212231525-59bd4edcf9d6 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
@@ -40,6 +43,7 @@ require (
 	github.com/swaggest/refl v1.0.1 // indirect
 	github.com/swaggest/rest v0.2.24 // indirect
 	github.com/swaggest/usecase v1.1.2 // indirect
+	github.com/xfrr/goffmpeg v0.0.0-20210624103149-5ca2d3062daf // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de // indirect

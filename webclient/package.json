@@ -44,5 +44,5 @@
   "devDependencies": {
     "@types/crypto-js": "^4.1.1"
   },
-  "proxy": "https://hal9000.frontdoor.johnjonesfour.com"
+  "proxy": "http://localhost:8080"
 }
