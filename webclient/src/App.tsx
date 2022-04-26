@@ -10,7 +10,9 @@ function App() {
   let mediaRecorder: MediaRecorder|null = null
   let buffer: Blob[] = []
   let mimeType: string
-  let [response, setResponse] = useState(null as Outbound|null)
+  const [response, setResponse] = useState(null as Outbound|null)
+  const [waiting, setWaiting] = useState(false)
+  const [listening, setListening] = useState(false)
   let location = {
     latitude: 0.0,
     longitude: 0.0
@@ -33,6 +35,7 @@ function App() {
 
   const sendAudio = async () => {
     try {
+      setWaiting(true)
       const data = await blobToBase64(new Blob(buffer))
       const inbound: Inbound = {
         location,
@@ -48,6 +51,7 @@ function App() {
     } catch (e) {
       alert(e)
     }
+    setWaiting(false)
   }
 
   const setupRecorder = async () => {
@@ -74,12 +78,13 @@ function App() {
     console.log('init')
     document.onkeydown = e => {
       if (e.key === ' ' && mediaRecorder && mediaRecorder.state !== 'recording') {
-        console.log('press')
+        setListening(true)
         mediaRecorder.start()
       }
     }
     document.onkeyup = e => {
       if (e.key === ' ' && mediaRecorder) {
+        setListening(false)
         mediaRecorder.stop()
       }
     }
@@ -102,7 +107,7 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className={['App', 'App-' + (listening ? 'listening' : 'not-listening'), 'App-' + (waiting ? 'waiting' : 'not-waiting')].join(' ')}>
       <div className="App-response">
         {renderResponse()}
       </div>

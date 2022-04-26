@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@500&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Antonio', sans-serif;
+  background: black;
+  color: white;
+}
+
+.App-response {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  aspect-ratio: 1 / 1;
+  border: solid white 4px;
+  max-height: 90%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2%;
+  font-size: 48px;
+  overflow: hidden;
+}
+
+.App-listening .App-response {
+  border-color: red;
+}
+
+.App-waiting .App-response {
+  border-color: blue;
+}

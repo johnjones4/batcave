@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/asticode/go-asticoqui"
@@ -14,8 +15,6 @@ import (
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 	"github.com/xfrr/goffmpeg/transcoder"
 )
-
-//TODO steps https://github.com/asticode/go-asticoqui
 
 type VoiceTranscriberConfiguration struct {
 	ModelPath string
@@ -27,6 +26,10 @@ type VoiceTranscriber struct {
 
 func NewVoiceTranscriber(configuration VoiceTranscriberConfiguration) (*VoiceTranscriber, error) {
 	model, err := asticoqui.New(configuration.ModelPath)
+	if err != nil {
+		return nil, err
+	}
+	err = model.EnableExternalScorer(os.Getenv("TRANSCRIBER_SCORER_PATH")) //TODO
 	if err != nil {
 		return nil, err
 	}

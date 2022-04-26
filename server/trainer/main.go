@@ -11,7 +11,7 @@ func main() {
 	mapFile := os.Getenv("INTENT_MAP_FILE")
 	modelFile := os.Getenv("MODEL_FILE")
 
-	err := learning.Train(trainingFile, mapFile, modelFile)
+	err := learning.TrainIntent(trainingFile, mapFile, modelFile)
 	if err != nil {
 		panic(err)
 	}

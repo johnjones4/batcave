@@ -32,6 +32,8 @@ func (ss *DatabaseStateStore) GetState(client core.Client) (string, error) {
 			return core.StateDefault, nil
 		}
 		return "", err
+	} else if state == "" {
+		return core.StateDefault, nil
 	}
 	return state, nil
 }
