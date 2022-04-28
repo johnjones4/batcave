@@ -4,16 +4,24 @@ const Client = require('./lib/Client')
 const {urlRoot, halId, halKey, location} = require('./res/priv/credentials')
 const path = require('path')
 const fs = require('fs/promises')
+const os = require('os')
 
 let win
-const buffer = []
+let buffer = []
+const logFile = path.join(os.homedir(), 'hal9000.log')
+
+const loadBuffer = async () => {
+  const contents = await fs.readFile(logFile, { encoding: 'utf-8' })
+  buffer = contents.split('\n')
+}
 
 const pushToBuffer = async (command) => {
   buffer.push(command)
   if (buffer.length >= 5000) {
     buffer.shift()
   }
-  await fs.writeFile(process.env.LOG, buffer.join('\n'), 'utf-8')
+  
+  await fs.writeFile(logFile, buffer.join('\n'), 'utf-8')
 }
 
 const createWindow = () => {
@@ -30,6 +38,7 @@ const createWindow = () => {
 
 const start = async () => {
   try {
+    await loadBuffer()
     const client = new Client(urlRoot, halId, halKey)
     await client.ping()
     const l = new Listener('./res/priv/model.tflite', './res/priv/huge-vocabulary.scorer', 'computer') 

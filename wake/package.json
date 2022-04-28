@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "LOG=~/hal.log electron .",
-    "rebuild": "./node_modules/.bin/electron-rebuild --force --version 16.0.10"
+    "rebuild": "./node_modules/.bin/electron-rebuild --force --version 16.0.10",
+    "build": "electron-packager . \"HAL 9000\" --overwrite"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "electron": "16.0.10",
+    "electron-packager": "^15.5.1",
     "electron-rebuild": "^3.2.7"
   }
 }
