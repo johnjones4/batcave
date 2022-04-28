@@ -8,3 +8,6 @@ ci:
 	docker build -t ${TAG} ./server
 	docker push ${TAG}:latest
 	docker image rm ${TAG}:latest
+
+ui:
+	cd app && npm run build
