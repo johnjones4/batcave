@@ -25,9 +25,14 @@ func New() (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+	nest, err := service.NewNestCameras(configuration.NestCameras)
+	if err != nil {
+		return nil, err
+	}
+	noaa := service.NewNOAA()
 	intents := []core.Intent{
 		&intent.Forecast{
-			Service: service.NewNOAA(),
+			Service: noaa,
 		},
 		&intent.Metro{
 			Service: service.NewMetro(configuration.Metro),
@@ -47,6 +52,12 @@ func New() (*Runtime, error) {
 		&intent.HouseProject{
 			Service:       service.NewTrello(configuration.Trello),
 			Configuration: configuration.HouseProject,
+		},
+		&intent.Display{
+			Services: []service.DisplayService{
+				nest,
+				noaa,
+			},
 		},
 	}
 	h := &IntentSet{

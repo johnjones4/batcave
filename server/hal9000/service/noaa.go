@@ -65,26 +65,41 @@ type NOAAWeatherAlertResponse struct {
 type NOAA struct {
 }
 
+type NOAARadar struct {
+}
+
+func (nr NOAARadar) Names() []string {
+	return []string{"radar"}
+}
+
+func (nr NOAARadar) URL(req core.Inbound) (string, error) {
+	point, err := makeWeatherAPIPointRequest(req.Location)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("https://radar.weather.gov/ridge/lite/%s_loop.gif?v=%d", point.RadarStation, time.Now().Unix()), nil
+}
+
 func NewNOAA() *NOAA {
 	return &NOAA{}
 }
 
-func (f NOAA) PredictWeather(coord core.Coordinate) (Weather, error) {
+func (f *NOAA) PredictWeather(coord core.Coordinate) (Weather, error) {
 	point, err := makeWeatherAPIPointRequest(coord)
 	if err != nil {
-		return Weather{}, nil
+		return Weather{}, err
 	}
 
 	radarURL := fmt.Sprintf("https://radar.weather.gov/ridge/lite/%s_loop.gif?v=%d", point.RadarStation, time.Now().Unix())
 
 	forecast, err := makeWeatherAPIForecastCall(point)
 	if err != nil {
-		return Weather{}, nil
+		return Weather{}, err
 	}
 
 	alerts, err := makeWeatherAPIAlertCall(point)
 	if err != nil {
-		return Weather{}, nil
+		return Weather{}, err
 	}
 
 	return Weather{
@@ -92,6 +107,11 @@ func (f NOAA) PredictWeather(coord core.Coordinate) (Weather, error) {
 		Forecast: forecast,
 		Alerts:   alerts,
 	}, nil
+}
+
+func (f *NOAA) Displays() []Displayable {
+	var radar Displayable = NOAARadar{}
+	return []Displayable{radar}
 }
 
 func makeWeatherAPIPointRequest(coord core.Coordinate) (NOAAWeatherPointProperties, error) {

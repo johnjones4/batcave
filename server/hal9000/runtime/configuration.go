@@ -20,6 +20,7 @@ type Configuration struct {
 	Storage          storage.Configuration
 	IntentPredictor  learning.IntentPredictorConfiguration
 	VoiceTranscriber learning.VoiceTranscriberConfiguration
+	NestCameras      service.NestCamerasConfiguration
 }
 
 func LoadConfigurationFromEnv() Configuration {
@@ -61,6 +62,9 @@ func LoadConfigurationFromEnv() Configuration {
 		},
 		VoiceTranscriber: learning.VoiceTranscriberConfiguration{
 			ModelPath: os.Getenv("TRANSCRIBER_MODEL_PATH"),
+		},
+		NestCameras: service.NestCamerasConfiguration{
+			CamerasPath: os.Getenv("NEST_CAMERAS_FILE"),
 		},
 	}
 }

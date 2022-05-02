@@ -37,11 +37,10 @@ func (c *Abode) SupportedComandsForState(s string) map[string]core.CommandInfo {
 func (c *Abode) Execute(req core.Inbound) (core.Outbound, error) {
 	switch req.Command {
 	case AbodeCommandMode:
-		mode := req.Body
-		if !util.ArrayContains([]string{service.AbodeModeAway, service.AbodeModeHome, service.AbodeModeStandby}, mode) {
-			return core.Outbound{}, core.NewFeedbackError(fmt.Sprintf("Unsupported mode: %s", mode))
+		mode := util.FindClosestMatchString([]string{service.AbodeModeAway, service.AbodeModeHome, service.AbodeModeStandby}, req.Body)
+		if mode == "" {
+			return core.Outbound{}, core.NewFeedbackError("That is not a valid mode")
 		}
-
 		err := c.Service.SetMode(mode)
 		if err != nil {
 			return core.Outbound{}, err

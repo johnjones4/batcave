@@ -16,6 +16,13 @@ type Forecast struct {
 	Service *service.NOAA
 }
 
+const (
+	forecastTimeToday           = "today"
+	forecastTimeTomorrow        = "tomorrow"
+	forecastTimeTonight         = "tonight"
+	forecastTimeTomorrowMorning = "tomorrow morning"
+)
+
 func (c *Forecast) SupportedComandsForState(s string) map[string]core.CommandInfo {
 	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
@@ -32,18 +39,34 @@ func (c *Forecast) Execute(req core.Inbound) (core.Outbound, error) {
 	weatherDate := time.Now()
 
 	if req.Body != "" {
-		w := when.New(nil)
-		w.Add(en.All...)
-		w.Add(common.All...)
-
-		dateInfo, err := w.Parse(req.Body, time.Now()) //TODO better parsing
-		if err != nil {
-			return core.Outbound{}, err
-		}
-		if dateInfo != nil && !dateInfo.Time.IsZero() {
-			weatherDate = dateInfo.Time
+		timeStrings := []string{forecastTimeToday, forecastTimeTonight, forecastTimeTomorrow, forecastTimeTomorrowMorning}
+		timeString := util.FindClosestMatchString(timeStrings, req.Body)
+		if timeString != "" {
+			now := time.Now()
+			nextDay := now.Add(time.Hour * 24)
+			switch timeString {
+			case forecastTimeToday:
+				weatherDate = now
+			case forecastTimeTonight:
+				weatherDate = time.Date(now.Year(), now.Month(), now.Day(), 20, 0, 0, 0, time.Local)
+			case forecastTimeTomorrowMorning:
+				weatherDate = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 8, 0, 0, 0, time.Local)
+			case forecastTimeTomorrow:
+				weatherDate = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 12, 0, 0, 0, time.Local)
+			}
 		} else {
-			weatherDate = time.Now()
+			w := when.New(nil)
+			w.Add(en.All...)
+			w.Add(common.All...)
+
+			dateInfo, err := w.Parse(req.Body, time.Now())
+			if err != nil {
+				return core.Outbound{}, err
+			}
+
+			if dateInfo != nil && !dateInfo.Time.IsZero() {
+				weatherDate = dateInfo.Time
+			}
 		}
 	}
 

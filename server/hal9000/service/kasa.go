@@ -46,6 +46,18 @@ func (k *Kasa) DeviceGroups() []KasaDeviceGroup {
 	return k.deviceGroups
 }
 
+func (k *Kasa) DeviceNamesAndMap() ([]string, map[string]KasaDeviceGroup) {
+	strings := make([]string, 0)
+	deviceMap := make(map[string]KasaDeviceGroup)
+	for _, device := range k.DeviceGroups() {
+		for _, name := range device.Names {
+			strings = append(strings, name)
+			deviceMap[name] = device
+		}
+	}
+	return strings, deviceMap
+}
+
 func (k *Kasa) SetStatus(id string, on bool) error {
 	if !k.client.IsConnected() {
 		if token := k.client.Connect(); token.Wait() && token.Error() != nil {

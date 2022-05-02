@@ -1,42 +1,12 @@
 package util
 
-func Levenshtein(str1, str2 []rune) int {
-	s1len := len(str1)
-	s2len := len(str2)
-	column := make([]int, len(str1)+1)
+import (
+	"log"
+	"math"
+	"strings"
 
-	for y := 1; y <= s1len; y++ {
-		column[y] = y
-	}
-	for x := 1; x <= s2len; x++ {
-		column[0] = x
-		lastkey := x - 1
-		for y := 1; y <= s1len; y++ {
-			oldkey := column[y]
-			var incr int
-			if str1[y-1] != str2[x-1] {
-				incr = 1
-			}
-
-			column[y] = minimum(column[y]+1, column[y-1]+1, lastkey+incr)
-			lastkey = oldkey
-		}
-	}
-	return column[s1len]
-}
-
-func minimum(a, b, c int) int {
-	if a < b {
-		if a < c {
-			return a
-		}
-	} else {
-		if b < c {
-			return b
-		}
-	}
-	return c
-}
+	"github.com/texttheater/golang-levenshtein/levenshtein"
+)
 
 func ArrayContains(a []string, v string) bool {
 	for _, v1 := range a {
@@ -45,4 +15,28 @@ func ArrayContains(a []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func FindClosestMatchString(options []string, corpus string) string {
+	tokens := strings.Split(corpus, " ")
+	closestMatch := ""
+	closestDistance := math.MaxInt
+	for _, keyword := range options {
+		for start := range tokens {
+			subTokens := tokens[start:]
+			for end := range subTokens {
+				text := strings.Join(subTokens[:end+1], " ")
+				distance := levenshtein.DistanceForStrings([]rune(keyword), []rune(text), levenshtein.DefaultOptions)
+				if distance < len(keyword)*2 && distance < closestDistance {
+					if distance == 0 {
+						return keyword
+					}
+					closestDistance = distance
+					closestMatch = keyword
+				}
+			}
+		}
+	}
+	log.Printf("Match: %s (%d)", closestMatch, closestDistance)
+	return closestMatch
 }

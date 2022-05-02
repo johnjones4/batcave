@@ -2,12 +2,16 @@ package intent
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 	"github.com/johnjones4/hal-9000/server/hal9000/service"
 	"github.com/johnjones4/hal-9000/server/hal9000/util"
+)
+
+const (
+	lightsOn  = "on"
+	lightsOff = "offs"
 )
 
 type Lights struct {
@@ -27,28 +31,28 @@ func (c *Lights) SupportedComandsForState(s string) map[string]core.CommandInfo 
 }
 
 func (c *Lights) Execute(req core.Inbound) (core.Outbound, error) {
-	deviceGroup, err := findDeviceInCommand(c.Service.DeviceGroups(), req.Body)
-	if err != nil {
-		return core.Outbound{}, err
+	names, mapped := c.Service.DeviceNamesAndMap()
+	name := util.FindClosestMatchString(names, req.Body)
+	if name == "" {
+		return core.Outbound{}, core.NewFeedbackError("Could not find a matching device")
+	}
+	deviceGroup := mapped[name]
+
+	newState := util.FindClosestMatchString([]string{lightsOn, lightsOff}, req.Body)
+	if newState == "" {
+		return core.Outbound{}, core.NewFeedbackError("Could not determine requested state")
 	}
 
-	newState := determineStateRequest(req.Body)
-
 	for _, device := range deviceGroup.Devices {
-		err = c.Service.SetStatus(device, newState)
+		err := c.Service.SetStatus(device, newState == lightsOn)
 		if err != nil {
 			return core.Outbound{}, err
 		}
 	}
 
-	newStateStr := "on"
-	if !newState {
-		newStateStr = "off"
-	}
-
 	return core.Outbound{
 		OutboundBody: core.OutboundBody{
-			Body: fmt.Sprintf("\"%s\" is now %s.", deviceGroup.PreferredName, newStateStr),
+			Body: fmt.Sprintf("\"%s\" is now %s.", deviceGroup.PreferredName, newState),
 		},
 		State: req.State,
 	}, nil
@@ -63,23 +67,4 @@ func determineStateRequest(body string) bool {
 		}
 	}
 	return false
-}
-
-func findDeviceInCommand(deviceGroups []service.KasaDeviceGroup, body string) (service.KasaDeviceGroup, error) {
-	bestDistance := math.MaxInt
-	var best service.KasaDeviceGroup
-	for _, deviceGroup := range deviceGroups {
-		for _, name := range deviceGroup.Names {
-			dist := util.Levenshtein([]rune(body), []rune(name))
-			if dist < bestDistance {
-				bestDistance = dist
-				best = deviceGroup
-			}
-		}
-	}
-	if best.PreferredName == "" {
-		return service.KasaDeviceGroup{}, core.NewFeedbackError("could not find a matching device")
-	}
-
-	return best, nil
 }
