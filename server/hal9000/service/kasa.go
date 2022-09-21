@@ -8,6 +8,8 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+//TODO info
+
 type KasaConfiguration struct {
 	DevicesPath string
 	MQTTURL     string

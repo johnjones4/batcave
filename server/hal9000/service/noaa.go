@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -72,8 +73,12 @@ func (nr NOAARadar) Names() []string {
 	return []string{"radar"}
 }
 
-func (nr NOAARadar) URL(req core.Inbound) (string, error) {
-	point, err := makeWeatherAPIPointRequest(req.Location)
+func (nr NOAARadar) URL(ctx context.Context) (string, error) {
+	loc, err := core.CoordinatesInContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	point, err := makeWeatherAPIPointRequest(loc)
 	if err != nil {
 		return "", err
 	}
@@ -82,6 +87,22 @@ func (nr NOAARadar) URL(req core.Inbound) (string, error) {
 
 func NewNOAA() *NOAA {
 	return &NOAA{}
+}
+
+func (f *NOAA) Name() string {
+	return "noaa"
+}
+
+func (f *NOAA) Info(c context.Context) (interface{}, error) {
+	loc, err := core.CoordinatesInContext(c)
+	if err != nil {
+		return "", err
+	}
+	weather, err := f.PredictWeather(loc)
+	if err != nil {
+		return nil, err
+	}
+	return weather, nil
 }
 
 func (f *NOAA) PredictWeather(coord core.Coordinate) (Weather, error) {

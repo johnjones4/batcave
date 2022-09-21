@@ -20,6 +20,7 @@ type Runtime struct {
 
 func New() (*Runtime, error) {
 	configuration := LoadConfigurationFromEnv()
+	var err error
 
 	kasa, err := service.NewKasa(configuration.Kasa)
 	if err != nil {
@@ -54,7 +55,7 @@ func New() (*Runtime, error) {
 			Configuration: configuration.HouseProject,
 		},
 		&intent.Display{
-			Services: []service.DisplayService{
+			DisplayServices: []service.DisplayService{
 				nest,
 				noaa,
 			},

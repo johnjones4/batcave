@@ -1,10 +1,10 @@
 package service
 
-import "github.com/johnjones4/hal-9000/server/hal9000/core"
+import "context"
 
 type Displayable interface {
 	Names() []string
-	URL(core.Inbound) (string, error)
+	URL(context.Context) (string, error)
 }
 
 type DisplayService interface {

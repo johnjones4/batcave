@@ -15,7 +15,13 @@ type HouseProject struct {
 	Configuration HouseProjectConfiguration
 }
 
-func (c *HouseProject) SupportedComandsForState(s string) map[string]core.CommandInfo {
+func (c *HouseProject) Services() []core.Service {
+	services := make([]core.Service, 1)
+	services[0] = c.Service
+	return services
+}
+
+func (c *HouseProject) SupportedCommandsForState(s string) map[string]core.CommandInfo {
 	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}

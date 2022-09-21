@@ -11,7 +11,13 @@ type WeatherStation struct {
 	Service *service.WeatherStation
 }
 
-func (w *WeatherStation) SupportedComandsForState(s string) map[string]core.CommandInfo {
+func (c *WeatherStation) Services() []core.Service {
+	services := make([]core.Service, 1)
+	services[0] = c.Service
+	return services
+}
+
+func (w *WeatherStation) SupportedCommandsForState(s string) map[string]core.CommandInfo {
 	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}

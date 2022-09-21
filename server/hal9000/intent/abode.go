@@ -18,7 +18,13 @@ const (
 	AbodeCommandInfo = "abode-info"
 )
 
-func (c *Abode) SupportedComandsForState(s string) map[string]core.CommandInfo {
+func (c *Abode) Services() []core.Service {
+	services := make([]core.Service, 1)
+	services[0] = c.Service
+	return services
+}
+
+func (c *Abode) SupportedCommandsForState(s string) map[string]core.CommandInfo {
 	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}

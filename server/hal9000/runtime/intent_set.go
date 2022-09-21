@@ -10,7 +10,7 @@ type IntentSet struct {
 
 func (h *IntentSet) ProcessRequest(req core.Inbound) (core.Outbound, error) {
 	for _, commandHandler := range h.Intents {
-		for command := range commandHandler.SupportedComandsForState(req.State) {
+		for command := range commandHandler.SupportedCommandsForState(req.State) {
 			if req.Command == command {
 				res, err := commandHandler.Execute(req)
 				if err != nil {
@@ -34,4 +34,25 @@ func (h *IntentSet) ProcessRequest(req core.Inbound) (core.Outbound, error) {
 		},
 		State: req.State,
 	}, nil
+}
+
+func serviceInList(l []core.Service, s1 core.Service) bool {
+	for _, s2 := range l {
+		if s1 == s2 {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *IntentSet) Services() []core.Service {
+	services := make([]core.Service, 0)
+	for _, intent := range h.Intents {
+		for _, service := range intent.Services() {
+			if !serviceInList(services, service) {
+				services = append(services, service)
+			}
+		}
+	}
+	return services
 }

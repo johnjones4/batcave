@@ -18,7 +18,13 @@ type Schedule struct {
 	Service *service.Google
 }
 
-func (c *Schedule) SupportedComandsForState(s string) map[string]core.CommandInfo {
+func (c *Schedule) Services() []core.Service {
+	services := make([]core.Service, 1)
+	services[0] = c.Service
+	return services
+}
+
+func (c *Schedule) SupportedCommandsForState(s string) map[string]core.CommandInfo {
 	if s != core.StateDefault {
 		return map[string]core.CommandInfo{}
 	}

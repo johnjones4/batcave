@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -142,6 +143,21 @@ func (a *Abode) request(method, path string, res interface{}) error {
 
 func (a *Abode) SetMode(mode string) error {
 	return a.request("PUT", "/api/v1/panel/mode/1/"+mode, nil)
+}
+
+func (c *Abode) Name() string {
+	return "abode"
+}
+
+func (a *Abode) Info(context.Context) (interface{}, error) {
+	statuses, err := a.GetDeviceStatuses()
+	if err != nil {
+		return nil, err
+	}
+	var info interface{} = map[string]interface{}{
+		"statuses": statuses,
+	}
+	return info, nil
 }
 
 type AbodeDeviceStatus struct {

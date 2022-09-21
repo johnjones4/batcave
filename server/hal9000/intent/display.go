@@ -1,16 +1,26 @@
 package intent
 
 import (
+	"context"
+
 	"github.com/johnjones4/hal-9000/server/hal9000/core"
 	"github.com/johnjones4/hal-9000/server/hal9000/service"
 	"github.com/johnjones4/hal-9000/server/hal9000/util"
 )
 
 type Display struct {
-	Services []service.DisplayService
+	DisplayServices []service.DisplayService
 }
 
-func (c *Display) SupportedComandsForState(s string) map[string]core.CommandInfo {
+func (c *Display) Services() []core.Service {
+	services := make([]core.Service, 0)
+	for _, s := range c.DisplayServices {
+		services = append(services, s)
+	}
+	return services
+}
+
+func (c *Display) SupportedCommandsForState(s string) map[string]core.CommandInfo {
 	return map[string]core.CommandInfo{
 		"display": {
 			Description:  "Show a given display device's output",
@@ -22,7 +32,7 @@ func (c *Display) SupportedComandsForState(s string) map[string]core.CommandInfo
 func (c *Display) Execute(req core.Inbound) (core.Outbound, error) {
 	displayMap := make(map[string]service.Displayable)
 	displays := make([]string, 0)
-	for _, displayProvider := range c.Services {
+	for _, displayProvider := range c.DisplayServices {
 		displaysList := displayProvider.Displays()
 		for _, display := range displaysList {
 			for _, name := range display.Names() {
@@ -39,7 +49,9 @@ func (c *Display) Execute(req core.Inbound) (core.Outbound, error) {
 
 	display := displayMap[displayName]
 
-	url, err := display.URL(req)
+	ctx := core.ContextWithCoordinates(context.Background(), req.Location)
+
+	url, err := display.URL(ctx)
 	if err != nil {
 		return core.Outbound{}, err
 	}

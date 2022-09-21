@@ -1,10 +1,9 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"os"
-
-	"github.com/johnjones4/hal-9000/server/hal9000/core"
 )
 
 type NestCamera struct {
@@ -16,7 +15,7 @@ func (c NestCamera) Names() []string {
 	return c.NamesStrs
 }
 
-func (c NestCamera) URL(core.Inbound) (string, error) {
+func (c NestCamera) URL(context.Context) (string, error) {
 	return c.URLstr, nil
 }
 
@@ -42,6 +41,24 @@ func NewNestCameras(configuration NestCamerasConfiguration) (*NestCameras, error
 	}
 
 	return &nc, nil
+}
+
+func (nc *NestCameras) Name() string {
+	return "nest"
+}
+
+func (nc *NestCameras) Info(c context.Context) (interface{}, error) {
+	displays := nc.Displays()
+	info := make(map[string]string)
+	for _, d := range displays {
+		names := d.Names()
+		url, err := d.URL(c)
+		if err != nil {
+			return nil, err
+		}
+		info[names[0]] = url
+	}
+	return info, nil
 }
 
 func (nc *NestCameras) Displays() []Displayable {

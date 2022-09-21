@@ -32,7 +32,7 @@ func makeCommandsHandler(r *runtime.Runtime) usecase.Interactor {
 
 		out.Commands = make(map[string]core.CommandInfo)
 		for _, intent := range r.Intents.Intents {
-			for command, description := range intent.SupportedComandsForState(state) {
+			for command, description := range intent.SupportedCommandsForState(state) {
 				out.Commands[command] = description
 			}
 		}

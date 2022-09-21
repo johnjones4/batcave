@@ -44,9 +44,13 @@ type CommandInfo struct {
 	RequiresBody bool   `json:"requiresBody"`
 }
 
+type Service interface {
+}
+
 type Intent interface {
-	SupportedComandsForState(s string) map[string]CommandInfo
+	SupportedCommandsForState(s string) map[string]CommandInfo
 	Execute(req Inbound) (Outbound, error)
+	Services() []Service
 }
 
 type FeedbackError struct {
