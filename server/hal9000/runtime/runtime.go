@@ -47,9 +47,6 @@ func New() (*Runtime, error) {
 		&intent.Lights{
 			Service: kasa,
 		},
-		&intent.Abode{
-			Service: service.NewAbode(configuration.Abode),
-		},
 		&intent.HouseProject{
 			Service:       service.NewTrello(configuration.Trello),
 			Configuration: configuration.HouseProject,

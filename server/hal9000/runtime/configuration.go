@@ -10,7 +10,6 @@ import (
 )
 
 type Configuration struct {
-	Abode            service.AbodeConfiguration
 	Google           service.GoogleConfiguration
 	Kasa             service.KasaConfiguration
 	Metro            service.MetroConfiguration
@@ -25,10 +24,6 @@ type Configuration struct {
 
 func LoadConfigurationFromEnv() Configuration {
 	return Configuration{
-		Abode: service.AbodeConfiguration{
-			Username: os.Getenv("ABODE_USERNAME"),
-			Password: os.Getenv("ABODE_PASSWORD"),
-		},
 		Google: service.GoogleConfiguration{
 			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
