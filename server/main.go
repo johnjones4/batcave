@@ -80,8 +80,9 @@ func main() {
 			processors.ConfirmMessage,
 			store.LogResponse,
 		},
-		Log:      log,
-		Telegram: *services.Telegram,
+		Log:            log,
+		Telegram:       services.Telegram,
+		ClientRegistry: store,
 	})
 	err = http.ListenAndServe(e.HttpHost, h)
 	panic(err)

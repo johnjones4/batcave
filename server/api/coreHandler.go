@@ -3,13 +3,9 @@ package api
 import (
 	"context"
 	"main/core"
-
-	"github.com/google/uuid"
 )
 
 func (a *apiConcrete) coreHandler(ctx context.Context, req core.Request) (core.Response, error) {
-	req.EventId = uuid.NewString()
-
 	for _, proc := range a.RequestProcessors {
 		err := proc(ctx, &req)
 		if err != nil {

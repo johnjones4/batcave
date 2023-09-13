@@ -15,7 +15,8 @@ type APIParams struct {
 	RequestProcessors  []core.RequestProcessor
 	ResponseProcessors []core.ResponseProcessor
 	Log                logrus.FieldLogger
-	Telegram           telegram.Telegram
+	Telegram           *telegram.Telegram
+	ClientRegistry     core.ClientRegistry
 }
 
 type apiConcrete struct {

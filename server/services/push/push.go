@@ -7,6 +7,7 @@ import (
 	"main/core"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,7 +37,7 @@ const (
 func (a *Push) SendLater(ctx context.Context, when time.Time, source string, clientId string, message core.PushMessage) error {
 	wait := time.Until(when)
 	if wait <= checkInterval {
-		go a.sendScheduledAsync(context.Background(), when, message.EventId, source, clientId, message)
+		go a.sendScheduledAsync(context.Background(), when, "", source, clientId, message)
 		return nil
 	} else {
 		return a.Scheduler.ScheduleEvent(ctx, &core.ScheduledEvent{
@@ -103,6 +104,8 @@ func (a *Push) Start(ctx context.Context) error {
 }
 
 func (a *Push) Send(ctx context.Context, source string, clientId string, message core.PushMessage) error {
+	message.EventId = uuid.NewString()
+
 	err := a.sendToClent(ctx, clientId, message)
 	if err != nil && err != ErrorClientDoesNotSupportPush {
 		return err

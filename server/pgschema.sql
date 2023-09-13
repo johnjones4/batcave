@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS intents (
 );
 
 CREATE TABLE IF NOT EXISTS requests (
-  event_id UUID NOT NULL,
+  event_id VARCHAR(128) NOT NULL PRIMARY KEY,
   timestamp TIMESTAMP NOT NULL,
   source VARCHAR(255) NOT NULL,
   client_id VARCHAR(255) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS requests (
 );
 
 CREATE TABLE IF NOT EXISTS responses (
-  event_id UUID NOT NULL,
+  event_id VARCHAR(128) NOT NULL PRIMARY KEY,
   timestamp TIMESTAMP NOT NULL,
   message_text VARCHAR(4095) NOT NULL,
   media_url VARCHAR(511) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS responses (
 );
 
 CREATE TABLE IF NOT EXISTS pushes (
-  event_id UUID NOT NULL,
+  event_id VARCHAR(128) NOT NULL PRIMARY KEY,
   timestamp TIMESTAMP NOT NULL,
   client_id VARCHAR(255) NOT NULL,
   message_text VARCHAR(4095) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS pushes (
 );
 
 CREATE TABLE IF NOT EXISTS scheduled_events (
-  event_id UUID NOT NULL,
+  event_id UUID NOT NULL PRIMARY KEY,
   event_type VARCHAR(255) NOT NULL,
   scheduled TIMESTAMP NOT NULL,
   created TIMESTAMP NOT NULL,

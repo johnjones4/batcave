@@ -41,6 +41,7 @@ func (a *apiConcrete) telegramHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := core.Request{
+		EventId: fmt.Sprintf("telegram_%d", receiver.UpdateId),
 		Message: core.Message{
 			Text: receiver.Message.Text,
 		},

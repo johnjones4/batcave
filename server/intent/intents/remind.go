@@ -51,7 +51,6 @@ func (i *Remind) ActOnIntent(ctx context.Context, req *core.Request, md *core.In
 		req.ClientID,
 		core.PushMessage{
 			OutboundMessage: core.OutboundMessage{
-				EventId: req.EventId,
 				Message: core.Message{
 					Text: fmt.Sprintf("I'm reminding you about \"%s\".", info.Description),
 				},
