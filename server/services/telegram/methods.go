@@ -11,8 +11,13 @@ import (
 	"net/http"
 )
 
+type TelegramConfiguration struct {
+	Token       string `json:"token"`
+	SecretToken string `json:"secretToken"`
+}
+
 type Telegram struct {
-	Token          string
+	Configuration  TelegramConfiguration
 	ClientRegistry core.ClientRegistry
 }
 
@@ -67,8 +72,23 @@ func (t *Telegram) SendToClient(ctx context.Context, clientId string, message co
 	return true, nil
 }
 
-func (t *Telegram) RegisterClient(ctx context.Context, msg IncomingMessage) error {
-	return t.ClientRegistry.UpsertClient(ctx, "telegram", fmt.Sprint(msg.From.Id), msg.Chat)
+func (t *Telegram) IsClientPermitted(ctx context.Context, r *http.Request, msg IncomingMessage) (bool, error) {
+	if r.Header.Get("X-Telegram-Bot-Api-Secret-Token") != t.Configuration.SecretToken {
+		return false, errors.New("access denied")
+	}
+
+	if msg.Message.Text == "" || msg.Chat.Type != "private" {
+		return false, nil
+	}
+
+	client, err := t.ClientRegistry.Client(ctx, "telegram", fmt.Sprint(msg.From.Id), nil)
+	if err != nil {
+		return false, err
+	}
+	if client.Id == "" {
+		return false, fmt.Errorf("user %d not permitted", msg.From.Id)
+	}
+	return true, nil
 }
 
 func (t *Telegram) callMethod(name string, parameters interface{}, response interface{}) error {
@@ -82,7 +102,7 @@ func (t *Telegram) callMethod(name string, parameters interface{}, response inte
 		}
 	}
 
-	url := fmt.Sprintf("https://api.telegram.org/bot%s/%s", t.Token, name)
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/%s", t.Configuration.Token, name)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
 	if err != nil {

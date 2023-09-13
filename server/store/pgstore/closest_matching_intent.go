@@ -15,7 +15,6 @@ func (s *PGStore) ClosestMatchingIntent(ctx context.Context, embedding []float32
 
 	var intent string
 	var distance float32
-	//TODO threshold
 	err = s.pool.QueryRow(ctx, "SELECT intent_label, embedding <=> $1 as distance FROM intents ORDER BY distance LIMIT 1", string(embeddingjson)).Scan(&intent, &distance)
 	if err == pgx.ErrNoRows {
 		return "", nil

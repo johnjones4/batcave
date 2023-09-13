@@ -23,8 +23,6 @@ func (a *apiConcrete) handleTelegramError(w http.ResponseWriter, receiver telegr
 }
 
 func (a *apiConcrete) telegramHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO user id filter
-	//TODO shared secret
 	var receiver telegram.Update
 	err := a.readJson(r, &receiver)
 	if err != nil {
@@ -32,13 +30,12 @@ func (a *apiConcrete) telegramHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.Telegram.RegisterClient(r.Context(), receiver.Message)
+	ok, err := a.Telegram.IsClientPermitted(r.Context(), r, receiver.Message)
 	if err != nil {
-		a.handleTelegramError(w, receiver, err)
+		a.handleError(w, err, http.StatusUnauthorized)
 		return
 	}
-
-	if receiver.Message.Text == "" || receiver.Message.Chat.Type != "private" {
+	if !ok {
 		w.WriteHeader(http.StatusOK)
 		return
 	}

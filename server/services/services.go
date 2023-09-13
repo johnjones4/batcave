@@ -27,7 +27,7 @@ type Services struct {
 
 type Configuration struct {
 	HomeAssistantConfiguration homeassistant.HomeAssistantConfiguration `json:"homeAssistant"`
-	TelegramToken              string                                   `json:"telegramToken"`
+	TelegramConfiguration      telegram.TelegramConfiguration           `json:"telegram"`
 	OpenAIApiKey               string                                   `json:"openAiAPIKey"`
 	OllamaURL                  string                                   `json:"ollamaURL"`
 }
@@ -53,7 +53,7 @@ func New(params ServiceParams) (*Services, error) {
 	}
 
 	telegram := &telegram.Telegram{
-		Token:          cfg.TelegramToken,
+		Configuration:  cfg.TelegramConfiguration,
 		ClientRegistry: params.ClientRegistry,
 	}
 
