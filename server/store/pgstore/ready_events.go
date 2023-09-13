@@ -3,10 +3,11 @@ package pgstore
 import (
 	"context"
 	"main/core"
+	"time"
 )
 
-func (s *PGStore) GetReadyEvents(ctx context.Context, eventType string, infoParser func(event *core.ScheduledEvent, info string) error) ([]core.ScheduledEvent, error) {
-	rows, err := s.pool.Query(ctx, "SELECT event_id, event_type, scheduled, info FROM scheduled_events WHERE scheduled <= CURRENT_TIMESTAMP")
+func (s *PGStore) ReadyEvents(ctx context.Context, frontier time.Time, eventType string, infoParser func(event *core.ScheduledEvent, info string) error) ([]core.ScheduledEvent, error) {
+	rows, err := s.pool.Query(ctx, "SELECT event_id, event_type, scheduled, info FROM scheduled_events WHERE event_type = $1 AND scheduled <= $2", eventType, frontier.UTC())
 	if err != nil {
 		return nil, err
 	}

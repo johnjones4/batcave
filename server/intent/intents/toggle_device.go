@@ -23,8 +23,10 @@ type toggleDeviceReceiver struct {
 
 var (
 	ResponseNoDevices = core.Response{
-		Message: core.Message{
-			Text: "No devices found for that request",
+		OutboundMessage: core.OutboundMessage{
+			Message: core.Message{
+				Text: "No devices found for that request",
+			},
 		},
 	}
 )

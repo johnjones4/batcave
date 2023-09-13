@@ -10,21 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type PushClient struct {
-	Source string `json:"source"`
-	Id     string `json:"id"`
-}
-
-type PushConfiguration struct {
-	ClienIdClusters [][]PushClient `json:"clienIdClusters"`
-}
-
 type Push struct {
-	PushConfiguration PushConfiguration
-	ClientProviders   []core.ClientProvider
-	Scheduler         core.Scheduler
-	Log               logrus.FieldLogger
-	PushLogger        core.PushLogger
+	ClientSenders  []core.ClientSender
+	ClientRegistry core.ClientRegistry
+	Scheduler      core.Scheduler
+	Log            logrus.FieldLogger
+	PushLogger     core.PushLogger
 }
 
 type pushEventInfo struct {
@@ -38,29 +29,55 @@ var (
 )
 
 const (
-	eventType = "push"
+	eventType     = "push"
+	checkInterval = time.Second * 30
 )
 
 func (a *Push) SendLater(ctx context.Context, when time.Time, source string, clientId string, message core.PushMessage) error {
-	return a.Scheduler.ScheduleEvent(ctx, &core.ScheduledEvent{
-		EventType: eventType,
-		Scheduled: when,
-		Info: pushEventInfo{
-			Source:   source,
-			ClientId: clientId,
-			Message:  message,
-		},
-	})
+	wait := time.Until(when)
+	if wait <= checkInterval {
+		go a.sendScheduledAsync(context.Background(), when, message.EventId, source, clientId, message)
+		return nil
+	} else {
+		return a.Scheduler.ScheduleEvent(ctx, &core.ScheduledEvent{
+			EventType: eventType,
+			Scheduled: when,
+			Info: pushEventInfo{
+				Source:   source,
+				ClientId: clientId,
+				Message:  message,
+			},
+		})
+	}
+}
+
+func (a *Push) sendScheduledAsync(ctx context.Context, when time.Time, eventId string, source string, clientId string, message core.PushMessage) {
+	wait := time.Until(when)
+	if wait > 0 {
+		time.Sleep(wait)
+	}
+	err := a.Send(ctx, source, clientId, message)
+	if err != nil {
+		a.Log.Errorf("Error sending push message: %e", err)
+		return
+	}
+	if eventId != "" {
+		err = a.Scheduler.ClearScheduledEvent(ctx, eventId)
+		if err != nil {
+			a.Log.Errorf("Error clearing push message: %e", err)
+			return
+		}
+	}
 }
 
 func (a *Push) Start(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 10) //TODO look ahead
+	ticker := time.NewTicker(checkInterval)
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			events, err := a.Scheduler.GetReadyEvents(ctx, eventType, func(event *core.ScheduledEvent, info string) error {
+			events, err := a.Scheduler.ReadyEvents(ctx, time.Now().Add(checkInterval), eventType, func(event *core.ScheduledEvent, info string) error {
 				var receiver pushEventInfo
 				err := json.Unmarshal([]byte(info), &receiver)
 				if err != nil {
@@ -79,16 +96,7 @@ func (a *Push) Start(ctx context.Context) error {
 				if !ok {
 					continue
 				}
-				err = a.Send(ctx, info.Source, info.ClientId, info.Message)
-				if err != nil {
-					a.Log.Errorf("Error sending push message: %e", err)
-					continue
-				}
-				err = a.Scheduler.ClearScheduledEvent(ctx, event.ID)
-				if err != nil {
-					a.Log.Errorf("Error clearing push message: %e", err)
-					continue
-				}
+				go a.sendScheduledAsync(context.Background(), event.Scheduled, event.ID, info.Source, info.ClientId, info.Message)
 			}
 		}
 	}
@@ -103,28 +111,32 @@ func (a *Push) Send(ctx context.Context, source string, clientId string, message
 		return nil
 	}
 
-	clusterIndex := -1
-	skipIndex := -1
-clusterLoop:
-	for i, cluster := range a.PushConfiguration.ClienIdClusters {
-		for j, clusterClientId := range cluster {
-			if clusterClientId.Source == source && clusterClientId.Id == clientId {
-				clusterIndex = i
-				skipIndex = j
-				break clusterLoop
-			}
-		}
+	user, err := a.ClientRegistry.UserForClient(ctx, source, clientId)
+	if err != nil {
+		return err
 	}
 
-	if clusterIndex < 0 {
+	clients, err := a.ClientRegistry.ClientsForUser(ctx, user.Id, nil)
+	if err != nil {
+		return err
+	}
+
+	skipIndex := -1
+	for i, client := range clients {
+		if client.Source == source && client.Id == clientId {
+			skipIndex = i
+			break
+		}
+	}
+	if skipIndex < 0 {
 		return errors.New("client id does not have a cluster")
 	}
 
-	for i, id := range a.PushConfiguration.ClienIdClusters[clusterIndex] {
+	for i, client := range clients {
 		if i == skipIndex {
 			continue
 		}
-		err = a.sendToClent(ctx, id.Id, message)
+		err = a.sendToClent(ctx, client.Id, message)
 		if err != nil && err != ErrorClientDoesNotSupportPush {
 			return err
 		}
@@ -134,18 +146,19 @@ clusterLoop:
 }
 
 func (a *Push) sendToClent(ctx context.Context, clientId string, message core.PushMessage) error {
-	for _, provider := range a.ClientProviders {
+	for _, provider := range a.ClientSenders {
 		ok, err := provider.SendToClient(ctx, clientId, message)
 		if ok {
+			err = a.PushLogger.LogPush(ctx, clientId, &message)
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 		if err != nil {
 			return err
 		}
-		err = a.PushLogger.LogPush(ctx, clientId, &message)
-		if err != nil {
-			return err
-		}
+
 	}
 	return ErrorClientDoesNotSupportPush
 }

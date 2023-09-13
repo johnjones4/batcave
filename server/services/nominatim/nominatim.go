@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"main/core"
 	"net/http"
 	"net/url"
@@ -39,6 +40,8 @@ func (n *Nominatim) Geocode(q string) (core.Coordinate, error) {
 	if err != nil {
 		return core.Coordinate{}, err
 	}
+
+	log.Println(string(resBody))
 
 	var items []nominatimResponseItem
 	err = json.Unmarshal(resBody, &items)

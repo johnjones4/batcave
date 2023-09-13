@@ -10,6 +10,10 @@ type Coordinate struct {
 	Longitude float64 `json:"longitude"`
 }
 
+func (c Coordinate) Empty() bool {
+	return c.Latitude == 0 && c.Longitude == 0
+}
+
 type Message struct {
 	Text  string `json:"text"`
 	Audio string `json:"audio"`
@@ -33,17 +37,19 @@ type Media struct {
 	Type string `json:"type"`
 }
 
-type Response struct {
+type OutboundMessage struct {
 	EventId string  `json:"eventId"`
 	Message Message `json:"message"`
-	Action  string  `json:"action"`
 	Media   Media   `json:"media"`
 }
 
+type Response struct {
+	OutboundMessage
+	Action string `json:"action"`
+}
+
 type PushMessage struct {
-	EventId string  `json:"eventId"`
-	Message Message `json:"message"`
-	Media   Media   `json:"media"`
+	OutboundMessage
 }
 
 type PushLogger interface {
@@ -57,7 +63,7 @@ type LLM interface {
 
 type IntentEmbeddingStore interface {
 	UpdateIntentEmbedding(ctx context.Context, intent string, embedding []float32) error
-	GetClosestMatchingIntent(ctx context.Context, embedding []float32) (string, error)
+	ClosestMatchingIntent(ctx context.Context, embedding []float32) (string, error)
 }
 
 type RequestProcessor func(ctx context.Context, req *Request) error
@@ -75,16 +81,25 @@ type IntentActor interface {
 }
 
 type Env struct {
-	HttpHost           string `env:"HTTP_HOST"`
-	ServiceConfig      string `env:"SERVICE_CONFIG"`
-	OpenAIKey          string `env:"OPENAI_API_KEY"`
-	IntentDescriptions string `env:"INTENT_DESCRIPTIONS"`
-	DatabaseURL        string `env:"DATABASE_URL"`
-	TelegramToken      string `env:"TELEGRAM_TOKEN"`
+	HttpHost      string `env:"HTTP_HOST"`
+	ServiceConfig string `env:"SERVICE_CONFIG"`
+	DatabaseURL   string `env:"DATABASE_URL"`
 }
 
-type ClientProvider interface {
+type ClientSender interface {
 	SendToClient(ctx context.Context, clientId string, message PushMessage) (bool, error)
+}
+
+type Client struct {
+	Source          string     `json:"source"`
+	Id              string     `json:"id"`
+	DefaultLocation Coordinate `json:"defaultLocation"`
+	Info            any        `json:"info"`
+}
+
+type User struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type ScheduledEvent struct {
@@ -96,11 +111,13 @@ type ScheduledEvent struct {
 
 type Scheduler interface {
 	ScheduleEvent(ctx context.Context, event *ScheduledEvent) error
-	GetReadyEvents(ctx context.Context, eventType string, infoParser func(event *ScheduledEvent, info string) error) ([]ScheduledEvent, error)
+	ReadyEvents(ctx context.Context, frontier time.Time, eventType string, infoParser func(event *ScheduledEvent, info string) error) ([]ScheduledEvent, error)
 	ClearScheduledEvent(ctx context.Context, id string) error
 }
 
 type ClientRegistry interface {
 	UpsertClient(ctx context.Context, source string, clientId string, info any) error
-	GetClient(ctx context.Context, source, clientId string, infoReceiver any) error
+	Client(ctx context.Context, source, clientId string, infoParser func(client *Client, info string) error) (Client, error)
+	UserForClient(ctx context.Context, source, clientId string) (User, error)
+	ClientsForUser(ctx context.Context, userId string, infoParser func(client *Client, info string) error) ([]Client, error)
 }

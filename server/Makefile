@@ -9,6 +9,10 @@ postgres:
 table:
 	psql dev -h localhost -d dev < pgschema.sql
 
+seed:
+	psql dev -h localhost -d dev < seed_intent.sql
+	psql dev -h localhost -d dev < seed_users.sql
+
 run:
 	HTTP_HOST=:8080 DATABASE_URL=postgresql://dev:dev@localhost/dev SERVICE_CONFIG=./data/service_configuration.json go run . 
 
@@ -16,3 +20,6 @@ container:
 	docker build -t ${TAG} --platform ${OS}/${ARCH} .
 	docker push ${TAG}:latest
 	docker image rm ${TAG}:latest
+
+intent-seed-openai:
+	python3 scripts/generate_openai_intent_seed.py > seed_intent.sql

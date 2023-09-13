@@ -37,7 +37,7 @@ func (id *IntentMatcher) Match(ctx context.Context, req *core.Request) (core.Int
 		return nil, core.IntentMetadata{}, err
 	}
 
-	intentLabel, err := id.istore.GetClosestMatchingIntent(ctx, emedding)
+	intentLabel, err := id.istore.ClosestMatchingIntent(ctx, emedding)
 	if err != nil {
 		return nil, core.IntentMetadata{}, err
 	}

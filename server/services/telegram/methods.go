@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"main/core"
@@ -15,22 +16,51 @@ type Telegram struct {
 	ClientRegistry core.ClientRegistry
 }
 
+func (t *Telegram) SendOutbound(ctx context.Context, chatId int, message core.OutboundMessage) error {
+	_, err := t.SendMessage(OutgoingMessage{
+		ChatId: chatId,
+		Message: Message{
+			Text: message.Message.Text,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if message.Media.Type == core.MediaTypeImage {
+		_, err = t.sendPhoto(OutgoingPhotoMessage{
+			ChatId: chatId,
+			Photo:  message.Media.URL,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (t *Telegram) SendToClient(ctx context.Context, clientId string, message core.PushMessage) (bool, error) {
-	var chat Chat
-	err := t.ClientRegistry.GetClient(ctx, "telegram", clientId, &chat)
+	client, err := t.ClientRegistry.Client(ctx, "telegram", clientId, func(client *core.Client, info string) error {
+		var chat Chat
+		err := json.Unmarshal([]byte(info), &chat)
+		if err != nil {
+			return err
+		}
+		client.Info = chat
+		return nil
+	})
 	if err != nil {
 		return false, err
+	}
+	chat, ok := client.Info.(Chat)
+	if !ok {
+		return false, errors.New("unexpected info")
 	}
 	if chat.Id == 0 {
 		return false, nil
 	}
-	_, err = t.SendMessage(OutgoingMessage{
-		ChatId: chat.Id,
-		Message: Message{
-			Text: message.Message.Text,
-			//TODO media
-		},
-	})
+	err = t.SendOutbound(ctx, chat.Id, message.OutboundMessage)
 	if err != nil {
 		return false, err
 	}
@@ -92,18 +122,9 @@ func (t *Telegram) SendMessage(m OutgoingMessage) (SendMessageResponse, error) {
 	return resp, nil
 }
 
-func (t *Telegram) SendReplyKeyboardMarkupMessage(m OutgoingReplyKeyboardMarkupMessage) (SendMessageResponse, error) {
+func (t *Telegram) sendPhoto(m OutgoingPhotoMessage) (SendMessageResponse, error) {
 	var resp SendMessageResponse
-	err := t.callMethod("sendMessage", m, &resp)
-	if err != nil {
-		return SendMessageResponse{}, err
-	}
-	return resp, nil
-}
-
-func (t *Telegram) SendReplyKeyboardRemoveMessage(m OutgoingReplyKeyboardRemoveMessage) (SendMessageResponse, error) {
-	var resp SendMessageResponse
-	err := t.callMethod("sendMessage", m, &resp)
+	err := t.callMethod("sendPhoto", m, &resp)
 	if err != nil {
 		return SendMessageResponse{}, err
 	}

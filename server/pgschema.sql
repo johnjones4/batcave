@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS intents (
 CREATE TABLE IF NOT EXISTS requests (
   event_id UUID NOT NULL,
   timestamp TIMESTAMP NOT NULL,
+  source VARCHAR(255) NOT NULL,
   client_id VARCHAR(255) NOT NULL,
   latitude DOUBLE PRECISION NOT NULL,
   longitude DOUBLE PRECISION NOT NULL,
@@ -46,9 +47,19 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_events_event_type ON scheduled_events(e
 
 CREATE TABLE IF NOT EXISTS clients_registry (
   source VARCHAR(255) NOT NULL,
+  user_id UUID,
   client_id VARCHAR(255) NOT NULL,
   info JSON NOT NULL,
+  latitude FLOAT8 NOT NULL,
+  longitude FLOAT8 NOT NULL,
   created TIMESTAMP NOT NULL,
   updated TIMESTAMP NOT NULL,
   PRIMARY KEY (source, client_id)
-)
+);
+
+CREATE TABLE IF NOT EXISTS users_registry (
+  user_id UUID NOT NULL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  created TIMESTAMP NOT NULL,
+  updated TIMESTAMP NOT NULL
+);

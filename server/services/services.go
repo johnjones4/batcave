@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"main/core"
 	"main/services/homeassistant"
+	"main/services/llm"
 	"main/services/noaa"
 	"main/services/nominatim"
 	"main/services/push"
@@ -21,12 +22,14 @@ type Services struct {
 	Nominatim     *nominatim.Nominatim
 	Telegram      *telegram.Telegram
 	Push          *push.Push
+	LLM           core.LLM
 }
 
 type Configuration struct {
 	HomeAssistantConfiguration homeassistant.HomeAssistantConfiguration `json:"homeAssistant"`
 	TelegramToken              string                                   `json:"telegramToken"`
-	PushConfiguration          push.PushConfiguration                   `json:"push"`
+	OpenAIApiKey               string                                   `json:"openAiAPIKey"`
+	OllamaURL                  string                                   `json:"ollamaURL"`
 }
 
 type ServiceParams struct {
@@ -54,6 +57,14 @@ func New(params ServiceParams) (*Services, error) {
 		ClientRegistry: params.ClientRegistry,
 	}
 
+	var llmi core.LLM
+	if cfg.OpenAIApiKey != "" {
+		llmi = llm.NewOpenAI(params.Log, cfg.OpenAIApiKey)
+	}
+	if cfg.OllamaURL != "" {
+		llmi = llm.NewOllama(params.Log, cfg.OllamaURL)
+	}
+
 	return &Services{
 		TuneIn: &tunein.TuneIn{},
 		HomeAssistant: &homeassistant.HomeAssistant{
@@ -63,13 +74,13 @@ func New(params ServiceParams) (*Services, error) {
 		NOAA:     &noaa.NOAA{},
 		Telegram: telegram,
 		Push: &push.Push{
-			PushConfiguration: cfg.PushConfiguration,
-			ClientProviders: []core.ClientProvider{
+			ClientSenders: []core.ClientSender{
 				telegram,
 			},
 			Scheduler:  params.Scheduler,
 			Log:        params.Log,
 			PushLogger: params.PushLogger,
 		},
+		LLM: llmi,
 	}, nil
 }

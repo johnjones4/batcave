@@ -6,7 +6,6 @@ import (
 	"main/core"
 	"main/intent"
 	"main/intent/intents"
-	"main/llm"
 	"main/processors"
 	"main/services"
 	"main/store/pgstore"
@@ -26,19 +25,9 @@ func main() {
 	log := logrus.New()
 	log.SetLevel(logrus.DebugLevel)
 
-	store, err := pgstore.New(context.Background(), e.DatabaseURL)
+	store, err := pgstore.New(context.Background(), log, e.DatabaseURL)
 	if err != nil {
 		panic(err)
-	}
-
-	// llm := llm.NewOllama("http://localhost:11434", log)
-	llm := llm.NewOpenAI(log, e.OpenAIKey)
-
-	if e.IntentDescriptions != "" {
-		err = intent.ParseIntents(context.Background(), log, llm, store, e.IntentDescriptions)
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	services, err := services.New(services.ServiceParams{
@@ -70,24 +59,26 @@ func main() {
 			Push: services.Push,
 		},
 		&intents.Unknown{},
-	}, llm, store)
+	}, services.LLM, store)
 
 	if err != nil {
 		panic(err)
 	}
 
 	processors := processors.Processors{
-		LLM: llm,
+		LLM:            services.LLM,
+		ClientRegistry: store,
 	}
 
 	h := api.New(api.APIParams{
 		IntentMatcher: id,
 		RequestProcessors: []core.RequestProcessor{
+			processors.DefaultLocation,
 			store.LogRequest,
 		},
 		ResponseProcessors: []core.ResponseProcessor{
-			store.LogResponse,
 			processors.ConfirmMessage,
+			store.LogResponse,
 		},
 		Log:      log,
 		Telegram: *services.Telegram,

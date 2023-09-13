@@ -14,7 +14,7 @@ func (s *PGStore) UpsertClient(ctx context.Context, source string, clientId stri
 		return nil
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	var dummy string
 	err = s.pool.QueryRow(ctx, "SELECT client_id FROM clients_registry WHERE source = $1 AND client_id = $2", source, clientId).Scan(&dummy)
@@ -33,7 +33,7 @@ func (s *PGStore) UpsertClient(ctx context.Context, source string, clientId stri
 			now,
 		)
 		if err != nil {
-			return nil
+			return err
 		}
 	} else {
 		_, err = s.pool.Exec(
@@ -45,7 +45,7 @@ func (s *PGStore) UpsertClient(ctx context.Context, source string, clientId stri
 			clientId,
 		)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 	return nil

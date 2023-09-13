@@ -1,4 +1,3 @@
-* timer (improve accuracy)
 * messaging
 * weather alerts
 * schedule

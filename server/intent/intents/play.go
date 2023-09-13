@@ -42,9 +42,11 @@ func (p *Play) ActOnIntent(ctx context.Context, req *core.Request, md *core.Inte
 	}
 
 	return core.Response{
-		Media: core.Media{
-			URL:  url,
-			Type: core.MediaTypeAudioStream,
+		OutboundMessage: core.OutboundMessage{
+			Media: core.Media{
+				URL:  url,
+				Type: core.MediaTypeAudioStream,
+			},
 		},
 		Action: core.ActionPlay,
 	}, nil

@@ -53,6 +53,11 @@ type OutgoingMessage struct {
 	ChatId int `json:"chat_id"`
 }
 
+type OutgoingPhotoMessage struct {
+	Photo  string `json:"photo"`
+	ChatId int    `json:"chat_id"`
+}
+
 type OutgoingReplyKeyboardMarkupMessage struct {
 	OutgoingMessage
 	ReplyMarkup ReplyKeyboardMarkup `json:"reply_markup"`

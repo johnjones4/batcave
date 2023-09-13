@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"main/core"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type Unknown struct {
@@ -26,5 +28,16 @@ func (p *Unknown) IntentParseReceiver() any {
 }
 
 func (p *Unknown) ActOnIntent(ctx context.Context, req *core.Request, md *core.IntentMetadata) (core.Response, error) {
-	return core.Response{}, nil //TODO
+	var info unknownIntentParseReceiver
+	err := mapstructure.Decode(md.IntentParseReceiver, &info)
+	if err != nil {
+		return core.ResponseEmpty, err
+	}
+	return core.Response{
+		OutboundMessage: core.OutboundMessage{
+			Message: core.Message{
+				Text: info.Answer,
+			},
+		},
+	}, nil
 }

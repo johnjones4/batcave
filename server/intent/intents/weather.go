@@ -27,7 +27,7 @@ func (p *Weather) IntentLabel() string {
 }
 
 func (p *Weather) IntentParsePrompt(req *core.Request) string {
-	return fmt.Sprintf("Extract the exact date and time relative to %s and location from the phrase \"%s\" and return the information in the JSON format {\"date\":\"RFC3339 format\", \"location\":\"city or town name, state, and country\"}", time.Now().String(), req.Message.Text)
+	return fmt.Sprintf("Extract the exact date and time relative to %s and location (use blank for unknown location) from the phrase \"%s\" and return the information in the JSON format {\"date\":\"RFC3339 format\", \"location\":\"city or town name, state, and country\"}", time.Now().String(), req.Message.Text)
 }
 
 func (p *Weather) IntentParseReceiver() any {
@@ -50,7 +50,9 @@ func (p *Weather) ActOnIntent(ctx context.Context, req *core.Request, md *core.I
 			return core.ResponseEmpty, err
 		}
 		locationName = info.Location
-	} else {
+	}
+
+	if locationName == "" || location.Empty() {
 		location = req.Coordinate
 		locationName = "your location"
 	}
@@ -73,7 +75,8 @@ func (p *Weather) ActOnIntent(ctx context.Context, req *core.Request, md *core.I
 				break
 			}
 		}
-	} else {
+	}
+	if idx == 0 {
 		media = core.Media{
 			URL:  weather.RadarURL,
 			Type: core.MediaTypeImage,
@@ -81,14 +84,16 @@ func (p *Weather) ActOnIntent(ctx context.Context, req *core.Request, md *core.I
 	}
 
 	return core.Response{
-		Message: core.Message{
-			Text: fmt.Sprintf("The weather from %s to %s in %s will be: %s",
-				weather.Forecast[idx].StartTime.Format(core.FriendlyDateFormat),
-				weather.Forecast[idx].EndTime.Format(core.FriendlyDateFormat),
-				locationName,
-				weather.Forecast[idx].DetailedForecast,
-			),
+		OutboundMessage: core.OutboundMessage{
+			Message: core.Message{
+				Text: fmt.Sprintf("The weather from %s to %s in %s will be: %s",
+					weather.Forecast[idx].StartTime.Format(core.FriendlyDateFormat),
+					weather.Forecast[idx].EndTime.Format(core.FriendlyDateFormat),
+					locationName,
+					weather.Forecast[idx].DetailedForecast,
+				),
+			},
+			Media: media,
 		},
-		Media: media,
 	}, nil
 }
