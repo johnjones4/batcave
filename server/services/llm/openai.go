@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/sashabaranov/go-openai"
@@ -50,4 +51,17 @@ func (o *OpenAI) Embedding(ctx context.Context, text string) ([]float32, error) 
 		return nil, err
 	}
 	return res.Data[0].Embedding, nil
+}
+
+func (o *OpenAI) SpeechToText(ctx context.Context, wavBytes []byte) (string, error) {
+	trans, err := o.client.CreateTranscription(ctx, openai.AudioRequest{
+		Model:    "whisper-1",
+		FilePath: "voice.wav",
+		Reader:   bytes.NewBuffer(wavBytes),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return trans.Text, nil
 }

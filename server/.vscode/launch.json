@@ -13,7 +13,10 @@
       "env": {
         "HTTP_HOST": ":8080",
         "DATABASE_URL": "postgresql://dev:dev@localhost/dev",
-        "SERVICE_CONFIG": "./data/service_configuration.json"
+        "SERVICE_CONFIG": "./data/service_configuration.json",
+        "LD_LIBRARY_PATH": "/Users/johnjones/.coqui:$LD_LIBRARY_PATH",
+        "CGO_LDFLAGS": "-L/Users/johnjones/.coqui",
+        "CGO_CXXFLAGS": "-I/Users/johnjones/.coqui"
       }
     }
   ]

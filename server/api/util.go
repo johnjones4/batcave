@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (a *apiConcrete) handleError(w http.ResponseWriter, err error, status int) {
+func (a *API) handleError(w http.ResponseWriter, err error, status int) {
 	if err == nil {
 		err = errors.New(http.StatusText(status))
 	}
@@ -15,7 +15,7 @@ func (a *apiConcrete) handleError(w http.ResponseWriter, err error, status int) 
 	http.Error(w, http.StatusText(status), status)
 }
 
-func (a *apiConcrete) jsonResponse(w http.ResponseWriter, j any) {
+func (a *API) jsonResponse(w http.ResponseWriter, j any) {
 	bytes, err := json.Marshal(j)
 	if err != nil {
 		a.handleError(w, err, http.StatusInternalServerError)
@@ -26,7 +26,7 @@ func (a *apiConcrete) jsonResponse(w http.ResponseWriter, j any) {
 	w.Write(bytes)
 }
 
-func (a *apiConcrete) readJson(req *http.Request, i any) error {
+func (a *API) readJson(req *http.Request, i any) error {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err

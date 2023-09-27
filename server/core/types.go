@@ -16,7 +16,9 @@ func (c Coordinate) Empty() bool {
 
 type Message struct {
 	Text  string `json:"text"`
-	Audio string `json:"audio"`
+	Audio struct {
+		Data string `json:"data"`
+	} `json:"audio"`
 }
 
 type Request struct {
@@ -120,4 +122,8 @@ type ClientRegistry interface {
 	Client(ctx context.Context, source, clientId string, infoParser func(client *Client, info string) error) (Client, error)
 	UserForClient(ctx context.Context, source, clientId string) (User, error)
 	ClientsForUser(ctx context.Context, userId string, infoParser func(client *Client, info string) error) ([]Client, error)
+}
+
+type STT interface {
+	SpeechToText(ctx context.Context, wavBytes []byte) (string, error)
 }

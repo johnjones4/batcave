@@ -68,11 +68,13 @@ func main() {
 	processors := processors.Processors{
 		LLM:            services.LLM,
 		ClientRegistry: store,
+		STT:            services.STT,
 	}
 
 	h := api.New(api.APIParams{
 		IntentMatcher: id,
 		RequestProcessors: []core.RequestProcessor{
+			processors.SpeechToText,
 			processors.DefaultLocation,
 			store.LogRequest,
 		},
@@ -84,6 +86,7 @@ func main() {
 		Telegram:       services.Telegram,
 		ClientRegistry: store,
 	})
+	go h.Start(context.Background())
 	err = http.ListenAndServe(e.HttpHost, h)
 	panic(err)
 }

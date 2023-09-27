@@ -46,10 +46,12 @@ func (p *Weather) ActOnIntent(ctx context.Context, req *core.Request, md *core.I
 
 	if info.Location != "" {
 		location, err = p.Nominatim.Geocode(info.Location)
-		if err != nil {
-			return core.ResponseEmpty, err
+		if err != nominatim.ErrorLocationNotFound {
+			if err != nil {
+				return core.ResponseEmpty, err
+			}
+			locationName = info.Location
 		}
-		locationName = info.Location
 	}
 
 	if locationName == "" || location.Empty() {

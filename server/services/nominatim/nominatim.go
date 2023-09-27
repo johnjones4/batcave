@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"main/core"
 	"net/http"
 	"net/url"
@@ -19,8 +18,9 @@ type Nominatim struct {
 }
 
 type nominatimResponseItem struct {
-	Latitude  string `json:"lat"`
-	Longitude string `json:"lon"`
+	Latitude    string `json:"lat"`
+	Longitude   string `json:"lon"`
+	CountryCode string `json:"country_code"`
 }
 
 func (n *Nominatim) Geocode(q string) (core.Coordinate, error) {
@@ -41,15 +41,13 @@ func (n *Nominatim) Geocode(q string) (core.Coordinate, error) {
 		return core.Coordinate{}, err
 	}
 
-	log.Println(string(resBody))
-
 	var items []nominatimResponseItem
 	err = json.Unmarshal(resBody, &items)
 	if err != nil {
 		return core.Coordinate{}, err
 	}
 
-	if len(items) == 0 {
+	if len(items) == 0 || items[0].CountryCode != "us" {
 		return core.Coordinate{}, ErrorLocationNotFound
 	}
 

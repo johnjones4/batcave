@@ -23,6 +23,7 @@ type Services struct {
 	Telegram      *telegram.Telegram
 	Push          *push.Push
 	LLM           core.LLM
+	STT           core.STT
 }
 
 type Configuration struct {
@@ -58,12 +59,15 @@ func New(params ServiceParams) (*Services, error) {
 	}
 
 	var llmi core.LLM
+	var stti core.STT
 	if cfg.OpenAIApiKey != "" {
-		llmi = llm.NewOpenAI(params.Log, cfg.OpenAIApiKey)
+		openai := llm.NewOpenAI(params.Log, cfg.OpenAIApiKey)
+		llmi = openai
+		stti = openai
 	}
-	if cfg.OllamaURL != "" {
-		llmi = llm.NewOllama(params.Log, cfg.OllamaURL)
-	}
+	// if cfg.OllamaURL != "" {
+	// 	llmi = llm.NewOllama(params.Log, cfg.OllamaURL)
+	// }
 
 	return &Services{
 		TuneIn: &tunein.TuneIn{},
@@ -82,5 +86,6 @@ func New(params ServiceParams) (*Services, error) {
 			PushLogger: params.PushLogger,
 		},
 		LLM: llmi,
+		STT: stti,
 	}, nil
 }

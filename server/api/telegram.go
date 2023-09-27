@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (a *apiConcrete) handleTelegramError(w http.ResponseWriter, receiver telegram.Update, err error) {
+func (a *API) handleTelegramError(w http.ResponseWriter, receiver telegram.Update, err error) {
 	a.Log.Error(err)
 
 	_, err = a.Telegram.SendMessage(telegram.OutgoingMessage{
@@ -22,7 +22,7 @@ func (a *apiConcrete) handleTelegramError(w http.ResponseWriter, receiver telegr
 	}
 }
 
-func (a *apiConcrete) telegramHandler(w http.ResponseWriter, r *http.Request) {
+func (a *API) telegramHandler(w http.ResponseWriter, r *http.Request) {
 	var receiver telegram.Update
 	err := a.readJson(r, &receiver)
 	if err != nil {
@@ -49,7 +49,13 @@ func (a *apiConcrete) telegramHandler(w http.ResponseWriter, r *http.Request) {
 		ClientID: fmt.Sprint(receiver.Message.From.Id),
 	}
 
-	res, err := a.coreHandler(r.Context(), req)
+	err = a.prepareRequest(r.Context(), &req)
+	if err != nil {
+		a.handleTelegramError(w, receiver, err)
+		return
+	}
+
+	res, err := a.coreHandler(r.Context(), &req)
 	if err != nil {
 		a.handleTelegramError(w, receiver, err)
 		return

@@ -11,37 +11,35 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Ollama struct {
+type LlamaDotCpp struct {
 	url string
 	log logrus.FieldLogger
 }
 
-type ollamaCompletionRequest struct {
-	Model  string `json:"model"`
+type llamaDotCppCompletionRequest struct {
 	Prompt string `json:"prompt"`
 	System string `json:"system"`
 }
 
-type ollamaCompletionResponseSegment struct {
+type llamaDotCppCompletionResponseSegment struct {
 	Response string `json:"response,omitempty"`
 }
 
-type ollamaEmbeddingRequest struct {
+type llamaDotCppEmbeddingRequest struct {
 	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
 }
 
-type ollamaEmbeddingResponse struct {
+type llamaDotCppEmbeddingResponse struct {
 	Embedding []float32 `json:"embedding"`
 }
 
-func NewOllama(log logrus.FieldLogger, url string) *Ollama {
-	return &Ollama{url, log}
+func NewLlamaDotCpp(log logrus.FieldLogger, url string) *LlamaDotCpp {
+	return &LlamaDotCpp{url, log}
 }
 
-func (o *Ollama) Completion(ctx context.Context, prompt string) (string, error) {
-	body, err := json.Marshal(ollamaCompletionRequest{
-		Model:  "llama2",
+func (o *LlamaDotCpp) Completion(ctx context.Context, prompt string) (string, error) {
+	body, err := json.Marshal(llamaDotCppCompletionRequest{
 		Prompt: prompt,
 		System: "Return only the JSON data requested in the prompt. Do not provide explanation",
 	})
@@ -65,7 +63,7 @@ func (o *Ollama) Completion(ctx context.Context, prompt string) (string, error) 
 		if part == "" {
 			continue
 		}
-		var seg ollamaCompletionResponseSegment
+		var seg llamaDotCppCompletionResponseSegment
 		err = json.Unmarshal([]byte(part), &seg)
 		if err != nil {
 			return "", err
@@ -77,14 +75,14 @@ func (o *Ollama) Completion(ctx context.Context, prompt string) (string, error) 
 
 	reponseFull := response.String()
 
-	o.log.Debugf("Ollama prompt: %s", prompt)
-	o.log.Debugf("Ollama response: %s", reponseFull)
+	o.log.Debugf("llamaDotCpp prompt: %s", prompt)
+	o.log.Debugf("llamaDotCpp response: %s", reponseFull)
 
 	return reponseFull, nil
 }
 
-func (o *Ollama) Embedding(ctx context.Context, text string) ([]float32, error) {
-	body, err := json.Marshal(ollamaEmbeddingRequest{
+func (o *LlamaDotCpp) Embedding(ctx context.Context, text string) ([]float32, error) {
+	body, err := json.Marshal(llamaDotCppEmbeddingRequest{
 		Model:  "llama2",
 		Prompt: text,
 	})
@@ -102,7 +100,7 @@ func (o *Ollama) Embedding(ctx context.Context, text string) ([]float32, error) 
 		return nil, err
 	}
 
-	var embRes ollamaEmbeddingResponse
+	var embRes llamaDotCppEmbeddingResponse
 	err = json.Unmarshal(resbody, &embRes)
 	if err != nil {
 		return nil, err
