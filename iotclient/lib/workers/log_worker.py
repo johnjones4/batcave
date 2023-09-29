@@ -24,6 +24,7 @@ class LogWorker(Worker):
                     time.sleep(1)
             except:
                 logging.exception("Error receiving log messages")
+                return #TODO reconnect?
 
     def start(self):
         self.ws = websocket.WebSocket()

@@ -82,6 +82,15 @@ type IntentActor interface {
 	ActOnIntent(ctx context.Context, req *Request, md *IntentMetadata) (Response, error)
 }
 
+type PushIntentActor interface {
+	IntentActor
+	ActOnAsyncIntent(ctx context.Context, source, clientId string, md *IntentMetadata) (PushMessage, error)
+}
+
+type PushIntentFactory interface {
+	PushIntent(named string) PushIntentActor
+}
+
 type Env struct {
 	HttpHost      string `env:"HTTP_HOST"`
 	ServiceConfig string `env:"SERVICE_CONFIG"`
@@ -104,17 +113,35 @@ type User struct {
 	Name string `json:"name"`
 }
 
+type ScheduledEventCore struct {
+	ID       string
+	Source   string
+	ClientId string
+}
+
 type ScheduledEvent struct {
-	ID        string
+	ScheduledEventCore
 	EventType string
 	Scheduled time.Time
 	Info      any
+}
+
+type ScheduledRecurringEvent struct {
+	ScheduledEventCore
+	Intent    string
+	Scheduled string
+	LastRun   time.Time
+	Info      map[string]any
 }
 
 type Scheduler interface {
 	ScheduleEvent(ctx context.Context, event *ScheduledEvent) error
 	ReadyEvents(ctx context.Context, frontier time.Time, eventType string, infoParser func(event *ScheduledEvent, info string) error) ([]ScheduledEvent, error)
 	ClearScheduledEvent(ctx context.Context, id string) error
+	ScheduleRecurringEvent(ctx context.Context, event *ScheduledRecurringEvent) error
+	ClearScheduledRecurringEvent(ctx context.Context, id string) error
+	RecurringEvents(ctx context.Context) ([]ScheduledRecurringEvent, error)
+	UpdateRecurringEventTimestamp(ctx context.Context, id string, stamp time.Time) error
 }
 
 type ClientRegistry interface {

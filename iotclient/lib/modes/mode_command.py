@@ -64,3 +64,8 @@ class ModeCommand(Mode):
                         # TODO images?
                         self.display.set_status_light(1, False)
                         self.display.set_status_light(2, False)
+                    elif incoming['type'] == "push":
+                        self.display.write(f"HAL 9000: {incoming['push']['message']['text']}")
+                        # TODO images?
+                        self.display.set_status_light(1, False)
+                        self.display.set_status_light(2, False)

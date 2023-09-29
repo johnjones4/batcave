@@ -24,6 +24,7 @@ type Services struct {
 	Push          *push.Push
 	LLM           core.LLM
 	STT           core.STT
+	SocketSender  *push.SocketSender
 }
 
 type Configuration struct {
@@ -34,11 +35,12 @@ type Configuration struct {
 }
 
 type ServiceParams struct {
-	Scheduler      core.Scheduler
-	Log            logrus.FieldLogger
-	PushLogger     core.PushLogger
-	ClientRegistry core.ClientRegistry
-	ConfigFile     string
+	Scheduler         core.Scheduler
+	Log               logrus.FieldLogger
+	PushLogger        core.PushLogger
+	ClientRegistry    core.ClientRegistry
+	ConfigFile        string
+	PushIntentFactory core.PushIntentFactory
 }
 
 func New(params ServiceParams) (*Services, error) {
@@ -69,6 +71,8 @@ func New(params ServiceParams) (*Services, error) {
 	// 	llmi = llm.NewOllama(params.Log, cfg.OllamaURL)
 	// }
 
+	socketSender := push.NewSocketSender()
+
 	return &Services{
 		TuneIn: &tunein.TuneIn{},
 		HomeAssistant: &homeassistant.HomeAssistant{
@@ -80,12 +84,15 @@ func New(params ServiceParams) (*Services, error) {
 		Push: &push.Push{
 			ClientSenders: []core.ClientSender{
 				telegram,
+				socketSender,
 			},
-			Scheduler:  params.Scheduler,
-			Log:        params.Log,
-			PushLogger: params.PushLogger,
+			Scheduler:         params.Scheduler,
+			Log:               params.Log,
+			PushLogger:        params.PushLogger,
+			PushIntentFactory: params.PushIntentFactory,
 		},
-		LLM: llmi,
-		STT: stti,
+		LLM:          llmi,
+		STT:          stti,
+		SocketSender: socketSender,
 	}, nil
 }

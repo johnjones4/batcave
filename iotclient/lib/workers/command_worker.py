@@ -51,6 +51,7 @@ class CommandWorker(Worker):
                 logging.exception("Error receiving command response")
                 if self.queue:
                     self.queue.put(e)
+                return
 
     def start(self):
         self.ws = websocket.WebSocket()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"main/core"
+	"main/services/push"
 	"main/services/tunein"
 
 	"github.com/mitchellh/mapstructure"
@@ -11,10 +12,12 @@ import (
 
 type Play struct {
 	TuneIn *tunein.TuneIn
+	Push   *push.Push
 }
 
 type playIntentParseReceiver struct {
-	AudioSource string `json:"audioSource"`
+	AudioSource           string `json:"audioSource"`
+	RecurranceDescription string `json:"recurranceDescription"`
 }
 
 func (p *Play) IntentLabel() string {
@@ -22,7 +25,7 @@ func (p *Play) IntentLabel() string {
 }
 
 func (p *Play) IntentParsePrompt(req *core.Request) string {
-	return fmt.Sprintf("Extract the name of the audio source from the phrase \"%s\" in the JSON format: {\"audioSource\":\"\"}", req.Message.Text)
+	return fmt.Sprintf("Extract the name of the audio source and recurrance description in crontab format or blank from the phrase \"%s\" in the JSON format: {\"audioSource\":\"\",\"recurranceDescription\":\"\"}", req.Message.Text)
 }
 
 func (p *Play) IntentParseReceiver() any {
@@ -34,6 +37,16 @@ func (p *Play) ActOnIntent(ctx context.Context, req *core.Request, md *core.Inte
 	err := mapstructure.Decode(md.IntentParseReceiver, &info)
 	if err != nil {
 		return core.ResponseEmpty, err
+	}
+
+	if info.RecurranceDescription != "" {
+		err = p.Push.SendRecurring(ctx, req.Source, req.ClientID, info.RecurranceDescription, p.IntentLabel(), map[string]any{
+			"audioSource": info.AudioSource,
+		})
+		if err != nil {
+			return core.ResponseEmpty, err
+		}
+		return core.ResponseEmpty, nil
 	}
 
 	url, err := p.TuneIn.GetStreamURL(info.AudioSource)

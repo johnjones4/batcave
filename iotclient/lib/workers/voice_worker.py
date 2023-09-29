@@ -35,6 +35,7 @@ class VoiceWorker(Worker):
     def purge(self):
         self.is_purging = True
         if not self.vox:
+            # TODO bugs here
             buffer = bytearray()
             while not self.intermediate_queue.empty():
                 frame = self.intermediate_queue.get()

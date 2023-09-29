@@ -8,21 +8,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorhill/cronexpr"
 	"github.com/sirupsen/logrus"
 )
 
 type Push struct {
-	ClientSenders  []core.ClientSender
-	ClientRegistry core.ClientRegistry
-	Scheduler      core.Scheduler
-	Log            logrus.FieldLogger
-	PushLogger     core.PushLogger
+	ClientSenders     []core.ClientSender
+	ClientRegistry    core.ClientRegistry
+	Scheduler         core.Scheduler
+	Log               logrus.FieldLogger
+	PushLogger        core.PushLogger
+	PushIntentFactory core.PushIntentFactory
 }
 
 type pushEventInfo struct {
-	Source   string           `json:"source"`
-	ClientId string           `json:"clientID"`
-	Message  core.PushMessage `json:"message"`
+	Message core.PushMessage `json:"message"`
 }
 
 var (
@@ -30,24 +30,40 @@ var (
 )
 
 const (
-	eventType     = "push"
-	checkInterval = time.Second * 30
+	eventType              = "push"
+	singleCheckInterval    = time.Second * 30
+	recurringCheckInterval = time.Minute * 5
 )
+
+func (a *Push) SendRecurring(ctx context.Context, source string, clientId string, schedule string, intent string, info map[string]any) error {
+	return a.Scheduler.ScheduleRecurringEvent(ctx, &core.ScheduledRecurringEvent{
+		ScheduledEventCore: core.ScheduledEventCore{
+			Source:   source,
+			ClientId: clientId,
+		},
+		Info:      info,
+		Intent:    intent,
+		Scheduled: schedule,
+		LastRun:   time.Now(),
+	})
+}
 
 func (a *Push) SendLater(ctx context.Context, when time.Time, source string, clientId string, message core.PushMessage) error {
 	wait := time.Until(when)
-	if wait <= checkInterval {
+	if wait <= singleCheckInterval {
 		go a.sendScheduledAsync(context.Background(), when, "", source, clientId, message)
 		return nil
 	} else {
 		return a.Scheduler.ScheduleEvent(ctx, &core.ScheduledEvent{
-			EventType: eventType,
-			Scheduled: when,
-			Info: pushEventInfo{
+			ScheduledEventCore: core.ScheduledEventCore{
 				Source:   source,
 				ClientId: clientId,
-				Message:  message,
 			},
+			Info: pushEventInfo{
+				Message: message,
+			},
+			EventType: eventType,
+			Scheduled: when,
 		})
 	}
 }
@@ -71,33 +87,79 @@ func (a *Push) sendScheduledAsync(ctx context.Context, when time.Time, eventId s
 	}
 }
 
+func (a *Push) doSingleEvents(ctx context.Context) error {
+	events, err := a.Scheduler.ReadyEvents(ctx, time.Now().Add(singleCheckInterval), eventType, func(event *core.ScheduledEvent, info string) error {
+		var receiver pushEventInfo
+		err := json.Unmarshal([]byte(info), &receiver)
+		if err != nil {
+			return err
+		}
+		event.Info = receiver
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, event := range events {
+		info, ok := event.Info.(pushEventInfo)
+		if !ok {
+			continue
+		}
+		go a.sendScheduledAsync(context.Background(), event.Scheduled, event.ID, event.Source, event.ClientId, info.Message)
+	}
+
+	return nil
+}
+
+func (a *Push) doRecurringEvents(ctx context.Context) error {
+	events, err := a.Scheduler.RecurringEvents(ctx)
+	if err != nil {
+		return err
+	}
+
+	limit := time.Now().Add(recurringCheckInterval)
+
+	for _, event := range events {
+		nextTime := cronexpr.MustParse(event.Scheduled).Next(event.LastRun)
+		a.Log.Debug(event, nextTime)
+		if nextTime.Before(limit) {
+			intent := a.PushIntentFactory.PushIntent(event.Intent)
+			push, err := intent.ActOnAsyncIntent(ctx, event.Source, event.ClientId, &core.IntentMetadata{
+				IntentParseReceiver: event.Info,
+			})
+			if err != nil {
+				return err
+			}
+			go a.sendScheduledAsync(context.Background(), nextTime, "", event.Source, event.ClientId, push)
+			err = a.Scheduler.UpdateRecurringEventTimestamp(ctx, event.ID, time.Now())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (a *Push) Start(ctx context.Context) error {
-	ticker := time.NewTicker(checkInterval)
+	singleTicker := time.NewTicker(singleCheckInterval)
+	recurringTicker := time.NewTicker(recurringCheckInterval)
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-ticker.C:
-			events, err := a.Scheduler.ReadyEvents(ctx, time.Now().Add(checkInterval), eventType, func(event *core.ScheduledEvent, info string) error {
-				var receiver pushEventInfo
-				err := json.Unmarshal([]byte(info), &receiver)
-				if err != nil {
-					return err
-				}
-				event.Info = receiver
-				return nil
-			})
+		case <-singleTicker.C:
+			err := a.doSingleEvents(ctx)
 			if err != nil {
-				a.Log.Errorf("Error getting scheduled events: %e", err)
+				a.Log.Errorf("Error processing scheduled events: %e", err)
 				continue
 			}
-
-			for _, event := range events {
-				info, ok := event.Info.(pushEventInfo)
-				if !ok {
-					continue
-				}
-				go a.sendScheduledAsync(context.Background(), event.Scheduled, event.ID, info.Source, info.ClientId, info.Message)
+		case <-recurringTicker.C:
+			err := a.doRecurringEvents(ctx)
+			if err != nil {
+				a.Log.Errorf("Error processing recurring events: %e", err)
+				continue
 			}
 		}
 	}

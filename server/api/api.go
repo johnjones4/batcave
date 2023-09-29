@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"main/core"
+	"main/services/push"
 	"main/services/telegram"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,14 +23,19 @@ type APIParams struct {
 	Log                *logrus.Logger
 	Telegram           *telegram.Telegram
 	ClientRegistry     core.ClientRegistry
+	SocketSender       *push.SocketSender
+}
+
+type logListener struct {
+	next    *logListener
+	channel chan string
 }
 
 type API struct {
-	logMessages chan string
-	mux         *chi.Mux
-	logMsg      string
-	logMsgStamp time.Time
-	logMsgLock  sync.RWMutex
+	logMessages      chan string
+	mux              *chi.Mux
+	logListenersLock sync.Mutex
+	logListeners     *logListener
 	APIParams
 }
 
@@ -44,10 +49,13 @@ func (a *API) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case msg := <-a.logMessages:
-			a.logMsgLock.Lock()
-			a.logMsg = msg
-			a.logMsgStamp = time.Now()
-			a.logMsgLock.Unlock()
+			a.logListenersLock.Lock()
+			l := a.logListeners
+			for l != nil {
+				l.channel <- msg
+				l = l.next
+			}
+			a.logListenersLock.Unlock()
 		}
 	}
 }

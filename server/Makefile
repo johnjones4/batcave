@@ -1,16 +1,7 @@
 PROJECT=$(shell basename $(shell cd .. && pwd))
-ARCH=arm64
+ARCH=amd64
 OS=linux
 TAG=ghcr.io/johnjones4/${PROJECT}-${OS}-${ARCH}
-
-whisper.cpp:
-	wget https://github.com/ggerganov/whisper.cpp/archive/refs/heads/master.zip
-	unzip master.zip
-	rm master.zip
-	mv whisper.cpp-master whisper.cpp
-
-whisper.cpp/libwhisper.a: whisper.cpp
-	WHISPER_NO_METAL=0 make -C whisper.cpp libwhisper.a
 
 postgres:
 	docker run -e POSTGRES_PASSWORD=dev -e POSTGRES_USER=dev -e POSTGRES_DB=dev -p 5432:5432 ankane/pgvector

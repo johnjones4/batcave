@@ -1,6 +1,6 @@
 {
   "play": "play a radio station",
-  "stop": "stop",
+  "stop": "stop a current task or activity",
   "toggle_device": "turn the lights on",
   "weather": "what is the current weather",
   "remind": "remind me or set a timer for five minutes"

@@ -6,9 +6,10 @@ import (
 )
 
 type conversationResponse struct {
-	Type     string         `json:"type"`
-	Request  *core.Request  `json:"request"`
-	Response *core.Response `json:"response"`
+	Type        string            `json:"type"`
+	Request     *core.Request     `json:"request"`
+	Response    *core.Response    `json:"response"`
+	PushMessage *core.PushMessage `json:"push"`
 }
 
 func (a *API) converse(w http.ResponseWriter, r *http.Request) {
@@ -19,44 +20,65 @@ func (a *API) converse(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
+	as := a.SocketSender.RegisterActiveSocket(r.Header.Get("X-Client-Id"), c.RemoteAddr().String())
+	defer a.SocketSender.DeregisterActiveSocket(as.ClientId, as.ConnectionId)
+
+	incomingMessages := make(chan core.Request)
+	go func() {
+		for {
+			var req core.Request
+			err = c.ReadJSON(&req)
+			if err != nil {
+				a.Log.Error(err)
+				return
+			}
+			incomingMessages <- req
+		}
+	}()
+
 	for {
-		var req core.Request
-		err = c.ReadJSON(&req)
-		if err != nil {
-			a.Log.Error(err)
-			return
-		}
+		select {
+		case push := <-as.Messages:
+			err = c.WriteJSON(conversationResponse{
+				Type:        "push",
+				PushMessage: &push,
+			})
+			if err != nil {
+				a.Log.Error(err)
+				return
+			}
+		case req := <-incomingMessages:
+			req.Source = "api"
 
-		req.Source = "api"
+			err = a.prepareRequest(r.Context(), &req)
+			if err != nil {
+				a.Log.Error(err)
+				return
+			}
 
-		err = a.prepareRequest(r.Context(), &req)
-		if err != nil {
-			a.Log.Error(err)
-			return
-		}
+			err = c.WriteJSON(conversationResponse{
+				Type:    "request",
+				Request: &req,
+			})
+			if err != nil {
+				a.Log.Error(err)
+				return
+			}
 
-		err = c.WriteJSON(conversationResponse{
-			Type:    "request",
-			Request: &req,
-		})
-		if err != nil {
-			a.Log.Error(err)
-			return
-		}
+			resp, err := a.coreHandler(r.Context(), &req)
+			if err != nil {
+				a.Log.Error(err)
+				return
+			}
 
-		resp, err := a.coreHandler(r.Context(), &req)
-		if err != nil {
-			a.Log.Error(err)
-			return
-		}
-
-		err = c.WriteJSON(conversationResponse{
-			Type:     "response",
-			Response: &resp,
-		})
-		if err != nil {
-			a.Log.Error(err)
-			return
+			err = c.WriteJSON(conversationResponse{
+				Type:     "response",
+				Response: &resp,
+			})
+			if err != nil {
+				a.Log.Error(err)
+				return
+			}
 		}
 	}
 }

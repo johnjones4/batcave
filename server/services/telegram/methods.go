@@ -58,6 +58,9 @@ func (t *Telegram) SendToClient(ctx context.Context, clientId string, message co
 	if err != nil {
 		return false, err
 	}
+	if client.Id == "" {
+		return false, nil
+	}
 	chat, ok := client.Info.(Chat)
 	if !ok {
 		return false, errors.New("unexpected info")

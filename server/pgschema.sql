@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS pushes (
 
 CREATE TABLE IF NOT EXISTS scheduled_events (
   event_id UUID NOT NULL PRIMARY KEY,
+  source VARCHAR(255) NOT NULL,
+  client_id VARCHAR(255) NOT NULL,
   event_type VARCHAR(255) NOT NULL,
   scheduled TIMESTAMP NOT NULL,
   created TIMESTAMP NOT NULL,
@@ -48,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_events_event_type ON scheduled_events(e
 CREATE TABLE IF NOT EXISTS clients_registry (
   source VARCHAR(255) NOT NULL,
   user_id UUID,
-  client_id VARCHAR(255) NOT NULL,
+  client_id VARCHAR(255) NOT NULL UNIQUE,
   info JSON NOT NULL,
   latitude FLOAT8 NOT NULL,
   longitude FLOAT8 NOT NULL,
@@ -62,4 +64,15 @@ CREATE TABLE IF NOT EXISTS users_registry (
   name VARCHAR(255) NOT NULL UNIQUE,
   created TIMESTAMP NOT NULL,
   updated TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS recurring_events (
+  event_id UUID NOT NULL PRIMARY KEY,
+  source VARCHAR(255) NOT NULL,
+  client_id VARCHAR(255) NOT NULL,
+  intent VARCHAR(255) NOT NULL,
+  scheduled VARCHAR(32) NOT NULL,
+  last_run TIMESTAMP NOT NULL,
+  created TIMESTAMP NOT NULL,
+  info JSON NOT NULL
 );
