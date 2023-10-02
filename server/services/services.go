@@ -90,6 +90,7 @@ func New(params ServiceParams) (*Services, error) {
 			Log:               params.Log,
 			PushLogger:        params.PushLogger,
 			PushIntentFactory: params.PushIntentFactory,
+			ClientRegistry:    params.ClientRegistry,
 		},
 		LLM:          llmi,
 		STT:          stti,

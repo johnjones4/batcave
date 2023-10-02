@@ -27,7 +27,7 @@ func (a *API) authMiddleware(next http.Handler) http.Handler {
 			a.handleError(w, err, http.StatusInternalServerError)
 			return
 		}
-		if client.Id == "" {
+		if client.Id == "" || client.Id != clientId {
 			a.handleError(w, nil, http.StatusUnauthorized)
 			return
 		}

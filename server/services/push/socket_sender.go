@@ -5,28 +5,22 @@ import (
 	"main/core"
 )
 
-type ActiveSocket struct {
-	Messages     chan core.PushMessage
-	ClientId     string
-	ConnectionId string
-}
-
 type SocketSender struct {
-	activeSockets map[string]map[string]*ActiveSocket
+	activeSockets map[string]map[string]*core.ActiveSocket
 }
 
 func NewSocketSender() *SocketSender {
 	return &SocketSender{
-		activeSockets: make(map[string]map[string]*ActiveSocket),
+		activeSockets: make(map[string]map[string]*core.ActiveSocket),
 	}
 }
 
-func (s *SocketSender) RegisterActiveSocket(clientId string, connectionId string) *ActiveSocket {
+func (s *SocketSender) RegisterActiveSocket(clientId string, connectionId string) *core.ActiveSocket {
 	ok, _ := s.DeregisterActiveSocket(clientId, connectionId)
 	if !ok {
-		s.activeSockets[clientId] = make(map[string]*ActiveSocket)
+		s.activeSockets[clientId] = make(map[string]*core.ActiveSocket)
 	}
-	as := &ActiveSocket{
+	as := &core.ActiveSocket{
 		Messages:     make(chan core.PushMessage, 255),
 		ClientId:     clientId,
 		ConnectionId: connectionId,

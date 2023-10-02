@@ -5,6 +5,20 @@ import (
 	"main/core"
 )
 
+func (a *API) bundledHandler(ctx context.Context, req *core.Request) (core.Response, error) {
+	err := a.prepareRequest(ctx, req)
+	if err != nil {
+		return core.ResponseEmpty, err
+	}
+
+	res, err := a.coreHandler(ctx, req)
+	if err != nil {
+		return core.ResponseEmpty, err
+	}
+
+	return res, nil
+}
+
 func (a *API) prepareRequest(ctx context.Context, req *core.Request) error {
 	for _, proc := range a.RequestProcessors {
 		err := proc(ctx, req)

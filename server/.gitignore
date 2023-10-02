@@ -3,3 +3,4 @@ bin
 seed_users.sql
 __debug_bin*
 whisper.cpp
+cover.out

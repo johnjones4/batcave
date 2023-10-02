@@ -17,7 +17,7 @@ func (s *PGStore) ScheduleEvent(ctx context.Context, event *core.ScheduledEvent)
 	}
 	_, err = s.pool.Exec(
 		ctx,
-		"INSERT INTO scheduled_events (event_id, source, client_id, vent_type, scheduled, created, info) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+		"INSERT INTO scheduled_events (event_id, source, client_id, event_type, scheduled, created, info) VALUES ($1,$2,$3,$4,$5,$6,$7)",
 		event.ID,
 		event.Source,
 		event.ClientId,

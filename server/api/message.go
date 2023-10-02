@@ -32,13 +32,7 @@ func (a *API) message(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.prepareRequest(r.Context(), &req)
-	if err != nil {
-		a.handleError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	res, err := a.coreHandler(r.Context(), &req)
+	res, err := a.bundledHandler(r.Context(), &req)
 	if err != nil {
 		a.handleError(w, err, http.StatusInternalServerError)
 		return

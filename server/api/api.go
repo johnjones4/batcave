@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"main/core"
-	"main/services/push"
-	"main/services/telegram"
 	"net/http"
 	"sync"
 
@@ -20,10 +18,10 @@ type APIParams struct {
 	IntentMatcher      core.IntentMatcher
 	RequestProcessors  []core.RequestProcessor
 	ResponseProcessors []core.ResponseProcessor
-	Log                *logrus.Logger
-	Telegram           *telegram.Telegram
+	Log                core.HookableLogger
+	Telegram           core.TelegramSender
 	ClientRegistry     core.ClientRegistry
-	SocketSender       *push.SocketSender
+	SocketSender       core.SocketSender
 }
 
 type logListener struct {
@@ -93,6 +91,9 @@ func New(params APIParams) *API {
 
 		r.Route("/client", func(r chi.Router) {
 			r.Use(a.authMiddleware)
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+			})
 			r.Post("/message", a.message)
 			r.Handle("/log", http.HandlerFunc(a.streamer))
 			r.Handle("/converse", http.HandlerFunc(a.converse))

@@ -13,7 +13,7 @@ type conversationResponse struct {
 }
 
 func (a *API) converse(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
+	c, err := upgrader.Upgrade(w, r, nil) //TODO make this an interface
 	if err != nil {
 		a.handleError(w, err, http.StatusBadRequest)
 		return
@@ -23,7 +23,7 @@ func (a *API) converse(w http.ResponseWriter, r *http.Request) {
 	as := a.SocketSender.RegisterActiveSocket(r.Header.Get("X-Client-Id"), c.RemoteAddr().String())
 	defer a.SocketSender.DeregisterActiveSocket(as.ClientId, as.ConnectionId)
 
-	incomingMessages := make(chan core.Request)
+	IncomingMessages := make(chan core.Request)
 	go func() {
 		for {
 			var req core.Request
@@ -32,7 +32,7 @@ func (a *API) converse(w http.ResponseWriter, r *http.Request) {
 				a.Log.Error(err)
 				return
 			}
-			incomingMessages <- req
+			IncomingMessages <- req
 		}
 	}()
 
@@ -47,7 +47,7 @@ func (a *API) converse(w http.ResponseWriter, r *http.Request) {
 				a.Log.Error(err)
 				return
 			}
-		case req := <-incomingMessages:
+		case req := <-IncomingMessages:
 			req.Source = "api"
 
 			err = a.prepareRequest(r.Context(), &req)

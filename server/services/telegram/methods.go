@@ -45,7 +45,7 @@ func (t *Telegram) SendOutbound(ctx context.Context, chatId int, message core.Ou
 	return nil
 }
 
-func (t *Telegram) SendToClient(ctx context.Context, clientId string, message core.PushMessage) (bool, error) {
+func (t *Telegram) SendToClient(ctx context.Context, clientId string, Message core.PushMessage) (bool, error) {
 	client, err := t.ClientRegistry.Client(ctx, "telegram", clientId, func(client *core.Client, info string) error {
 		var chat Chat
 		err := json.Unmarshal([]byte(info), &chat)
@@ -68,28 +68,28 @@ func (t *Telegram) SendToClient(ctx context.Context, clientId string, message co
 	if chat.Id == 0 {
 		return false, nil
 	}
-	err = t.SendOutbound(ctx, chat.Id, message.OutboundMessage)
+	err = t.SendOutbound(ctx, chat.Id, Message.OutboundMessage)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (t *Telegram) IsClientPermitted(ctx context.Context, r *http.Request, msg IncomingMessage) (bool, error) {
+func (t *Telegram) IsClientPermitted(ctx context.Context, r *http.Request, msgFrom int, msgText, msgType string) (bool, error) {
 	if r.Header.Get("X-Telegram-Bot-Api-Secret-Token") != t.Configuration.SecretToken {
 		return false, errors.New("access denied")
 	}
 
-	if msg.Message.Text == "" || msg.Chat.Type != "private" {
+	if msgText == "" || msgType != "private" {
 		return false, nil
 	}
 
-	client, err := t.ClientRegistry.Client(ctx, "telegram", fmt.Sprint(msg.From.Id), nil)
+	client, err := t.ClientRegistry.Client(ctx, "telegram", fmt.Sprint(msgFrom), nil)
 	if err != nil {
 		return false, err
 	}
 	if client.Id == "" {
-		return false, fmt.Errorf("user %d not permitted", msg.From.Id)
+		return false, fmt.Errorf("user %d not permitted", msgFrom)
 	}
 	return true, nil
 }

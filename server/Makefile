@@ -23,3 +23,17 @@ container:
 
 intent-seed-openai:
 	python3 scripts/generate_openai_intent_seed.py > seed_intent.sql
+
+.PHONEY:
+
+mocks: .PHONEY
+	~/go/bin/mockgen -source=./core/intent_types.go -package=mocks  > ./mocks/intent_types.go
+	~/go/bin/mockgen -source=./core/message_types.go -package=mocks  > ./mocks/message_types.go
+	~/go/bin/mockgen -source=./core/service_types.go -package=mocks  > ./mocks/service_types.go
+	~/go/bin/mockgen -source=./core/service_types.go -package=mocks  > ./mocks/service_types.go
+	~/go/bin/mockgen -source=./core/store_types.go -package=mocks  > ./mocks/store_types.go
+	~/go/bin/mockgen -source=./core/types.go -package=mocks  > ./mocks/types.go
+
+test-coverage:
+	go test -coverprofile cover.out ./...
+	go tool cover -html=cover.out

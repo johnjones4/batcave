@@ -166,16 +166,6 @@ func (a *Push) Start(ctx context.Context) error {
 }
 
 func (a *Push) Send(ctx context.Context, source string, clientId string, message core.PushMessage) error {
-	message.EventId = uuid.NewString()
-
-	err := a.sendToClent(ctx, clientId, message)
-	if err != nil && err != ErrorClientDoesNotSupportPush {
-		return err
-	}
-	if err == nil {
-		return nil
-	}
-
 	user, err := a.ClientRegistry.UserForClient(ctx, source, clientId)
 	if err != nil {
 		return err
@@ -186,31 +176,28 @@ func (a *Push) Send(ctx context.Context, source string, clientId string, message
 		return err
 	}
 
-	skipIndex := -1
-	for i, client := range clients {
-		if client.Source == source && client.Id == clientId {
-			skipIndex = i
-			break
-		}
-	}
-	if skipIndex < 0 {
-		return errors.New("client id does not have a cluster")
-	}
-
-	for i, client := range clients {
-		if i == skipIndex {
-			continue
-		}
+	sends := 0
+	for _, client := range clients {
+		message.EventId = uuid.NewString()
+		//TODO make better use of source
 		err = a.sendToClent(ctx, client.Id, message)
 		if err != nil && err != ErrorClientDoesNotSupportPush {
 			return err
 		}
+		if err == nil || err == ErrorClientDoesNotSupportPush {
+			sends++
+		}
 	}
 
-	return ErrorClientDoesNotSupportPush
+	if sends == 0 {
+		return ErrorClientDoesNotSupportPush
+	}
+
+	return nil
 }
 
 func (a *Push) sendToClent(ctx context.Context, clientId string, message core.PushMessage) error {
+	sends := 0
 	for _, provider := range a.ClientSenders {
 		ok, err := provider.SendToClient(ctx, clientId, message)
 		if ok {
@@ -218,12 +205,14 @@ func (a *Push) sendToClent(ctx context.Context, clientId string, message core.Pu
 			if err != nil {
 				return err
 			}
-			return nil
+			sends++
 		}
 		if err != nil {
 			return err
 		}
-
 	}
-	return ErrorClientDoesNotSupportPush
+	if sends == 0 {
+		return ErrorClientDoesNotSupportPush
+	}
+	return nil
 }

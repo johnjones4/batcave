@@ -10,12 +10,13 @@ import (
 func (a *API) handleTelegramError(w http.ResponseWriter, receiver telegram.Update, err error) {
 	a.Log.Error(err)
 
-	_, err = a.Telegram.SendMessage(telegram.OutgoingMessage{
-		ChatId: receiver.Message.Chat.Id,
-		Message: telegram.Message{
-			Text: fmt.Sprintf("Error: \"%s\"", err.Error()),
-		},
-	})
+	//TODO
+	// _, err = a.Telegram.SendMessage(telegram.OutgoingMessage{
+	// 	ChatId: receiver.Message.Chat.Id,
+	// 	Message: telegram.Message{
+	// 		Text: fmt.Sprintf("Error: \"%s\"", err.Error()),
+	// 	},
+	// })
 	if err != nil {
 		a.handleError(w, err, http.StatusInternalServerError)
 		return
@@ -30,7 +31,7 @@ func (a *API) telegramHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ok, err := a.Telegram.IsClientPermitted(r.Context(), r, receiver.Message)
+	ok, err := a.Telegram.IsClientPermitted(r.Context(), r, receiver.Message.From.Id, receiver.Message.Text, receiver.Message.Chat.Type)
 	if err != nil {
 		a.handleError(w, err, http.StatusUnauthorized)
 		return
@@ -49,13 +50,7 @@ func (a *API) telegramHandler(w http.ResponseWriter, r *http.Request) {
 		ClientID: fmt.Sprint(receiver.Message.From.Id),
 	}
 
-	err = a.prepareRequest(r.Context(), &req)
-	if err != nil {
-		a.handleTelegramError(w, receiver, err)
-		return
-	}
-
-	res, err := a.coreHandler(r.Context(), &req)
+	res, err := a.bundledHandler(r.Context(), &req)
 	if err != nil {
 		a.handleTelegramError(w, receiver, err)
 		return
