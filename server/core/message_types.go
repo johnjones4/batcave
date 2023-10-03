@@ -33,6 +33,7 @@ type SocketSender interface {
 type Client struct {
 	Source          string     `json:"source"`
 	Id              string     `json:"id"`
+	UserId          string     `json:"userId"`
 	DefaultLocation Coordinate `json:"defaultLocation"`
 	Info            any        `json:"info"`
 }
@@ -75,11 +76,11 @@ type OutboundMessage struct {
 	EventId string  `json:"eventId"`
 	Message Message `json:"message"`
 	Media   Media   `json:"media"`
+	Action  string  `json:"action"`
 }
 
 type Response struct {
 	OutboundMessage
-	Action string `json:"action"`
 }
 
 type PushMessage struct {

@@ -7,7 +7,7 @@ import (
 )
 
 func (s *PGStore) LogPush(ctx context.Context, clientId string, push *core.PushMessage) error {
-	_, err := s.pool.Exec(
+	return s.pool.Exec(
 		ctx,
 		"INSERT INTO pushes (event_id, timestamp, client_id, message_text, media_url, media_type) VALUES ($1,$2,$3,$4,$5,$6)",
 		push.EventId,
@@ -17,5 +17,4 @@ func (s *PGStore) LogPush(ctx context.Context, clientId string, push *core.PushM
 		push.Media.URL,
 		push.Media.Type,
 	)
-	return err
 }

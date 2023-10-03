@@ -18,12 +18,12 @@ func (s *PGStore) UpdateIntentEmbedding(ctx context.Context, intent string, embe
 	if err != nil && err != pgx.ErrNoRows {
 		return err
 	} else if err != nil {
-		_, err = s.pool.Exec(ctx, "INSERT INTO intents (intent_label, embedding) VALUES ($1, $2)", intent, string(embeddingjson))
+		err = s.pool.Exec(ctx, "INSERT INTO intents (intent_label, embedding) VALUES ($1, $2)", intent, string(embeddingjson))
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = s.pool.Exec(ctx, "UPDATE intents SET embedding = $1 WHERE intent_label = $2", string(embeddingjson), intent)
+		err = s.pool.Exec(ctx, "UPDATE intents SET embedding = $1 WHERE intent_label = $2", string(embeddingjson), intent)
 		if err != nil {
 			return err
 		}

@@ -30,7 +30,6 @@ var errorTestError = errors.New("test")
 func TestIntents(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	tuneIn := mocks.NewMockTuneIn(ctrl)
-	pushR := mocks.NewMockRecurringPush(ctrl)
 	push := mocks.NewMockPush(ctrl)
 	ha := mocks.NewMockHomeAssistant(ctrl)
 	now := time.Now().UTC()
@@ -55,7 +54,7 @@ func TestIntents(t *testing.T) {
 		{
 			intentActor: &Play{
 				TuneIn: tuneIn,
-				Push:   pushR,
+				Push:   push,
 			},
 			iterations: []intentTestCaseIteration{
 				{
@@ -72,8 +71,8 @@ func TestIntents(t *testing.T) {
 									URL:  "test url",
 									Type: core.MediaTypeAudioStream,
 								},
+								Action: core.ActionPlay,
 							},
-							Action: core.ActionPlay,
 						}
 						tuneIn.EXPECT().GetStreamURL(metadata.IntentParseReceiver["audioSource"]).Return(r.OutboundMessage.Media.URL, nil)
 						return r
@@ -104,7 +103,7 @@ func TestIntents(t *testing.T) {
 						},
 					},
 					prepareCalls: func(request core.Request, actor core.IntentActor, metadata core.IntentMetadata) core.Response {
-						pushR.EXPECT().SendRecurring(gomock.Any(), request.Source, request.ClientID, metadata.IntentParseReceiver["recurranceDescription"], actor.IntentLabel(), map[string]any{
+						push.EXPECT().SendRecurring(gomock.Any(), request.Source, request.ClientID, metadata.IntentParseReceiver["recurranceDescription"], actor.IntentLabel(), map[string]any{
 							"audioSource": metadata.IntentParseReceiver["audioSource"],
 						}).Return(nil)
 						return core.ResponseEmpty
@@ -122,7 +121,7 @@ func TestIntents(t *testing.T) {
 						},
 					},
 					prepareCalls: func(request core.Request, actor core.IntentActor, metadata core.IntentMetadata) core.Response {
-						pushR.EXPECT().SendRecurring(gomock.Any(), request.Source, request.ClientID, metadata.IntentParseReceiver["recurranceDescription"], actor.IntentLabel(), map[string]any{
+						push.EXPECT().SendRecurring(gomock.Any(), request.Source, request.ClientID, metadata.IntentParseReceiver["recurranceDescription"], actor.IntentLabel(), map[string]any{
 							"audioSource": metadata.IntentParseReceiver["audioSource"],
 						}).Return(errorTestError)
 						return core.ResponseEmpty
@@ -157,6 +156,45 @@ func TestIntents(t *testing.T) {
 						}).Return(nil)
 						return core.ResponseEmpty
 					},
+				},
+				{
+					request: core.Request{
+						Source:   "source str",
+						ClientID: "client id",
+					},
+					metadata: core.IntentMetadata{
+						IntentParseReceiver: map[string]any{
+							"date":                  now.Format(time.RFC3339Nano),
+							"recurranceDescription": "recurrance",
+							"description":           "description str",
+						},
+					},
+					prepareCalls: func(request core.Request, actor core.IntentActor, metadata core.IntentMetadata) core.Response {
+						push.EXPECT().SendRecurring(gomock.Any(), request.Source, request.ClientID, metadata.IntentParseReceiver["recurranceDescription"], actor.IntentLabel(), map[string]any{
+							"description": metadata.IntentParseReceiver["description"],
+						}).Return(nil)
+						return core.ResponseEmpty
+					},
+				},
+				{
+					request: core.Request{
+						Source:   "source str",
+						ClientID: "client id",
+					},
+					metadata: core.IntentMetadata{
+						IntentParseReceiver: map[string]any{
+							"date":                  now.Format(time.RFC3339Nano),
+							"recurranceDescription": "recurrance",
+							"description":           "description str",
+						},
+					},
+					prepareCalls: func(request core.Request, actor core.IntentActor, metadata core.IntentMetadata) core.Response {
+						push.EXPECT().SendRecurring(gomock.Any(), request.Source, request.ClientID, metadata.IntentParseReceiver["recurranceDescription"], actor.IntentLabel(), map[string]any{
+							"description": metadata.IntentParseReceiver["description"],
+						}).Return(errorTestError)
+						return core.ResponseEmpty
+					},
+					error: errorTestError,
 				},
 				{
 					request: core.Request{

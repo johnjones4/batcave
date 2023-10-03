@@ -23,7 +23,7 @@ func (s *PGStore) UpsertClient(ctx context.Context, source string, clientId stri
 	}
 
 	if err == pgx.ErrNoRows {
-		_, err = s.pool.Exec(
+		err = s.pool.Exec(
 			ctx,
 			"INSERT INTO clients_registry (source, client_id, info, created, updated) VALUES ($1, $2, $3, $4, $5)",
 			source,
@@ -36,7 +36,7 @@ func (s *PGStore) UpsertClient(ctx context.Context, source string, clientId stri
 			return err
 		}
 	} else {
-		_, err = s.pool.Exec(
+		err = s.pool.Exec(
 			ctx,
 			"UPDATE clients_registry SET info = $1, updated = $2 WHERE source = $3 AND client_id = $4",
 			string(infoStr),

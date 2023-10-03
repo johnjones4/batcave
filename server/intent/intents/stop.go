@@ -22,6 +22,8 @@ func (p *Stop) IntentParseReceiver() any {
 
 func (p *Stop) ActOnIntent(ctx context.Context, req *core.Request, md *core.IntentMetadata) (core.Response, error) {
 	return core.Response{
-		Action: core.ActionStop,
+		OutboundMessage: core.OutboundMessage{
+			Action: core.ActionStop,
+		},
 	}, nil
 }

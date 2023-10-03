@@ -32,7 +32,7 @@ var (
 const (
 	eventType              = "push"
 	singleCheckInterval    = time.Second * 30
-	recurringCheckInterval = time.Minute * 5
+	recurringCheckInterval = time.Minute
 )
 
 func (a *Push) SendRecurring(ctx context.Context, source string, clientId string, schedule string, intent string, info map[string]any) error {
@@ -121,20 +121,29 @@ func (a *Push) doRecurringEvents(ctx context.Context) error {
 	limit := time.Now().Add(recurringCheckInterval)
 
 	for _, event := range events {
-		nextTime := cronexpr.MustParse(event.Scheduled).Next(event.LastRun)
+		parsed, err := cronexpr.Parse(event.Scheduled)
+		if err != nil {
+			a.Log.Error(err)
+			continue
+		}
+		nextTime := parsed.Next(event.LastRun)
 		a.Log.Debug(event, nextTime)
 		if nextTime.Before(limit) {
 			intent := a.PushIntentFactory.PushIntent(event.Intent)
-			push, err := intent.ActOnAsyncIntent(ctx, event.Source, event.ClientId, &core.IntentMetadata{
-				IntentParseReceiver: event.Info,
-			})
-			if err != nil {
-				return err
-			}
-			go a.sendScheduledAsync(context.Background(), nextTime, "", event.Source, event.ClientId, push)
-			err = a.Scheduler.UpdateRecurringEventTimestamp(ctx, event.ID, time.Now())
-			if err != nil {
-				return err
+			if intent != nil {
+				push, err := intent.ActOnAsyncIntent(ctx, event.Source, event.ClientId, &core.IntentMetadata{
+					IntentParseReceiver: event.Info,
+				})
+				if err != nil {
+					a.Log.Error(err)
+					continue
+				}
+				go a.sendScheduledAsync(context.Background(), nextTime, "", event.Source, event.ClientId, push)
+				err = a.Scheduler.UpdateRecurringEventTimestamp(ctx, event.ID, time.Now())
+				if err != nil {
+					a.Log.Error(err)
+					continue
+				}
 			}
 		}
 	}

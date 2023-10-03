@@ -41,9 +41,6 @@ type TuneIn interface {
 
 type Push interface {
 	SendLater(ctx context.Context, when time.Time, source string, clientId string, message PushMessage) error
-}
-
-type RecurringPush interface {
 	SendRecurring(ctx context.Context, source string, clientId string, schedule string, intent string, info map[string]any) error
 }
 

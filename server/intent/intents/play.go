@@ -10,7 +10,7 @@ import (
 
 type Play struct {
 	TuneIn core.TuneIn
-	Push   core.RecurringPush
+	Push   core.Push
 }
 
 type playIntentParseReceiver struct {
@@ -23,7 +23,7 @@ func (p *Play) IntentLabel() string {
 }
 
 func (p *Play) IntentParsePrompt(req *core.Request) string {
-	return fmt.Sprintf("Extract the name of the audio source and recurrance description in crontab format or blank from the phrase \"%s\" in the JSON format: {\"audioSource\":\"\",\"recurranceDescription\":\"\"}", req.Message.Text)
+	return fmt.Sprintf("Extract the name of the audio source and recurrance description in * * * * * crontab format or blank from the phrase \"%s\" in the JSON format: {\"audioSource\":\"\",\"recurranceDescription\":\"\"}", req.Message.Text)
 }
 
 func (p *Play) IntentParseReceiver() any {
@@ -58,7 +58,30 @@ func (p *Play) ActOnIntent(ctx context.Context, req *core.Request, md *core.Inte
 				URL:  url,
 				Type: core.MediaTypeAudioStream,
 			},
+			Action: core.ActionPlay,
 		},
-		Action: core.ActionPlay,
+	}, nil
+}
+
+func (p *Play) ActOnAsyncIntent(ctx context.Context, source, clientId string, md *core.IntentMetadata) (core.PushMessage, error) {
+	var info playIntentParseReceiver
+	err := mapstructure.Decode(md.IntentParseReceiver, &info)
+	if err != nil {
+		return core.PushMessage{}, err
+	}
+
+	url, err := p.TuneIn.GetStreamURL(info.AudioSource)
+	if err != nil {
+		return core.PushMessage{}, err
+	}
+
+	return core.PushMessage{
+		OutboundMessage: core.OutboundMessage{
+			Media: core.Media{
+				URL:  url,
+				Type: core.MediaTypeAudioStream,
+			},
+			Action: core.ActionPlay,
+		},
 	}, nil
 }

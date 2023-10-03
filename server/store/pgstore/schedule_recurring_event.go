@@ -15,7 +15,7 @@ func (s *PGStore) ScheduleRecurringEvent(ctx context.Context, event *core.Schedu
 	if err != nil {
 		return err
 	}
-	_, err = s.pool.Exec(
+	err = s.pool.Exec(
 		ctx,
 		"INSERT INTO recurring_events (event_id, source, client_id, intent, scheduled, last_run, created, info) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 		event.ID,

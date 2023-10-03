@@ -183,31 +183,8 @@ func (mr *MockPushMockRecorder) SendLater(ctx, when, source, clientId, message a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendLater", reflect.TypeOf((*MockPush)(nil).SendLater), ctx, when, source, clientId, message)
 }
 
-// MockRecurringPush is a mock of RecurringPush interface.
-type MockRecurringPush struct {
-	ctrl     *gomock.Controller
-	recorder *MockRecurringPushMockRecorder
-}
-
-// MockRecurringPushMockRecorder is the mock recorder for MockRecurringPush.
-type MockRecurringPushMockRecorder struct {
-	mock *MockRecurringPush
-}
-
-// NewMockRecurringPush creates a new mock instance.
-func NewMockRecurringPush(ctrl *gomock.Controller) *MockRecurringPush {
-	mock := &MockRecurringPush{ctrl: ctrl}
-	mock.recorder = &MockRecurringPushMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockRecurringPush) EXPECT() *MockRecurringPushMockRecorder {
-	return m.recorder
-}
-
 // SendRecurring mocks base method.
-func (m *MockRecurringPush) SendRecurring(ctx context.Context, source, clientId, schedule, intent string, info map[string]any) error {
+func (m *MockPush) SendRecurring(ctx context.Context, source, clientId, schedule, intent string, info map[string]any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendRecurring", ctx, source, clientId, schedule, intent, info)
 	ret0, _ := ret[0].(error)
@@ -215,9 +192,9 @@ func (m *MockRecurringPush) SendRecurring(ctx context.Context, source, clientId,
 }
 
 // SendRecurring indicates an expected call of SendRecurring.
-func (mr *MockRecurringPushMockRecorder) SendRecurring(ctx, source, clientId, schedule, intent, info any) *gomock.Call {
+func (mr *MockPushMockRecorder) SendRecurring(ctx, source, clientId, schedule, intent, info any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendRecurring", reflect.TypeOf((*MockRecurringPush)(nil).SendRecurring), ctx, source, clientId, schedule, intent, info)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendRecurring", reflect.TypeOf((*MockPush)(nil).SendRecurring), ctx, source, clientId, schedule, intent, info)
 }
 
 // MockHomeAssistant is a mock of HomeAssistant interface.

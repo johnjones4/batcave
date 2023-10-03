@@ -5,6 +5,20 @@ import (
 	"time"
 )
 
+type Row interface {
+	Scan(dest ...interface{}) error
+}
+
+type Rows interface {
+	Row
+	Next() bool
+	Close()
+}
+type Database interface {
+	Exec(ctx context.Context, sql string, arguments ...interface{}) error
+	Query(ctx context.Context, sql string, args ...interface{}) (Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) Row
+}
 type PushLogger interface {
 	LogPush(ctx context.Context, clientId string, push *PushMessage) error
 }

@@ -19,12 +19,12 @@ func (s *PGStore) ClosestMatchingIntent(ctx context.Context, embedding []float32
 	if err == pgx.ErrNoRows {
 		return "", nil
 	}
+	if err != nil {
+		return "", err
+	}
 	s.log.Debugf("Found intent %s with distance %f", intent, distance)
 	if distance > 0.25 {
 		return "", nil
-	}
-	if err != nil {
-		return "", err
 	}
 
 	return intent, nil
