@@ -21,7 +21,7 @@ func (t *prepareRequestTest) Process(ctx context.Context, req *core.Request) err
 func TestPrepareRequest(t *testing.T) {
 	cases := []prepareRequestTest{
 		{
-			err: testError,
+			err: errorTestError,
 		},
 		{
 			err: nil,
@@ -89,7 +89,7 @@ func TestCoreHandler(t *testing.T) {
 				},
 				ClientID: "123",
 			},
-			intentMatcherError: testError,
+			intentMatcherError: errorTestError,
 		},
 		{
 			request: core.Request{
@@ -99,7 +99,7 @@ func TestCoreHandler(t *testing.T) {
 				},
 				ClientID: "123",
 			},
-			intentActorError: testError,
+			intentActorError: errorTestError,
 		},
 		{
 			request: core.Request{
@@ -109,7 +109,7 @@ func TestCoreHandler(t *testing.T) {
 				},
 				ClientID: "123",
 			},
-			responseProcessorError:     testError,
+			responseProcessorError:     errorTestError,
 			responseProcessorShouldRun: true,
 		},
 	}

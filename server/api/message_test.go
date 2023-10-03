@@ -61,7 +61,7 @@ func TestMessage(t *testing.T) {
 			response:            core.ResponseEmpty,
 			clientId:            "123",
 			responseCode:        http.StatusInternalServerError,
-			clientRegistryError: testError,
+			clientRegistryError: errorTestError,
 		},
 		{
 			request: core.Request{

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"main/core"
-	"main/services/push"
 	"main/util"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 )
 
 type Remind struct {
-	Push *push.Push
+	Push core.Push
 }
 
 type scheduleIntentParseReceiver struct {
@@ -61,6 +60,6 @@ func (i *Remind) ActOnIntent(ctx context.Context, req *core.Request, md *core.In
 		return core.ResponseEmpty, err
 	}
 
-	return core.ResponseEmpty, err
+	return core.ResponseEmpty, nil
 
 }

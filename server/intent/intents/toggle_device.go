@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"main/core"
-	"main/services/homeassistant"
 	"math"
 	"strings"
 
@@ -14,7 +13,7 @@ import (
 )
 
 type ToggleDevice struct {
-	HomeAssistant *homeassistant.HomeAssistant
+	HomeAssistant core.HomeAssistant
 }
 
 type toggleDeviceReceiver struct {
@@ -67,10 +66,11 @@ func (td *ToggleDevice) ActOnIntent(ctx context.Context, req *core.Request, md *
 }
 
 func (td *ToggleDevice) deviceIdsForRequst(req *core.Request) []string {
+	groups := td.HomeAssistant.Groups()
 	queryLc := strings.ToLower(req.Message.Text)
 	lowestIdx := -1
 	lowestScore := math.MaxInt64
-	for i, group := range td.HomeAssistant.Configuration.Groups {
+	for i, group := range groups {
 		if len(group.ClientIds) > 0 && !slices.Contains(group.ClientIds, req.ClientID) {
 			continue
 		}
@@ -87,5 +87,5 @@ func (td *ToggleDevice) deviceIdsForRequst(req *core.Request) []string {
 		return []string{}
 	}
 
-	return td.HomeAssistant.Configuration.Groups[lowestIdx].DeviceIds
+	return groups[lowestIdx].DeviceIds
 }

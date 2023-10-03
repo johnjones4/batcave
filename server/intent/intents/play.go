@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 	"main/core"
-	"main/services/push"
-	"main/services/tunein"
 
 	"github.com/mitchellh/mapstructure"
 )
 
 type Play struct {
-	TuneIn *tunein.TuneIn
-	Push   *push.Push
+	TuneIn core.TuneIn
+	Push   core.RecurringPush
 }
 
 type playIntentParseReceiver struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"main/core"
-	"main/services/noaa"
 	"main/services/nominatim"
 	"main/util"
 	"time"
@@ -13,8 +12,8 @@ import (
 )
 
 type Weather struct {
-	NOAA      *noaa.NOAA
-	Nominatim *nominatim.Nominatim
+	Weather  core.Weather
+	Geocoder core.Geocoder
 }
 
 type weatherIntentParseReceiver struct {
@@ -45,7 +44,7 @@ func (p *Weather) ActOnIntent(ctx context.Context, req *core.Request, md *core.I
 	var locationName string
 
 	if info.Location != "" {
-		location, err = p.Nominatim.Geocode(info.Location)
+		location, err = p.Geocoder.Geocode(info.Location)
 		if err != nominatim.ErrorLocationNotFound {
 			if err != nil {
 				return core.ResponseEmpty, err
@@ -59,7 +58,7 @@ func (p *Weather) ActOnIntent(ctx context.Context, req *core.Request, md *core.I
 		locationName = "your location"
 	}
 
-	weather, err := p.NOAA.PredictWeather(location)
+	weather, err := p.Weather.PredictWeather(location)
 	if err != nil {
 		return core.ResponseEmpty, err
 	}

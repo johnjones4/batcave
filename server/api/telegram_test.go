@@ -92,7 +92,7 @@ func TestTelegram(t *testing.T) {
 					},
 				},
 			},
-			IsClientPermittedError: testError,
+			IsClientPermittedError: errorTestError,
 			responseCode:           http.StatusUnauthorized,
 		},
 		{

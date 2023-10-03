@@ -17,6 +17,7 @@ run:
 	HTTP_HOST=:8080 DATABASE_URL=postgresql://dev:dev@localhost/dev SERVICE_CONFIG=./data/service_configuration.json go run . 
 
 container:
+	go test -cover ./...
 	docker build -t ${TAG} --platform ${OS}/${ARCH} .
 	docker push ${TAG}:latest
 	docker image rm ${TAG}:latest
@@ -33,6 +34,7 @@ mocks: .PHONEY
 	~/go/bin/mockgen -source=./core/service_types.go -package=mocks  > ./mocks/service_types.go
 	~/go/bin/mockgen -source=./core/store_types.go -package=mocks  > ./mocks/store_types.go
 	~/go/bin/mockgen -source=./core/types.go -package=mocks  > ./mocks/types.go
+	~/go/bin/mockgen -source=${HOME}/go/pkg/mod/github.com/sirupsen/logrus@v1.9.3/logrus.go -package=mocks  > ./mocks/logrus.go
 
 test-coverage:
 	go test -coverprofile cover.out ./...

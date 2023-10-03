@@ -17,8 +17,8 @@ func Factory(services *services.Services) []core.IntentActor {
 			HomeAssistant: services.HomeAssistant,
 		},
 		&intents.Weather{
-			NOAA:      services.NOAA,
-			Nominatim: services.Nominatim,
+			Weather:  services.NOAA,
+			Geocoder: services.Nominatim,
 		},
 		&intents.Remind{
 			Push: services.Push,

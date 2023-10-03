@@ -5,19 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"main/core"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
 
 type HomeAssistantConfiguration struct {
-	URLRoot     string `json:"urlBase"`
-	BearerToken string `json:"bearerToken"`
-	Groups      []struct {
-		Names     []string `json:"names"`
-		DeviceIds []string `json:"deviceIds"`
-		ClientIds []string `json:"clientIds"`
-	} `json:"groups"`
+	URLRoot     string                    `json:"urlBase"`
+	BearerToken string                    `json:"bearerToken"`
+	Groups      []core.HomeAssistantGroup `json:"groups"`
 }
 
 type HomeAssistant struct {
@@ -27,6 +24,10 @@ type HomeAssistant struct {
 
 type deviceControlRequest struct {
 	EntityId string `json:"entity_id"`
+}
+
+func (ha *HomeAssistant) Groups() []core.HomeAssistantGroup {
+	return ha.Groups()
 }
 
 func (ha *HomeAssistant) ToggleDeviceState(deviceId string, on bool) error {

@@ -11,12 +11,6 @@ import (
 	"time"
 )
 
-type NOAAWeather struct {
-	RadarURL string                              `json:"radarURL"`
-	Forecast []NOAAWeatherForecastPeriod         `json:"forecast"`
-	Alerts   []NOAAWeatherAlertFeatureProperties `json:"alerts"`
-}
-
 type noaaWeatherPointProperties struct {
 	ForecastURL  string `json:"forecast"`
 	ForecastZone string `json:"forecastZone"`
@@ -27,35 +21,16 @@ type noaaWeatherPointResponse struct {
 	Properties noaaWeatherPointProperties `json:"properties"`
 }
 
-type NOAAWeatherForecastPeriod struct {
-	StartTime        time.Time `json:"startTime"`
-	EndTime          time.Time `json:"endTime"`
-	DetailedForecast string    `json:"detailedForecast"`
-	Name             string    `json:"name"`
-	Temperature      float64   `json:"temperature"`
-	TemperatureUnit  string    `json:"temperatureUnit"`
-	WindSpeed        string    `json:"windSpeed"`
-	WindDirection    string    `json:"windDirection"`
-	Icon             string    `json:"icon"`
-	IsDaytime        bool      `json:"isDaytime"`
-}
-
 type noaaWeatherForecastProperties struct {
-	Periods []NOAAWeatherForecastPeriod `json:"periods"`
+	Periods []core.WeatherForecastPeriod `json:"periods"`
 }
 
 type noaaWeatherForecastResponse struct {
 	Properties noaaWeatherForecastProperties `json:"properties"`
 }
 
-type NOAAWeatherAlertFeatureProperties struct {
-	ID            string   `json:"id"`
-	AffectedZones []string `json:"affectedZones"`
-	Headline      string   `json:"headline"`
-}
-
 type noaaWeatherAlertFeature struct {
-	Properties NOAAWeatherAlertFeatureProperties `json:"properties"`
+	Properties core.WeatherAlert `json:"properties"`
 }
 
 type noaaWeatherAlertResponse struct {
@@ -65,25 +40,25 @@ type noaaWeatherAlertResponse struct {
 type NOAA struct {
 }
 
-func (f *NOAA) PredictWeather(coord core.Coordinate) (NOAAWeather, error) {
+func (f *NOAA) PredictWeather(coord core.Coordinate) (core.WeatherForecast, error) {
 	point, err := makeWeatherAPIPointRequest(coord)
 	if err != nil {
-		return NOAAWeather{}, err
+		return core.WeatherForecast{}, err
 	}
 
 	radarURL := fmt.Sprintf("https://radar.weather.gov/ridge/standard/%s_loop.gif?refreshed=%d", point.RadarStation, time.Now().Unix())
 
 	forecast, err := makeWeatherAPIForecastCall(point)
 	if err != nil {
-		return NOAAWeather{}, err
+		return core.WeatherForecast{}, err
 	}
 
 	alerts, err := makeWeatherAPIAlertCall(point)
 	if err != nil {
-		return NOAAWeather{}, err
+		return core.WeatherForecast{}, err
 	}
 
-	return NOAAWeather{
+	return core.WeatherForecast{
 		RadarURL: radarURL,
 		Forecast: forecast,
 		Alerts:   alerts,
@@ -108,7 +83,7 @@ func makeWeatherAPIPointRequest(coord core.Coordinate) (noaaWeatherPointProperti
 	return pointResponse.Properties, err
 }
 
-func makeWeatherAPIForecastCall(point noaaWeatherPointProperties) ([]NOAAWeatherForecastPeriod, error) {
+func makeWeatherAPIForecastCall(point noaaWeatherPointProperties) ([]core.WeatherForecastPeriod, error) {
 	httpResponse, err := http.Get(point.ForecastURL)
 	if err != nil {
 		return nil, err
@@ -132,7 +107,7 @@ func makeWeatherAPIForecastCall(point noaaWeatherPointProperties) ([]NOAAWeather
 	return response.Properties.Periods, nil
 }
 
-func makeWeatherAPIAlertCall(point noaaWeatherPointProperties) ([]NOAAWeatherAlertFeatureProperties, error) {
+func makeWeatherAPIAlertCall(point noaaWeatherPointProperties) ([]core.WeatherAlert, error) {
 	zoneId := strings.Replace(point.ForecastZone, "https://api.weather.gov/zones/forecast/", "", 1)
 
 	httpResponse, err := http.Get(fmt.Sprintf("https://api.weather.gov/alerts/active/zone/%s", zoneId))
@@ -151,7 +126,7 @@ func makeWeatherAPIAlertCall(point noaaWeatherPointProperties) ([]NOAAWeatherAle
 		return nil, err
 	}
 
-	featureProps := make([]NOAAWeatherAlertFeatureProperties, 0)
+	featureProps := make([]core.WeatherAlert, 0)
 	for _, feature := range response.Features {
 		for _, zone := range feature.Properties.AffectedZones {
 			if zone == point.ForecastZone {
