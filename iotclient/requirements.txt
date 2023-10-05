@@ -1,4 +1,0 @@
-websocket-client
-readkeys
-PyAudio
-webrtcvad

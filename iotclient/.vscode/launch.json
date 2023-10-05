@@ -5,17 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Current File",
-      "type": "python",
+      "name": "Launch Package",
+      "type": "go",
       "request": "launch",
-      "program": "desktop.py",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "env": {
-        "CLIENT_ID": "john",
-        "API_KEY": "john",
-        "HOSTNAME": "localhost:8080"
-      }
+      "mode": "auto",
+      "program": "."
     }
   ]
 }
