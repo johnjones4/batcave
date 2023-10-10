@@ -26,7 +26,7 @@ func (p *Weather) IntentLabel() string {
 }
 
 func (p *Weather) IntentParsePrompt(req *core.Request) string {
-	return fmt.Sprintf("Extract the exact date and time relative to %s and location (use blank for unknown location) from the phrase \"%s\" and return the information in the JSON format {\"date\":\"RFC3339 format\", \"location\":\"city or town name, state, and country\"}", time.Now().String(), req.Message.Text)
+	return fmt.Sprintf("Extract the exact date and time relative to %s and location (use blank for unknown location) from the phrase \"%s\" and return the information in the JSON format {\"date\":\"RFC3339 format\", \"location\":\"city or town name and state\"}", time.Now().String(), req.Message.Text)
 }
 
 func (p *Weather) IntentParseReceiver() any {

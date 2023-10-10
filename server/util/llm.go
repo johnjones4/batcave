@@ -16,9 +16,25 @@ func CleanLLMJSON(response string) string {
 
 func ParseLLMDate(str string) (time.Time, error) {
 	formats := []string{
-		time.RFC3339Nano,
-		time.RFC3339,
 		"2006-01-02T15:04:05.999999999-0700",
+		time.DateOnly,
+		time.DateTime,
+		time.Layout,
+		time.ANSIC,
+		time.UnixDate,
+		time.RubyDate,
+		time.RFC822,
+		time.RFC822Z,
+		time.RFC850,
+		time.RFC1123,
+		time.RFC1123Z,
+		time.RFC3339,
+		time.RFC3339Nano,
+		time.Kitchen,
+		time.Stamp,
+		time.StampMilli,
+		time.StampMicro,
+		time.StampNano,
 	}
 	for _, format := range formats {
 		t, err := time.Parse(format, str)

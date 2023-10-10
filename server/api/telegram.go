@@ -17,10 +17,11 @@ func (a *API) handleTelegramError(w http.ResponseWriter, receiver telegram.Updat
 	// 		Text: fmt.Sprintf("Error: \"%s\"", err.Error()),
 	// 	},
 	// })
-	if err != nil {
-		a.handleError(w, err, http.StatusInternalServerError)
-		return
-	}
+	// if err != nil {
+	// 	a.handleError(w, err, http.StatusInternalServerError)
+	// 	return
+	// }
+	w.WriteHeader(http.StatusOK)
 }
 
 func (a *API) telegramHandler(w http.ResponseWriter, r *http.Request) {

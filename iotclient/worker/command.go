@@ -11,7 +11,7 @@ import (
 
 type CommandWorker struct {
 	workerConcrete
-	cfg          util.ServerConfig
+	socketworker
 	sendQueue    chan core.Request
 	receiveQueue chan core.Response
 }
@@ -19,9 +19,13 @@ type CommandWorker struct {
 func NewCommandWorker(cfg util.ServerConfig, log logrus.FieldLogger) *CommandWorker {
 	return &CommandWorker{
 		workerConcrete: newWorkerConcrete(log),
-		cfg:            cfg,
 		sendQueue:      make(chan core.Request, 32),
 		receiveQueue:   make(chan core.Response, 32),
+		socketworker: socketworker{
+			url: "/api/client/converse",
+			cfg: cfg,
+			log: log,
+		},
 	}
 }
 
@@ -34,23 +38,28 @@ func (w *CommandWorker) Teardown() error {
 }
 
 func (w *CommandWorker) Start(ctx context.Context) {
-	conn, _, err := websocket.DefaultDialer.Dial(w.cfg.URL("/api/client/converse"), w.cfg.Headers())
-	if err != nil {
-		w.log.Errorf("error connecting to websocket: %s", err)
+	var conn *websocket.Conn
+	conn = w.socketworker.reconnect()
+	if conn == nil {
 		return
 	}
-	defer conn.Close()
+
 	defer func() {
+		conn.Close()
 		w.stopped <- true
 	}()
+
+	needsReconnect := make(chan bool)
+	reconnecting := make(chan bool)
 
 	go func() {
 		for {
 			var response core.Response
 			err := conn.ReadJSON(&response)
 			if err != nil {
-				w.log.Errorf("error reading websocket: %s", err)
-				return
+				w.workerConcrete.log.Errorf("error reading websocket: %s", err)
+				needsReconnect <- true
+				<-reconnecting
 			}
 			w.receiveQueue <- response
 		}
@@ -62,11 +71,22 @@ func (w *CommandWorker) Start(ctx context.Context) {
 			return
 		case <-w.stop:
 			return
-		case request := <-w.sendQueue:
-			err = conn.WriteJSON(request)
-			if err != nil {
-				w.log.Errorf("error writing websocket: %s", err)
+		case <-needsReconnect:
+			conn.Close()
+			conn = w.socketworker.reconnect()
+			if conn == nil {
 				return
+			}
+			reconnecting <- true
+		case request := <-w.sendQueue:
+			err := conn.WriteJSON(request)
+			if err != nil {
+				w.workerConcrete.log.Errorf("error writing websocket: %s", err)
+				conn.Close()
+				conn = w.socketworker.reconnect()
+				if conn == nil {
+					return
+				}
 			}
 		}
 	}

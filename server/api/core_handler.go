@@ -26,6 +26,7 @@ func (a *API) prepareRequest(ctx context.Context, req *core.Request) error {
 			return err
 		}
 	}
+	//TODO undo request insert on failure
 	return nil
 }
 

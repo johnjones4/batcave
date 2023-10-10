@@ -18,9 +18,11 @@ type Nominatim struct {
 }
 
 type nominatimResponseItem struct {
-	Latitude    string `json:"lat"`
-	Longitude   string `json:"lon"`
-	CountryCode string `json:"country_code"`
+	Latitude  string `json:"lat"`
+	Longitude string `json:"lon"`
+	Address   struct {
+		CountryCode string `json:"country_code"`
+	} `json:"address"`
 }
 
 func (n *Nominatim) Geocode(q string) (core.Coordinate, error) {
@@ -31,7 +33,9 @@ func (n *Nominatim) Geocode(q string) (core.Coordinate, error) {
 		"limit":          []string{"1"},
 	}
 
-	res, err := http.Get("https://nominatim.openstreetmap.org/search?" + params.Encode())
+	url := "https://nominatim.openstreetmap.org/search?" + params.Encode()
+
+	res, err := http.Get(url)
 	if err != nil {
 		return core.Coordinate{}, err
 	}
@@ -47,7 +51,7 @@ func (n *Nominatim) Geocode(q string) (core.Coordinate, error) {
 		return core.Coordinate{}, err
 	}
 
-	if len(items) == 0 || items[0].CountryCode != "us" {
+	if len(items) == 0 || items[0].Address.CountryCode != "us" {
 		return core.Coordinate{}, ErrorLocationNotFound
 	}
 

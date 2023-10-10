@@ -31,7 +31,7 @@ type Configuration struct {
 	HomeAssistantConfiguration homeassistant.HomeAssistantConfiguration `json:"homeAssistant"`
 	TelegramConfiguration      telegram.TelegramConfiguration           `json:"telegram"`
 	OpenAIApiKey               string                                   `json:"openAiAPIKey"`
-	OllamaURL                  string                                   `json:"ollamaURL"`
+	Ollama                     llm.OllamaCfg                            `json:"ollama"`
 }
 
 type ServiceParams struct {
@@ -66,6 +66,9 @@ func New(params ServiceParams) (*Services, error) {
 		openai := llm.NewOpenAI(params.Log, cfg.OpenAIApiKey)
 		llmi = openai
 		stti = openai
+	}
+	if cfg.Ollama.URL != "" {
+		llmi = llm.NewOllama(cfg.Ollama)
 	}
 	// if cfg.OllamaURL != "" {
 	// 	llmi = llm.NewOllama(params.Log, cfg.OllamaURL)
