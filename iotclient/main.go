@@ -7,6 +7,8 @@ import (
 	"main/iface"
 	"main/util"
 	"main/worker"
+	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -44,8 +46,15 @@ func main() {
 		lights = term
 	case modeInterface:
 		gpio, err := iface.NewGPIOController(log, iface.GPIOConfig{
-			StatusPins: map[core.StatusLight]int{},
-			SignalPins: map[iface.GPIOPinKey]int{},
+			StatusPins: map[core.StatusLight]int{
+				core.StatusLightError:     17,
+				core.StatusLightListening: 27,
+				core.StatusLightWorking:   22,
+			},
+			SignalPins: map[iface.GPIOPinKey]int{
+				iface.GPIOPinKeyEsc:    5,
+				iface.GPIOPinKeyToggle: 6,
+			},
 		})
 		if err != nil {
 			log.Panic(err)
@@ -58,10 +67,10 @@ func main() {
 	}
 
 	cfg := util.ServerConfig{
-		Hostname:        "hal9000.johnjonesfour.com",
-		SecureTransport: true,
-		ClientId:        "john",
-		ApiKey:          "john",
+		Hostname:        os.Getenv("HOSTNAME"),
+		SecureTransport: parseBool(os.Getenv("SECURE_TRANSPORT")),
+		ClientId:        os.Getenv("CLIENT_ID"),
+		ApiKey:          os.Getenv("API_KEY"),
 	}
 
 	rt := runtime{
@@ -77,4 +86,8 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func parseBool(b string) bool {
+	return strings.ToLower(b) == "true" || b == "1"
 }
