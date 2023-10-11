@@ -19,6 +19,7 @@ type StatusLight int
 
 type StatusLightsControl interface {
 	SetModeStatusLight(ctx context.Context, l StatusLight, t bool) error
+	Close() error
 }
 
 type Worker interface {

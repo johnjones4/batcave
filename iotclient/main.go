@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"main/core"
 	"main/iface"
 	"main/util"
 	"main/worker"
@@ -9,16 +11,51 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	modeTerminal  = "terminal"
+	modeInterface = "interface"
+)
+
 func main() {
 	log := logrus.New()
-	log.SetLevel(logrus.DebugLevel)
 
-	controller, err := iface.NewKeyboardController(log)
+	mode := flag.String("mode", modeTerminal, "Operating mode")
+	loglevelStr := flag.String("loglevel", logrus.WarnLevel.String(), "Log level")
+	flag.Parse()
+
+	loglevel, err := logrus.ParseLevel(*loglevelStr)
 	if err != nil {
 		log.Panic(err)
 	}
+	log.SetLevel(loglevel)
 
-	display := iface.NewTerminalDisplayContext(log)
+	var controller core.Controller
+	var display core.Display
+	var lights core.StatusLightsControl
+
+	switch *mode {
+	case modeTerminal:
+		controller, err = iface.NewKeyboardController(log)
+		if err != nil {
+			log.Panic(err)
+		}
+		term := iface.NewTerminalDisplayContext(log)
+		display = term
+		lights = term
+	case modeInterface:
+		gpio, err := iface.NewGPIOController(log, iface.GPIOConfig{
+			StatusPins: map[core.StatusLight]int{},
+			SignalPins: map[iface.GPIOPinKey]int{},
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		controller = gpio
+		lights = gpio
+		display = iface.NewTerminalDisplayContext(log)
+	default:
+		return
+	}
 
 	cfg := util.ServerConfig{
 		Hostname:        "hal9000.johnjonesfour.com",
@@ -31,7 +68,7 @@ func main() {
 		log:           log,
 		controller:    controller,
 		display:       display,
-		lights:        display,
+		lights:        lights,
 		voiceWorker:   worker.NewVoiceWorker(log),
 		commandWorker: worker.NewCommandWorker(cfg, log),
 		cfg:           cfg,

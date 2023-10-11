@@ -26,7 +26,7 @@ type runtime struct {
 func (r *runtime) start(ctx context.Context) error {
 	r.log.Debug("Starting up")
 	r.pendingEvents = make(map[string]bool)
-	errs := make(chan error, 16)
+	errs := make(chan error, 128)
 	workers := []core.Worker{
 		r.voiceWorker,
 		r.commandWorker,
@@ -40,8 +40,23 @@ func (r *runtime) start(ctx context.Context) error {
 		}
 	}
 	defer func() {
+		err := r.controller.Close()
+		if err != nil {
+			r.log.Errorf("controller close error: %s", err)
+		}
+
+		err = r.display.Close()
+		if err != nil {
+			r.log.Errorf("display close error: %s", err)
+		}
+
+		err = r.lights.Close()
+		if err != nil {
+			r.log.Errorf("lights close error: %s", err)
+		}
+
 		for _, w := range workers {
-			err := w.Teardown()
+			err = w.Teardown()
 			if err != nil {
 				r.log.Errorf("teardown error: %s", err)
 			}
@@ -85,10 +100,10 @@ func (r *runtime) handleControlSignal(ctx context.Context, signal core.Signal) (
 		return true, nil
 	case core.SignalTypeToggleOff:
 		go r.voiceWorker.Stop()
-		return false, nil
+		return false, r.lights.SetModeStatusLight(ctx, core.StatusLightListening, false)
 	case core.SignalTypeToggleOn:
 		go r.voiceWorker.Start(ctx)
-		return false, nil
+		return false, r.lights.SetModeStatusLight(ctx, core.StatusLightListening, true)
 	}
 	return false, nil
 }

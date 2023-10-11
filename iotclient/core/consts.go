@@ -9,4 +9,17 @@ const (
 const (
 	StatusLightError StatusLight = iota
 	StatusLightWorking
+	StatusLightListening
 )
+
+func (l StatusLight) String() string {
+	switch l {
+	case StatusLightError:
+		return "ERROR"
+	case StatusLightWorking:
+		return "WORKING"
+	case StatusLightListening:
+		return "LISTENING"
+	}
+	return ""
+}

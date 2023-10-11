@@ -2,6 +2,7 @@ package iface
 
 import (
 	"context"
+	"fmt"
 	"main/core"
 
 	"github.com/sirupsen/logrus"
@@ -22,11 +23,11 @@ func (d *TerminalDisplayContext) Close() error {
 }
 
 func (d *TerminalDisplayContext) Write(ctx context.Context, s string) error {
-	d.log.Printf("DISPLAY: \"%s\"", s)
+	fmt.Printf("DISPLAY: \"%s\"\n", s)
 	return nil
 }
 
 func (d *TerminalDisplayContext) SetModeStatusLight(ctx context.Context, l core.StatusLight, t bool) error {
-	d.log.Printf("STATUS LIGHT: %d / %b", l, t)
+	fmt.Printf("STATUS LIGHT: %s / %t\n", l.String(), t)
 	return nil
 }
