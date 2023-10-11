@@ -1,15 +1,12 @@
 package core
 
-import "errors"
-
-const NStatusLights = 3
-
-var (
-	ErrorDisplayContextClosed = errors.New("display context closed")
+const (
+	SignalTypeToggleOn Signal = iota
+	SignalTypeToggleOff
+	SignalTypeEsc
 )
 
 const (
-	SignalTypeMode SignalType = iota
-	SignalTypeToggle
-	SignalTypeEsc
+	StatusLightError StatusLight = iota
+	StatusLightWorking
 )

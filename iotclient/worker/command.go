@@ -29,7 +29,8 @@ func NewCommandWorker(cfg util.ServerConfig, log logrus.FieldLogger) *CommandWor
 	}
 }
 
-func (w *CommandWorker) Setup() error {
+func (w *CommandWorker) Setup(errors chan error) error {
+	w.errors = errors
 	return nil
 }
 
@@ -57,7 +58,7 @@ func (w *CommandWorker) Start(ctx context.Context) {
 			var response core.Response
 			err := conn.ReadJSON(&response)
 			if err != nil {
-				w.workerConcrete.log.Errorf("error reading websocket: %s", err)
+				w.errors <- err
 				needsReconnect <- true
 				<-reconnecting
 			}
@@ -81,7 +82,7 @@ func (w *CommandWorker) Start(ctx context.Context) {
 		case request := <-w.sendQueue:
 			err := conn.WriteJSON(request)
 			if err != nil {
-				w.workerConcrete.log.Errorf("error writing websocket: %s", err)
+				w.errors <- err
 				conn.Close()
 				conn = w.socketworker.reconnect()
 				if conn == nil {

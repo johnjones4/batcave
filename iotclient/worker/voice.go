@@ -33,7 +33,8 @@ func NewVoiceWorker(log logrus.FieldLogger) *VoiceWorker {
 	}
 }
 
-func (v *VoiceWorker) Setup() error {
+func (v *VoiceWorker) Setup(errors chan error) error {
+	v.workerConcrete.errors = errors
 	err := portaudio.Initialize()
 	if err != nil {
 		return err
@@ -61,24 +62,23 @@ func (v *VoiceWorker) Teardown() error {
 	return nil
 }
 
-func (v *VoiceWorker) Stop() error {
+func (v *VoiceWorker) Stop() {
 	v.log.Debug("Stopping voice")
 	err := v.stream.Stop()
 	if err != nil {
-		return err
+		v.errors <- err
 	}
 	v.stop <- true
 	<-v.stopped
 	v.buffer = nil
 	v.log.Debug("Stopped voice")
-	return nil
 }
 
 func (v *VoiceWorker) Start(ctx context.Context) {
 	v.log.Debug("Starting voice")
 	err := v.stream.Start()
 	if err != nil {
-		v.log.Errorf("error starting audio stream: %s", err)
+		v.workerConcrete.errors <- err
 		return
 	}
 	v.buffer = &audio.IntBuffer{
@@ -104,18 +104,18 @@ func (v *VoiceWorker) Start(ctx context.Context) {
 			encoder := wav.NewEncoder(buffer, SampleRate, 16, Channels, 1)
 			err = encoder.Write(v.buffer)
 			if err != nil {
-				v.log.Errorf("error encoding audio stream buffer: %s", err)
+				v.workerConcrete.errors <- err
 				return
 			}
 			err = encoder.Close()
 			if err != nil {
-				v.log.Errorf("error closing audio stream buffer: %s", err)
+				v.workerConcrete.errors <- err
 				return
 			}
 
 			bytes, err := io.ReadAll(buffer.Reader())
 			if err != nil {
-				v.log.Errorf("error reading stream buffer: %s", err)
+				v.workerConcrete.errors <- err
 				return
 			}
 
@@ -126,7 +126,7 @@ func (v *VoiceWorker) Start(ctx context.Context) {
 			if i, _ := v.stream.AvailableToRead(); i > 0 {
 				err = v.stream.Read()
 				if err != nil {
-					v.log.Errorf("error reading audio stream: %s", err)
+					v.workerConcrete.errors <- err
 					continue
 				}
 				for _, i := range v.audioChunkBuffer {

@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"main/controller"
-	"main/core"
-	display "main/displaycontext"
-	"main/mode"
+	"main/iface"
 	"main/util"
 	"main/worker"
 
@@ -15,26 +12,32 @@ import (
 func main() {
 	log := logrus.New()
 	log.SetLevel(logrus.DebugLevel)
-	controller := controller.NewKeyboardController(log)
+
+	controller, err := iface.NewKeyboardController(log)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	display := iface.NewTerminalDisplayContext(log)
+
 	cfg := util.ServerConfig{
 		Hostname:        "hal9000.johnjonesfour.com",
 		SecureTransport: true,
 		ClientId:        "john",
 		ApiKey:          "john",
 	}
-	logWorker := worker.NewLogWorker(cfg, log)
-	commandWorker := worker.NewCommandWorker(cfg, log)
-	voiceWorker := worker.NewVoiceWorker(log)
-	err := voiceWorker.Setup()
+
+	rt := runtime{
+		log:           log,
+		controller:    controller,
+		display:       display,
+		lights:        display,
+		voiceWorker:   worker.NewVoiceWorker(log),
+		commandWorker: worker.NewCommandWorker(cfg, log),
+		cfg:           cfg,
+	}
+	err = rt.start(context.Background())
 	if err != nil {
 		log.Panic(err)
 	}
-	modes := []core.Mode{
-		mode.NewModeLog(log, logWorker),
-		mode.NewModeCommand(log, voiceWorker, commandWorker, cfg.ClientId),
-	}
-	rt := New(log, modes, controller, func() (core.DisplayContext, error) {
-		return display.NewTerminalDisplayContext(log), nil
-	})
-	rt.Start(context.Background())
 }

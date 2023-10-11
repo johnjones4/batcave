@@ -2,64 +2,130 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"main/core"
+	"main/util"
+	"main/worker"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
-type Runtime struct {
-	log                   logrus.FieldLogger
-	modes                 []core.Mode
-	controller            core.Controller
-	displayContextFactory core.DisplayContextFactory
-	activeMode            int
+type runtime struct {
+	log           logrus.FieldLogger
+	controller    core.Controller
+	display       core.Display
+	lights        core.StatusLightsControl
+	voiceWorker   *worker.VoiceWorker
+	commandWorker *worker.CommandWorker
+	cfg           util.ServerConfig
+	pendingEvents map[string]bool
 }
 
-func New(log logrus.FieldLogger, modes []core.Mode, controller core.Controller, displayContextFactory core.DisplayContextFactory) *Runtime {
-	return &Runtime{
-		activeMode:            0,
-		log:                   log,
-		modes:                 modes,
-		controller:            controller,
-		displayContextFactory: displayContextFactory,
+func (r *runtime) start(ctx context.Context) error {
+	r.log.Debug("Starting up")
+	r.pendingEvents = make(map[string]bool)
+	errs := make(chan error, 16)
+	workers := []core.Worker{
+		r.voiceWorker,
+		r.commandWorker,
 	}
-}
 
-func (r *Runtime) startNextMode(ctx context.Context) {
-	dctx, err := r.displayContextFactory()
-	if err != nil {
-		r.log.Errorf("Error getting display context: %s", err)
-		return
-	}
-	go r.modes[r.activeMode].Start(ctx, dctx)
-}
-
-func (r *Runtime) Start(ctx context.Context) {
-	go r.controller.Start(ctx)
-	r.startNextMode(ctx)
-	for event := range r.controller.SignalChannel() {
-		switch event.Type {
-		case core.SignalTypeMode:
-			if event.Mode < len(r.modes) {
-				err := r.modes[r.activeMode].Stop()
-				if err != nil {
-					r.log.Errorf("Error stopping current mode: %s", err)
-				}
-				r.activeMode = event.Mode
-				r.startNextMode(ctx)
-			}
-		case core.SignalTypeToggle:
-			err := r.modes[r.activeMode].Toggle(ctx)
-			if err != nil {
-				r.log.Errorf("Error sending toggle to mode: %s", err)
-			}
-		case core.SignalTypeEsc:
-			r.log.Debug("Stopping all")
-			err := r.modes[r.activeMode].Stop()
-			if err != nil {
-				r.log.Errorf("Error stopping current mode: %s", err)
-			}
-			return
+	r.log.Debug("Initializing workers")
+	for _, w := range workers {
+		err := w.Setup(errs)
+		if err != nil {
+			return err
 		}
 	}
+	defer func() {
+		for _, w := range workers {
+			err := w.Teardown()
+			if err != nil {
+				r.log.Errorf("teardown error: %s", err)
+			}
+		}
+	}()
+
+	r.log.Debug("Starting workers")
+	go r.controller.Start(ctx)
+	go r.commandWorker.Start(ctx)
+
+	r.log.Debug("Beginning main application loop")
+	for {
+		var terminate bool
+		var err error
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case signal := <-r.controller.SignalChannel():
+			terminate, err = r.handleControlSignal(ctx, signal)
+		case voiceData := <-r.voiceWorker.Chan():
+			err = r.handleVoiceData(ctx, voiceData)
+		case res := <-r.commandWorker.Chan():
+			err = r.handleReponse(ctx, res)
+		case err1 := <-errs:
+			err = err1
+		}
+		if err != nil {
+			r.log.Errorf("runtime error: %s", err)
+			r.lights.SetModeStatusLight(ctx, core.StatusLightError, true)
+		}
+		if terminate {
+			return nil
+		}
+	}
+}
+
+func (r *runtime) handleControlSignal(ctx context.Context, signal core.Signal) (bool, error) {
+	r.log.Debugf("Got signal: %d", signal)
+	switch signal {
+	case core.SignalTypeEsc:
+		return true, nil
+	case core.SignalTypeToggleOff:
+		go r.voiceWorker.Stop()
+		return false, nil
+	case core.SignalTypeToggleOn:
+		go r.voiceWorker.Start(ctx)
+		return false, nil
+	}
+	return false, nil
+}
+
+func (r *runtime) handleVoiceData(ctx context.Context, voiceData []byte) error {
+	r.log.Debugf("Got %d bytes of audio to send", len(voiceData))
+	var req core.Request
+	req.ClientID = r.cfg.ClientId
+	req.EventId = uuid.NewString()
+	req.Message.Audio.Data = base64.StdEncoding.EncodeToString(voiceData)
+	r.commandWorker.SendChan() <- req
+	r.pendingEvents[req.EventId] = true
+	return r.lights.SetModeStatusLight(ctx, core.StatusLightWorking, true)
+}
+
+func (r *runtime) handleReponse(ctx context.Context, res core.Response) error {
+	switch res.Type {
+	case "request":
+		return r.display.Write(ctx, fmt.Sprintf("You: %s", res.Request.Message.Text))
+	case "response", "push":
+		var resBody core.ResponseBody
+		if res.Response != nil {
+			resBody = *res.Response
+		} else if res.PushMessage != nil {
+			resBody = *res.PushMessage
+		}
+		if resBody.EventId != "" {
+			delete(r.pendingEvents, resBody.EventId)
+			if len(r.pendingEvents) == 0 {
+				err := r.lights.SetModeStatusLight(ctx, core.StatusLightWorking, false)
+				if err != nil {
+					return err
+				}
+			}
+
+			return r.display.Write(ctx, fmt.Sprintf("HAL: %s", resBody.Message.Text))
+		}
+	}
+	return nil
 }
