@@ -7,6 +7,7 @@ import (
 	"main/services/llm"
 	"main/services/noaa"
 	"main/services/nominatim"
+	"main/services/opentts"
 	"main/services/push"
 	"main/services/telegram"
 	"main/services/tunein"
@@ -25,6 +26,7 @@ type Services struct {
 	LLM           core.LLM
 	STT           core.STT
 	SocketSender  *push.SocketSender
+	TTS           core.TTS
 }
 
 type Configuration struct {
@@ -32,6 +34,7 @@ type Configuration struct {
 	TelegramConfiguration      telegram.TelegramConfiguration           `json:"telegram"`
 	OpenAIApiKey               string                                   `json:"openAiAPIKey"`
 	Ollama                     llm.OllamaCfg                            `json:"ollama"`
+	OpenTTS                    opentts.OpenTTSConfiguration             `json:"opentts"`
 }
 
 type ServiceParams struct {
@@ -70,9 +73,13 @@ func New(params ServiceParams) (*Services, error) {
 	if cfg.Ollama.URL != "" {
 		llmi = llm.NewOllama(cfg.Ollama)
 	}
-	// if cfg.OllamaURL != "" {
-	// 	llmi = llm.NewOllama(params.Log, cfg.OllamaURL)
-	// }
+
+	var tts core.TTS
+	if cfg.OpenTTS.URL != "" {
+		tts = &opentts.OpenTTS{
+			Configuration: cfg.OpenTTS,
+		}
+	}
 
 	socketSender := push.NewSocketSender()
 
@@ -98,5 +105,6 @@ func New(params ServiceParams) (*Services, error) {
 		LLM:          llmi,
 		STT:          stti,
 		SocketSender: socketSender,
+		TTS:          tts,
 	}, nil
 }

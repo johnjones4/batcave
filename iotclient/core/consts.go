@@ -23,3 +23,13 @@ func (l StatusLight) String() string {
 	}
 	return ""
 }
+
+const (
+	MediaTypeAudioStream = "audio_stream"
+	MediaTypeImage       = "image"
+)
+
+const (
+	ActionPlay = "play"
+	ActionStop = "stop"
+)

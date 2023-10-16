@@ -10,9 +10,10 @@ type Controller interface {
 }
 
 type Display interface {
-	Write(ctx context.Context, s string) error
+	Display(ctx context.Context, res Response) error
 	// Show(ctx context.Context, url string) error
 	Close() error
+	Start(ctx context.Context)
 }
 
 type StatusLight int

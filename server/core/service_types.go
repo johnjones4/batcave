@@ -14,6 +14,10 @@ type STT interface {
 	SpeechToText(ctx context.Context, wavBytes []byte) (string, error)
 }
 
+type TTS interface {
+	TextToSpeech(ctx context.Context, text string) ([]byte, error)
+}
+
 type ScheduledEventCore struct {
 	ID       string
 	Source   string

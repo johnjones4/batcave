@@ -61,6 +61,7 @@ func New(ctx context.Context) (*Runtime, error) {
 		LLM:            r.Services.LLM,
 		ClientRegistry: r.Store,
 		STT:            r.Services.STT,
+		TTS:            r.Services.TTS,
 	}
 
 	r.API = api.New(api.APIParams{
@@ -72,6 +73,7 @@ func New(ctx context.Context) (*Runtime, error) {
 		},
 		ResponseProcessors: []core.ResponseProcessor{
 			processors.ConfirmMessage,
+			processors.TexttToSpeech,
 			r.Store.LogResponse,
 		},
 		Log:            r.Log,

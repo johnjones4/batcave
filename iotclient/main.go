@@ -14,14 +14,17 @@ import (
 )
 
 const (
-	modeTerminal  = "terminal"
-	modeInterface = "interface"
+	inputModeKeyboard  = "keyboard"
+	inputModeGPIO      = "gpio"
+	outputModeTerminal = "terminal"
+	outputModeGUI      = "gui"
 )
 
 func main() {
 	log := logrus.New()
 
-	mode := flag.String("mode", modeTerminal, "Operating mode")
+	inputMode := flag.String("inputmode", inputModeKeyboard, "Input mode")
+	outputMode := flag.String("outputmode", outputModeTerminal, "Output mode")
 	loglevelStr := flag.String("loglevel", logrus.WarnLevel.String(), "Log level")
 	flag.Parse()
 
@@ -35,17 +38,14 @@ func main() {
 	var display core.Display
 	var lights core.StatusLightsControl
 
-	switch *mode {
-	case modeTerminal:
+	switch *inputMode {
+	case inputModeKeyboard:
 		controller, err = iface.NewKeyboardController(log)
 		if err != nil {
 			log.Panic(err)
 		}
-		term := iface.NewTerminalDisplayContext(log)
-		display = term
-		lights = term
-	case modeInterface:
-		gpio, err := iface.NewGPIOController(log, iface.GPIOConfig{
+	case inputModeGPIO:
+		controller, err = iface.NewGPIOController(log, iface.GPIOConfig{
 			StatusPins: map[core.StatusLight]int{
 				core.StatusLightError:     17,
 				core.StatusLightListening: 27,
@@ -59,9 +59,17 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		controller = gpio
-		lights = gpio
-		display = iface.NewTerminalDisplayContext(log)
+	default:
+		return
+	}
+	switch *outputMode {
+	case outputModeTerminal:
+		term := iface.NewTerminalDisplay(log)
+		display = term
+		lights = term
+	case outputModeGUI:
+		lights = iface.NewTerminalDisplay(log)
+		display = iface.NewGUIDisplay()
 	default:
 		return
 	}
@@ -80,6 +88,7 @@ func main() {
 		lights:        lights,
 		voiceWorker:   worker.NewVoiceWorker(log),
 		commandWorker: worker.NewCommandWorker(cfg, log),
+		player:        worker.NewPlayer(log),
 		cfg:           cfg,
 	}
 	err = rt.start(context.Background())

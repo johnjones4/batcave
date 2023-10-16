@@ -3,14 +3,18 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"main/core"
 	"main/util"
 	"main/worker"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
+
+type closeable interface {
+	Close() error
+}
 
 type runtime struct {
 	log           logrus.FieldLogger
@@ -19,6 +23,7 @@ type runtime struct {
 	lights        core.StatusLightsControl
 	voiceWorker   *worker.VoiceWorker
 	commandWorker *worker.CommandWorker
+	player        *worker.Player
 	cfg           util.ServerConfig
 	pendingEvents map[string]bool
 }
@@ -30,6 +35,12 @@ func (r *runtime) start(ctx context.Context) error {
 	workers := []core.Worker{
 		r.voiceWorker,
 		r.commandWorker,
+		r.player,
+	}
+	closables := []closeable{
+		r.controller,
+		r.display,
+		r.lights,
 	}
 
 	r.log.Debug("Initializing workers")
@@ -39,58 +50,54 @@ func (r *runtime) start(ctx context.Context) error {
 			return err
 		}
 	}
-	defer func() {
-		err := r.controller.Close()
-		if err != nil {
-			r.log.Errorf("controller close error: %s", err)
-		}
-
-		err = r.display.Close()
-		if err != nil {
-			r.log.Errorf("display close error: %s", err)
-		}
-
-		err = r.lights.Close()
-		if err != nil {
-			r.log.Errorf("lights close error: %s", err)
-		}
-
-		for _, w := range workers {
-			err = w.Teardown()
-			if err != nil {
-				r.log.Errorf("teardown error: %s", err)
-			}
-		}
-	}()
 
 	r.log.Debug("Starting workers")
 	go r.controller.Start(ctx)
 	go r.commandWorker.Start(ctx)
 
+	r.log.Debug("Beginning event loop")
+	go func() {
+		for {
+			var terminate bool
+			var err error
+			select {
+			case <-ctx.Done():
+				terminate = true
+			case signal := <-r.controller.SignalChannel():
+				terminate, err = r.handleControlSignal(ctx, signal)
+			case voiceData := <-r.voiceWorker.Chan():
+				err = r.handleVoiceData(ctx, voiceData)
+			case res := <-r.commandWorker.Chan():
+				err = r.handleReponse(ctx, res)
+			case err1 := <-errs:
+				err = err1
+			}
+			if err != nil {
+				r.log.Errorf("runtime error: %s", err)
+				r.lights.SetModeStatusLight(ctx, core.StatusLightError, true)
+			}
+			if terminate {
+				for _, c := range closables {
+					err := c.Close()
+					if err != nil {
+						r.log.Errorf("close error: %s", err)
+					}
+				}
+				for _, w := range workers {
+					err = w.Teardown()
+					if err != nil {
+						r.log.Errorf("teardown error: %s", err)
+					}
+				}
+				os.Exit(0)
+			}
+		}
+	}()
+
 	r.log.Debug("Beginning main application loop")
-	for {
-		var terminate bool
-		var err error
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case signal := <-r.controller.SignalChannel():
-			terminate, err = r.handleControlSignal(ctx, signal)
-		case voiceData := <-r.voiceWorker.Chan():
-			err = r.handleVoiceData(ctx, voiceData)
-		case res := <-r.commandWorker.Chan():
-			err = r.handleReponse(ctx, res)
-		case err1 := <-errs:
-			err = err1
-		}
-		if err != nil {
-			r.log.Errorf("runtime error: %s", err)
-			r.lights.SetModeStatusLight(ctx, core.StatusLightError, true)
-		}
-		if terminate {
-			return nil
-		}
-	}
+	r.display.Start(ctx)
+
+	return nil
 }
 
 func (r *runtime) handleControlSignal(ctx context.Context, signal core.Signal) (bool, error) {
@@ -120,27 +127,33 @@ func (r *runtime) handleVoiceData(ctx context.Context, voiceData []byte) error {
 }
 
 func (r *runtime) handleReponse(ctx context.Context, res core.Response) error {
-	switch res.Type {
-	case "request":
-		return r.display.Write(ctx, fmt.Sprintf("You: %s", res.Request.Message.Text))
-	case "response", "push":
-		var resBody core.ResponseBody
-		if res.Response != nil {
-			resBody = *res.Response
-		} else if res.PushMessage != nil {
-			resBody = *res.PushMessage
-		}
-		if resBody.EventId != "" {
-			delete(r.pendingEvents, resBody.EventId)
-			if len(r.pendingEvents) == 0 {
-				err := r.lights.SetModeStatusLight(ctx, core.StatusLightWorking, false)
-				if err != nil {
-					return err
-				}
+	var responseBody *core.ResponseBody
+	if res.Response != nil {
+		responseBody = res.Response
+		delete(r.pendingEvents, res.Response.EventId)
+		if len(r.pendingEvents) == 0 {
+			err := r.lights.SetModeStatusLight(ctx, core.StatusLightWorking, false)
+			if err != nil {
+				return err
 			}
-
-			return r.display.Write(ctx, fmt.Sprintf("HAL: %s", resBody.Message.Text))
+		}
+	} else if res.PushMessage != nil {
+		responseBody = res.PushMessage
+	}
+	if responseBody != nil {
+		switch responseBody.Action {
+		case core.ActionStop:
+			err := r.player.Stop()
+			if err != nil {
+				return err
+			}
+		case core.ActionPlay:
+			switch responseBody.Media.Type {
+			case core.MediaTypeAudioStream:
+				go r.player.Play(ctx, responseBody.Media.URL)
+			}
 		}
 	}
+	r.display.Display(ctx, res)
 	return nil
 }

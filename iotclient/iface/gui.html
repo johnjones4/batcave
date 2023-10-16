@@ -1,0 +1,92 @@
+<html>
+  <style type="text/css">
+    body {
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+      background: black;
+      color: white;
+    }
+
+    .message {
+      padding: 1em;
+      border-bottom: solid 1px #aaa;
+    }
+
+    .message .from.user {
+      color: #aa0;
+    }
+
+    .message .from.hal {
+      color: #0aa;
+    }
+
+    .message img {
+      margin-top: 1em;
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  </style>
+  <body>
+    <script>
+      const makeUpdate = (from, message) => {
+        let display = false 
+
+        const div = document.createElement('div')
+        div.classList = 'message'
+
+        if (message.message && message.message.text) {
+          display = true
+
+          const text = document.createElement('div')
+          text.classList = 'text'
+          div.appendChild(text)
+
+          const fromT = document.createElement('span')
+          fromT.classList = `from ${from.toLowerCase()}`
+          fromT.textContent = `${from}: `
+          text.appendChild(fromT)
+
+          const msgText = document.createElement('span')
+          msgText.textContent = message.message.text
+          text.appendChild(msgText)
+        }
+
+        if (message.media && message.media.type === 'image') {
+          display = true
+          const img = document.createElement('img')
+          img.src = message.media.url
+          div.appendChild(img)
+        }
+
+        if (!display) {
+          return null
+        }
+
+        return div
+      }
+      const main = () => {
+        document.addEventListener('response', async () => {
+          const message = await window.getResponses()
+      
+          let div = null
+
+          if (message.request) {
+            div = makeUpdate('User', message.request)
+          } else if (message.response) {
+            div = makeUpdate('HAL', message.response)
+          } else if (message.push) {
+            div = makeUpdate('HAL', message.push)
+          }
+
+          if (div) {
+            document.body.appendChild(div)
+            window.scrollTo(0, document.body.scrollHeight)
+          }
+        })
+      }
+      document.addEventListener("DOMContentLoaded", () => main())
+    </script>
+  </body>
+</html>
