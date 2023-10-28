@@ -18,6 +18,7 @@ const (
 	inputModeGPIO      = "gpio"
 	outputModeTerminal = "terminal"
 	outputModeGUI      = "gui"
+	outputModeGPIO     = "gpio"
 )
 
 func main() {
@@ -37,6 +38,7 @@ func main() {
 	var controller core.Controller
 	var display core.Display
 	var lights core.StatusLightsControl
+	var gpio *iface.GPIOController
 
 	switch *inputMode {
 	case inputModeKeyboard:
@@ -45,7 +47,7 @@ func main() {
 			log.Panic(err)
 		}
 	case inputModeGPIO:
-		controller, err = iface.NewGPIOController(log, iface.GPIOConfig{
+		gpio, err = iface.NewGPIOController(log, iface.GPIOConfig{
 			StatusPins: map[core.StatusLight]int{
 				core.StatusLightError:     17,
 				core.StatusLightListening: 27,
@@ -56,6 +58,7 @@ func main() {
 				iface.GPIOPinKeyToggle: 6,
 			},
 		})
+		controller = gpio
 		if err != nil {
 			log.Panic(err)
 		}
@@ -68,8 +71,12 @@ func main() {
 		display = term
 		lights = term
 	case outputModeGUI:
-		lights = iface.NewTerminalDisplay(log)
+		lights = gpio
 		display = iface.NewGUIDisplay()
+	case outputModeGPIO:
+		term := iface.NewTerminalDisplay(log)
+		display = term
+		lights = gpio
 	default:
 		return
 	}
