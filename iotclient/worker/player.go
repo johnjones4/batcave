@@ -1,14 +1,17 @@
 package worker
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/ebitengine/oto/v3"
 	"github.com/kvark128/minimp3"
 	"github.com/sirupsen/logrus"
+	"github.com/youpy/go-wav"
 )
 
 type Player struct {
@@ -23,14 +26,53 @@ func NewPlayer(log logrus.FieldLogger) *Player {
 	}
 }
 
-func (p *Player) Play(ctx context.Context, url string) {
+func (p *Player) Play(reader io.Reader, opts oto.NewContextOptions) {
+	c, ready, err := oto.NewContext(&opts)
+	if err != nil {
+		p.errors <- err
+		return
+	}
+	<-ready
+	p.context = c
+	p.player = c.NewPlayer(reader)
+	p.player.Play()
+}
+
+func (p *Player) PlayBuffer(ctx context.Context, contentType string, bytesReader *bytes.Reader) {
+	var reader io.Reader
+	var opts oto.NewContextOptions
+
+	switch contentType {
+	case "audio/wav", "audio/wave":
+		decoder := wav.NewReader(bytesReader)
+		reader = decoder
+
+	case "audio/mpeg":
+		decoder := minimp3.NewDecoder(bytesReader)
+		decoder.Read([]byte{})
+
+		opts = oto.NewContextOptions{
+			SampleRate:   decoder.SampleRate(),
+			ChannelCount: decoder.Channels(),
+			Format:       oto.FormatSignedInt16LE,
+		}
+		reader = decoder
+	default:
+		p.errors <- errors.New("usupported media")
+		return
+	}
+
+	p.Play(reader, opts)
+}
+
+func (p *Player) PlayURL(ctx context.Context, url string) {
 	err := p.Stop()
 	if err != nil {
 		p.errors <- err
 		return
 	}
 
-	res, err := http.Get(url)
+	res, err := http.Get(strings.Trim(url, " \n")) //TODO remove
 	if err != nil {
 		p.errors <- err
 		return
@@ -40,6 +82,9 @@ func (p *Player) Play(ctx context.Context, url string) {
 	var opts oto.NewContextOptions
 
 	switch res.Header.Get("Content-type") {
+	// case "audio/wav", "audio/wave":
+	// 	decoder := wav.NewReader(bytesReader)
+
 	case "audio/mpeg":
 		decoder := minimp3.NewDecoder(res.Body)
 		decoder.Read([]byte{})
@@ -55,15 +100,7 @@ func (p *Player) Play(ctx context.Context, url string) {
 		return
 	}
 
-	c, ready, err := oto.NewContext(&opts)
-	if err != nil {
-		p.errors <- err
-		return
-	}
-	<-ready
-	p.context = c
-	p.player = c.NewPlayer(reader)
-	p.player.Play()
+	p.Play(reader, opts)
 }
 
 func (p *Player) Stop() error {

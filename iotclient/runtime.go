@@ -150,7 +150,7 @@ func (r *runtime) handleReponse(ctx context.Context, res core.Response) error {
 		case core.ActionPlay:
 			switch responseBody.Media.Type {
 			case core.MediaTypeAudioStream:
-				go r.player.Play(ctx, responseBody.Media.URL)
+				go r.player.PlayURL(ctx, responseBody.Media.URL)
 			}
 		}
 	}

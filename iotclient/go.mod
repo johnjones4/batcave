@@ -12,6 +12,8 @@ require (
 	github.com/nareix/joy5 v0.0.0-20210317075623-2c912ca30590 // indirect
 	github.com/spf13/cobra v0.0.4-0.20190109003409-7547e83b2d85 // indirect
 	github.com/spf13/pflag v1.0.4-0.20181223182923-24fa6976df40 // indirect
+	github.com/youpy/go-riff v0.1.0 // indirect
+	github.com/zaf/g711 v0.0.0-20190814101024-76a4a538f52b // indirect
 )
 
 require (
@@ -26,5 +28,6 @@ require (
 	github.com/stianeikeland/go-rpio v4.2.0+incompatible
 	github.com/stianeikeland/go-rpio/v4 v4.6.0
 	github.com/webview/webview_go v0.0.0-20230901181450-5a14030a9070
+	github.com/youpy/go-wav v0.3.2
 	golang.org/x/sys v0.12.0 // indirect
 )

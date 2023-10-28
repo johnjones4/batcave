@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 var (
@@ -69,7 +70,7 @@ func (t *TuneIn) search(query string) (string, error) {
 
 	for _, outline := range o.Body.Outlines {
 		if outline.Type == "audio" {
-			return outline.URL, nil
+			return strings.Trim(outline.URL, " \n"), nil
 		}
 	}
 
