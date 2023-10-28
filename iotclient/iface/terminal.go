@@ -45,5 +45,6 @@ func (d *TerminalDisplay) SetModeStatusLight(ctx context.Context, l core.StatusL
 }
 
 func (d *TerminalDisplay) Start(ctx context.Context) {
-
+	for {
+	}
 }
