@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"main/core"
@@ -141,6 +142,14 @@ func (r *runtime) handleReponse(ctx context.Context, res core.Response) error {
 		responseBody = res.PushMessage
 	}
 	if responseBody != nil {
+		if responseBody.Message.Audio.Data != "" {
+			data, err := base64.StdEncoding.DecodeString(responseBody.Message.Audio.Data)
+			if err != nil {
+				return err
+			}
+			r.player.PlayBuffer(ctx, "audio/wav", bytes.NewReader(data))
+		}
+
 		switch responseBody.Action {
 		case core.ActionStop:
 			err := r.player.Stop()

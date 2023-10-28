@@ -45,7 +45,17 @@ func (p *Player) PlayBuffer(ctx context.Context, contentType string, bytesReader
 	switch contentType {
 	case "audio/wav", "audio/wave":
 		decoder := wav.NewReader(bytesReader)
+		fmt, err := decoder.Format()
+		if err != nil {
+			p.errors <- err
+			return
+		}
 		reader = decoder
+		opts = oto.NewContextOptions{
+			SampleRate:   int(fmt.SampleRate),
+			ChannelCount: int(fmt.NumChannels),
+			Format:       oto.FormatSignedInt16LE,
+		}
 
 	case "audio/mpeg":
 		decoder := minimp3.NewDecoder(bytesReader)

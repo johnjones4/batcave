@@ -22,7 +22,7 @@ func (tts *OpenTTS) TextToSpeech(ctx context.Context, text string) ([]byte, erro
 		"voice": {tts.Configuration.Voice},
 		"text":  {text},
 	}
-	res, err := http.Get(fmt.Sprintf("%s/api/tts%s", tts.Configuration.URL, params.Encode()))
+	res, err := http.Get(fmt.Sprintf("%s/api/tts?%s", tts.Configuration.URL, params.Encode()))
 	if err != nil {
 		return nil, err
 	}

@@ -2,11 +2,14 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 
 	"github.com/sirupsen/logrus"
 )
+
+var exitError *exec.ExitError
 
 const (
 	Channels   = 1
@@ -58,7 +61,7 @@ func (v *VoiceWorker) Start(ctx context.Context) {
 	v.cancel = cancel
 	cmd := exec.CommandContext(cancellable, "sox", "-d", "/tmp/hal.wav")
 	err := cmd.Run()
-	if err != nil && err != context.Canceled {
+	if err != nil && !errors.As(err, &exitError) {
 		v.errors <- err
 		return
 	}
