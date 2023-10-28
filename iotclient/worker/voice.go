@@ -46,11 +46,16 @@ func (v *VoiceWorker) Stop() {
 	}
 	go func() {
 		file, err := os.ReadFile("/tmp/hal.wav")
-		if err != nil && err != context.Canceled {
+		if err != nil {
 			v.errors <- err
 			return
 		}
 		v.Chan() <- file
+		err = os.Remove("/tmp/hal.wav")
+		if err != nil {
+			v.errors <- err
+			return
+		}
 	}()
 	v.log.Debug("Stopped voice")
 }

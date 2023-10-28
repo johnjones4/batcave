@@ -27,6 +27,11 @@ func NewPlayer(log logrus.FieldLogger) *Player {
 }
 
 func (p *Player) Play(reader io.Reader, opts oto.NewContextOptions) {
+	err := p.Stop()
+	if err != nil {
+		p.errors <- err
+		return
+	}
 	c, ready, err := oto.NewContext(&opts)
 	if err != nil {
 		p.errors <- err
