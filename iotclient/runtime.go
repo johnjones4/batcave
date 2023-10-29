@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"main/core"
@@ -24,7 +23,8 @@ type runtime struct {
 	lights        core.StatusLightsControl
 	voiceWorker   *worker.VoiceWorker
 	commandWorker *worker.CommandWorker
-	player        *worker.Player
+	splayer       *worker.StreamPlayer
+	bplayer       *worker.BufferPlayer
 	cfg           util.ServerConfig
 	pendingEvents map[string]bool
 }
@@ -36,7 +36,8 @@ func (r *runtime) start(ctx context.Context) error {
 	workers := []core.Worker{
 		r.voiceWorker,
 		r.commandWorker,
-		r.player,
+		r.splayer,
+		r.bplayer,
 	}
 	closables := []closeable{
 		r.controller,
@@ -147,19 +148,19 @@ func (r *runtime) handleReponse(ctx context.Context, res core.Response) error {
 			if err != nil {
 				return err
 			}
-			r.player.PlayBuffer(ctx, "audio/wav", bytes.NewReader(data))
+			r.bplayer.PlayWAV(ctx, data)
 		}
 
 		switch responseBody.Action {
 		case core.ActionStop:
-			err := r.player.Stop()
+			err := r.splayer.Stop()
 			if err != nil {
 				return err
 			}
 		case core.ActionPlay:
 			switch responseBody.Media.Type {
 			case core.MediaTypeAudioStream:
-				go r.player.PlayURL(ctx, responseBody.Media.URL)
+				go r.splayer.PlayURL(ctx, responseBody.Media.URL)
 			}
 		}
 	}

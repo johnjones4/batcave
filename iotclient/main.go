@@ -95,7 +95,8 @@ func main() {
 		lights:        lights,
 		voiceWorker:   worker.NewVoiceWorker(log),
 		commandWorker: worker.NewCommandWorker(cfg, log),
-		player:        worker.NewPlayer(log),
+		splayer:       worker.NewStreamPlayer(log),
+		bplayer:       worker.NewBufferPlayer(log),
 		cfg:           cfg,
 	}
 	err = rt.start(context.Background())
